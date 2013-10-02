@@ -7,6 +7,7 @@ urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'cumulus_devbot.views.home', name='home'),
     # url(r'^cumulus_devbot/', include('cumulus_devbot.foo.urls')),
+    url(r'^mrbelvedere/', include('mrbelvedere.urls')),
 
     # django admin routes
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
