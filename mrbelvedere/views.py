@@ -13,8 +13,17 @@ GITHUB_WHITELIST = [
 
 def github_webhook(request):
     is_github = False
+
+    # If the request was forwarded to a proxy and that is passed in header, 
+    # use the HTTP_X_FORWARDED_FOR header instead of REMOTE_ADDR
+    if 'HTTP_X_FORWARDED_FOR' in request.META:
+        ip_adds = request.META['HTTP_X_FORWARDED_FOR'].split(",")   
+        ip = ip_adds[0]
+    else:
+        ip = request.META['REMOTE_ADDR']
+
     for subnet in GITHUB_WHITELIST:
-        if subnet in request.META['REMOTE_ADDR']:
+        if subnet in ip:
             is_github = True
             break
     if not is_github:

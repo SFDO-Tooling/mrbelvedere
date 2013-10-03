@@ -175,3 +175,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
+
+# Heroku doesn't pass remote ip in REMOTE_ADDR, you have to parse
+# the first ip from HTTP_X_FORWARDED_FOR to get the remote ip
+USE_X_FORWARDED_HOST = True
