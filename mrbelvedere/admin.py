@@ -10,33 +10,34 @@ from mrbelvedere.models import GithubUser
 from mrbelvedere.models import Push
 
 class JenkinsSiteAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('slug','url','user')
 admin.site.register(JenkinsSite, JenkinsSiteAdmin)
 
 class JobAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('slug','site')
 admin.site.register(Job, JobAdmin)
 
 class RepositoryAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('slug','url')
 admin.site.register(Repository, RepositoryAdmin)
 
 class RepositoryNewBranchJobAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id','repository','job')
 admin.site.register(RepositoryNewBranchJob, RepositoryNewBranchJobAdmin)
 
 class BranchAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('slug','repository')
 admin.site.register(Branch, BranchAdmin)
 
 class BranchJobTriggerAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id','branch','job','active','last_trigger_date')
 admin.site.register(BranchJobTrigger, BranchJobTriggerAdmin)
 
 class GithubUserAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id','slug','name','email')
 admin.site.register(GithubUser, GithubUserAdmin)
 
 class PushAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id','branch','github_user','message')
+    list_filter = ('branch','branch__repository','github_user')
 admin.site.register(Push, PushAdmin)

@@ -122,7 +122,10 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
+    'south',
+    'django_rq',
     'mrbelvedere',
+    'orgbuilder',
 )
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
@@ -179,3 +182,21 @@ STATICFILES_DIRS = (
 # Heroku doesn't pass remote ip in REMOTE_ADDR, you have to parse
 # the first ip from HTTP_X_FORWARDED_FOR to get the remote ip
 USE_X_FORWARDED_HOST = True
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+        'PASSWORD': 'some-password',
+    },
+    'high': {
+        'URL': os.getenv('REDISTOGO_URL', 'redis://localhost:6379'), # If you're on Heroku
+        'DB': 0,
+    },
+    'low': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+    }
+}
