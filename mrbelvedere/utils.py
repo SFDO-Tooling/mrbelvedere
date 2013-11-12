@@ -33,11 +33,13 @@ class GithubWebhookParser(object):
    
     @property
     def branch_obj(self):
+        jenkins_name = self.ref.replace('ref/heads','origin')
+        jenkins_name = jenkins_name.replace('refs/tags','origin/tags')
         return Branch.objects.get_or_create(
             slug = self.ref.replace('refs/heads/', ''),
             repository = self.repository_obj,
             github_name = self.ref,
-            jenkins_name = self.ref.replace('refs/heads', 'origin'),
+            jenkins_name = jenkins_name,
         )[0]
 
     @property
