@@ -78,6 +78,7 @@ class Job(models.Model):
 class RepositoryNewBranchJob(models.Model):
     repository = models.ForeignKey(Repository)
     job = models.ForeignKey(Job)
+    prefix = models.CharField(max_length=128, null=True, blank=True)
 
     #def __unicode__(self):
     #    if self.repository and self.job:

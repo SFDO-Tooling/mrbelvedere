@@ -10,11 +10,12 @@ def create_new_branch_job_triggers(sender, **kwargs):
 
     branch = kwargs['instance']
     for branchjob in branch.repository.repositorynewbranchjob_set.all():
-        trigger = BranchJobTrigger(
-            branch = branch,
-            job = branchjob.job,
-        )
-        trigger.save()
+        if branchjob.prefix and branch.github_name.startswith(branchjob.prefix):
+            trigger = BranchJobTrigger(
+                branch = branch,
+                job = branchjob.job,
+            )
+            trigger.save()
 
 @receiver(post_save, sender=Push)
 def trigger_jenkins_jobs_on_push(sender, **kwargs):
