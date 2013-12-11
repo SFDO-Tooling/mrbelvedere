@@ -2,6 +2,7 @@ from django.db import models
 from django.template.defaultfilters import slugify
 from jenkinsapi.jenkins import Jenkins
 from xml.dom import minidom
+import django_rq
 
 class JenkinsSite(models.Model):
     slug = models.SlugField()
@@ -93,6 +94,7 @@ class BranchJobTrigger(models.Model):
     #def __unicode__(self):
     #    return '%s -> %s' (self.branch.slug, self.job.slug)
 
+    @django_rq.job
     def invoke(self, push):
         api = self.job.get_api()
         api.invoke(build_params={
