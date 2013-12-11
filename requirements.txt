@@ -12,7 +12,7 @@ django-rq==0.5.1
 django-toolbelt==0.0.1
 docutils==0.11
 gunicorn==18.0
-jenkinsapi==0.2.14
+jenkinsapi==0.2.16
 kombu==2.5.15
 psycopg2==2.5.1
 python-dateutil==2.1
