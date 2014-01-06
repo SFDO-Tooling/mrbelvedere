@@ -2,6 +2,8 @@ from django.db import models
 from django.template.defaultfilters import slugify
 from jenkinsapi.jenkins import Jenkins
 from xml.dom import minidom
+import requests
+import json
 import django_rq
 
 class JenkinsSite(models.Model):
@@ -44,10 +46,21 @@ class JenkinsSite(models.Model):
 
 class Repository(models.Model):
     slug = models.SlugField()
+    owner = models.CharField(max_length=255)
     url = models.URLField()
 
     def __unicode__(self):
         return self.slug
+
+    def get_latest_release(self, beta=None):
+        if not beta:
+            beta = False
+        resp = requests.get('https://api.github.com/repos/%s/%s/releases' % (self.owner, self.slug))
+        data = json.loads(resp.content)
+        for release in data:
+            if release['prerelease'] == beta:
+                return release['name']
+                break
 
 class Branch(models.Model):
     slug = models.SlugField()

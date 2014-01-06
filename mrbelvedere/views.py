@@ -50,3 +50,12 @@ def jenkins_update_jobs(request, slug):
     site = get_object_or_404(JenkinsSite, slug=slug)
     site.update_jobs()
     return HttpResponse('Jobs Updated!')
+
+def latest_prod_version(request, slug):
+    repo = get_object_or_404(Repository, slug=slug)
+    return HttpResponse(repo.get_latest_release())
+    
+def latest_beta_version(request, slug):
+    repo = get_object_or_404(Repository, slug=slug)
+    return HttpResponse(repo.get_latest_release(beta=True))
+    
