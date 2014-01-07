@@ -58,9 +58,18 @@ class Repository(models.Model):
         resp = requests.get('https://api.github.com/repos/%s/%s/releases' % (self.owner, self.slug))
         data = json.loads(resp.content)
         for release in data:
-            if release['prerelease'] == beta:
-                return release['name']
-                break
+            # Releases are returned in reverse chronological order.
+
+            # If release is not of the prerelease status (production or beta) we are looking for, skip it
+            if release['prerelease'] != beta:
+                continue
+
+            # If release does not have an install link in the body, skip it
+            if release['body'].find(test.find('https://login.salesforce.com/packaging/installPackage.apexp')) == -1:
+                continue
+
+            # If we got here, this is the release we're looking for
+            return release['name']
 
 class Branch(models.Model):
     slug = models.SlugField()
