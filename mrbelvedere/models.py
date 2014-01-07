@@ -65,7 +65,7 @@ class Repository(models.Model):
                 continue
 
             # If release does not have an install link in the body, skip it
-            if release['body'].find(test.find('https://login.salesforce.com/packaging/installPackage.apexp')) == -1:
+            if release['body'].find('https://login.salesforce.com/packaging/installPackage.apexp') == -1:
                 continue
 
             # If we got here, this is the release we're looking for
