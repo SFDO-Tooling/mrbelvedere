@@ -55,8 +55,6 @@ class Repository(models.Model):
     def get_latest_release(self, beta=None):
         if not beta:
             beta = False
-        if not tag:
-            tag = False
         resp = requests.get('https://api.github.com/repos/%s/%s/releases' % (self.owner, self.slug))
         data = json.loads(resp.content)
         for release in data:
