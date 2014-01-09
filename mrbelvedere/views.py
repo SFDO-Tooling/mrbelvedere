@@ -2,6 +2,7 @@ import json
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.shortcuts import get_object_or_404
+from django.views.decorators.cache import cache_page
 from mrbelvedere.models import JenkinsSite, Job
 from mrbelvedere.models import Repository, Branch, BranchJobTrigger
 from mrbelvedere.utils import GithubWebhookParser
@@ -51,18 +52,22 @@ def jenkins_update_jobs(request, slug):
     site.update_jobs()
     return HttpResponse('Jobs Updated!')
 
+@cache_page(60*2)
 def latest_prod_version(request, slug):
     repo = get_object_or_404(Repository, slug=slug)
     return HttpResponse(repo.get_latest_release_name())
     
+@cache_page(60*2)
 def latest_beta_version(request, slug):
     repo = get_object_or_404(Repository, slug=slug)
     return HttpResponse(repo.get_latest_release_name(beta=True))
     
+@cache_page(60*2)
 def latest_prod_version_tag(request, slug):
     repo = get_object_or_404(Repository, slug=slug)
     return HttpResponse(repo.get_latest_release_tag())
     
+@cache_page(60*2)
 def latest_beta_version_tag(request, slug):
     repo = get_object_or_404(Repository, slug=slug)
     return HttpResponse(repo.get_latest_release_tag(beta=True))

@@ -48,6 +48,8 @@ class Repository(models.Model):
     slug = models.SlugField()
     owner = models.CharField(max_length=255)
     url = models.URLField()
+    username = models.CharField(max_length=255, null=True, blank=True)
+    password = models.CharField(max_length=255, null=True, blank=True)
 
     def __unicode__(self):
         return self.slug
@@ -55,7 +57,14 @@ class Repository(models.Model):
     def get_latest_release(self, beta=None):
         if not beta:
             beta = False
-        resp = requests.get('https://api.github.com/repos/%s/%s/releases' % (self.owner, self.slug))
+
+        api_url = 'https://api.github.com/repos/%s/%s/releases' % (self.owner, self.slug)
+        # Use Github Authentication if available for the repo
+        if self.username and self.password:
+            resp = requests.get(api_url, auth=(self.username, self.password))
+        else:
+            resp = requests.get(api_url)
+
         data = json.loads(resp.content)
         for release in data:
             # Releases are returned in reverse chronological order.
