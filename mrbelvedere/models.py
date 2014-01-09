@@ -55,6 +55,8 @@ class Repository(models.Model):
     def get_latest_release(self, beta=None):
         if not beta:
             beta = False
+        if not tag:
+            tag = False
         resp = requests.get('https://api.github.com/repos/%s/%s/releases' % (self.owner, self.slug))
         data = json.loads(resp.content)
         for release in data:
@@ -69,7 +71,18 @@ class Repository(models.Model):
                 continue
 
             # If we got here, this is the release we're looking for
-            return release['name']
+            return release
+
+    def get_latest_release_name(self, beta=None):
+        rel = self.get_latest_release(beta)
+        if rel:
+            return rel['name']
+
+    def get_latest_release_tag(self, beta=None):
+        rel = self.get_latest_release(beta)
+        if rel:
+            return rel['tag_name']
+
 
 class Branch(models.Model):
     slug = models.SlugField()

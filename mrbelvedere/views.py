@@ -53,9 +53,17 @@ def jenkins_update_jobs(request, slug):
 
 def latest_prod_version(request, slug):
     repo = get_object_or_404(Repository, slug=slug)
-    return HttpResponse(repo.get_latest_release())
+    return HttpResponse(repo.get_latest_release_name())
     
 def latest_beta_version(request, slug):
     repo = get_object_or_404(Repository, slug=slug)
-    return HttpResponse(repo.get_latest_release(beta=True))
+    return HttpResponse(repo.get_latest_release_name(beta=True))
+    
+def latest_prod_version_tag(request, slug):
+    repo = get_object_or_404(Repository, slug=slug)
+    return HttpResponse(repo.get_latest_release_tag())
+    
+def latest_beta_version_tag(request, slug):
+    repo = get_object_or_404(Repository, slug=slug)
+    return HttpResponse(repo.get_latest_release_tag(beta=True))
     
