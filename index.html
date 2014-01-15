@@ -1,0 +1,258 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Mrbelvedere by SalesforceFoundation</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Mrbelvedere</h1>
+        <p class="header">A build bot used to fill gaps in triggering jobs and interacting with the GitHub API for CumulusCI</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/SalesforceFoundation/mrbelvedere/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/SalesforceFoundation/mrbelvedere/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/SalesforceFoundation/mrbelvedere">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/SalesforceFoundation">SalesforceFoundation</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a name="mrbelvedere" class="anchor" href="#mrbelvedere"><span class="octicon octicon-link"></span></a>mrbelvedere</h1>
+
+<p>A build bot used to fill gaps in triggering jobs and interacting with the GitHub API for <a href="https://github.com/SalesforceFoundation/mrbelvedere">CumulusCI</a>.</p>
+
+<h2>
+<a name="key-functionality" class="anchor" href="#key-functionality"><span class="octicon octicon-link"></span></a>Key Functionality</h2>
+
+<ul>
+<li>Create a framework to easily build custom logic around GitHub post-commit web hooks to trigger jobs in Jenkins</li>
+<li>Create triggers for commits on individual branches to trigger builds in Jenkins</li>
+<li>Automatically create new triggers for newly create jobs and branches based on their ref prefix</li>
+<li>Serve up the latest available production and beta Force.com managed package for a repository using GitHub Releases in the <a href="http://salesforcefoundation.github.io/CumulusCI/">CumulusCI</a> process.</li>
+</ul><h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>mrbelvedere is a web application built on <a href="http://www.djangoproject.com">Django</a>.  These instructions cover deploying the app to <a href="https://www.heroku.com">Heroku</a> though it should be possible to run it on your own server.</p>
+
+<p>You will need the <a href="https://devcenter.heroku.com/articles/quickstart">heroku</a> command line tool setup and linked to your Heroku account.</p>
+
+<pre><code>git clone git@github.com:SalesforceFoundation/mrbelvedere
+    Cloning into 'mrbelvedere'...
+    remote: Counting objects: 133, done.
+    remote: Compressing objects: 100% (56/56), done.
+    remote: Total 133 (delta 72), reused 130 (delta 72)
+    Receiving objects: 100% (133/133), 22.21 KiB | 0 bytes/s, done.
+    Resolving deltas: 100% (72/72), done.
+    Checking connectivity... done`
+
+cd mrbelvedere/
+
+heroku create
+    Creating salty-journey-4106... done, stack is cedar
+    http://salty-journey-4106.herokuapp.com/ | git@heroku.com:salty-journey-4106.git
+    Git remote heroku added
+
+git remote -v
+    heroku  git@heroku.com:salty-journey-4106.git (fetch)
+    heroku  git@heroku.com:salty-journey-4106.git (push)
+    origin  git@github.com:SalesforceFoundation/mrbelvedere (fetch)
+    origin  git@github.com:SalesforceFoundation/mrbelvedere (push)
+
+git push heroku master
+    The authenticity of host 'heroku.com (50.19.85.154)' can't be established.
+    RSA key fingerprint is 8b:48:5e:67:0e:c9:16:47:32:f2:87:0c:1f:c8:60:ad.
+    Are you sure you want to continue connecting (yes/no)? yes
+    Warning: Permanently added 'heroku.com,50.19.85.154' (RSA) to the list of known hosts.
+    Initializing repository, done.
+    Counting objects: 133, done.
+    Delta compression using up to 4 threads.
+    Compressing objects: 100% (56/56), done.
+    Writing objects: 100% (133/133), 22.21 KiB | 0 bytes/s, done.
+    Total 133 (delta 72), reused 133 (delta 72)
+
+    -----&gt; Python app detected
+    -----&gt; No runtime.txt provided; assuming python-2.7.4.
+    -----&gt; Preparing Python runtime (python-2.7.4)
+    -----&gt; Installing Distribute (0.6.36)
+    -----&gt; Installing Pip (1.3.1)
+    -----&gt; Installing dependencies using Pip (1.3.1)
+    Downloading/unpacking Django==1.5.4 (from -r requirements.txt (line 1))
+    ...
+    Running setup.py egg_info for package Django
+    ...
+    Installing collected packages: Django, South, amqp, anyjson, billiard, celery, decorator, distribute, dj-database-url, dj-static, django-rq, django-toolbelt, docutils, gunicorn, jenkinsapi, kombu, psycopg2, python-dateutil, pytz, redis, requests, rq, six, static, times
+    Running setup.py install for Django
+      changing mode of build/scripts-2.7/django-admin.py from 600 to 755
+
+      changing mode of /app/.heroku/python/bin/django-admin.py to 755
+
+    ...
+
+    Successfully installed Django South amqp anyjson billiard celery decorator distribute dj-database-url dj-static django-rq django-toolbelt docutils gunicorn jenkinsapi kombu psycopg2 python-dateutil pytz redis requests rq six static times
+    Cleaning up...
+
+    -----&gt; Discovering process types
+      Procfile declares types -&gt; web
+
+    -----&gt; Compressing... done, 38.1MB
+    -----&gt; Launching... done, v5
+      http://salty-journey-4106.herokuapp.com deployed to Heroku
+
+    To git@heroku.com:salty-journey-4106.git
+      * [new branch]      master -&gt; master
+
+
+heroku run python manage.py syncdb
+    Running `python manage.py syncdb` attached to terminal... up, run.9882
+    Syncing...
+    Creating tables ...
+    Creating table auth_permission
+    Creating table auth_group_permissions
+    Creating table auth_group
+    Creating table auth_user_groups
+    Creating table auth_user_user_permissions
+    Creating table auth_user
+    Creating table django_content_type
+    Creating table django_session
+    Creating table django_site
+    Creating table django_admin_log
+    Creating table south_migrationhistory
+
+    You just installed Django's auth system, which means you don't have any superusers defined.
+    Would you like to create one now? (yes/no): yes
+    Username (leave blank to use 'u22151'): jlantz
+    Email address: jlantz@salesforcefoundation.org
+    Password: 
+    Password (again): 
+    Superuser created successfully.
+    Installing custom SQL ...
+    Installing indexes ...
+    Installed 0 object(s) from 0 fixture(s)
+
+    Synced:
+    &gt; django.contrib.auth
+    &gt; django.contrib.contenttypes
+    &gt; django.contrib.sessions
+    &gt; django.contrib.sites
+    &gt; django.contrib.messages
+    &gt; django.contrib.staticfiles
+    &gt; django.contrib.admin
+    &gt; django.contrib.admindocs
+    &gt; south
+    &gt; django_rq
+
+    Not synced (use migrations):
+    - mrbelvedere
+    (use ./manage.py migrate to migrate these)
+
+
+heroku run python manage.py migrate
+    Running `python manage.py migrate` attached to terminal... up, run.5334
+    Running migrations for mrbelvedere:
+    - Migrating forwards to 0004_auto__add_field_repository_username__add_field_repository_password.
+    &gt; mrbelvedere:0001_initial
+    &gt; mrbelvedere:0002_auto__add_field_repositorynewbranchjob_prefix
+    &gt; mrbelvedere:0003_auto__add_field_repository_owner
+    &gt; mrbelvedere:0004_auto__add_field_repository_username__add_field_repository_password
+    - Loading initial data for mrbelvedere.
+    Installed 0 object(s) from 0 fixture(s)
+
+heroku run python manage.py createcachetable cache
+    Running `python manage.py createcachetable cache` attached to terminal... up, run.1060
+</code></pre>
+
+<p>At this point, your app should be running on Heroku where you can login using the created login at http://YOUR_APP.herokuapp.com/admin</p>
+
+<h2>
+<a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h2>
+
+<p>h3. Setting up the Jenkins</p>
+
+<p>Configuring the site is simple but requires a few manual steps which could be automated in the future for easier deployment.</p>
+
+<h3>
+<a name="add-jenkins-site" class="anchor" href="#add-jenkins-site"><span class="octicon octicon-link"></span></a>Add Jenkins Site</h3>
+
+<ol>
+<li>In the Django admin for your app (http://YOUR_APP.herokuapp.com/admin), click the Add link for 'Jenkins Site'.</li>
+<li>Enter a slug (becomes part of the url path for the site in the app), site url, and username/password.  If you are using the Github Authentication Plug In to handle Jenkins security as the <a href="https://github.com/SalesforceFoundation/CumulusCI/blob/master/docs/setup/README.md">CumulusCI</a> setup documentation details, you need to go to your account in Jenkins and get your API token to use as the password.</li>
+<li>Go to http://YOUR_APP.herokuapp.com/mrbelvedere/jenkins/YOUR_SLUG/update_jobs</li>
+<li>Go back to the Django admin (http://YOUR_APP.herokuapp.com/admin)</li>
+<li>Click on Jobs and you should see all your Jenkins jobs listed</li>
+</ol><h3>
+<a name="create-github-webhook" class="anchor" href="#create-github-webhook"><span class="octicon octicon-link"></span></a>Create GitHub Webhook</h3>
+
+<ol>
+<li>Go to your repositories and click the <strong>Settings</strong> link.</li>
+<li>Go to <strong>Service Hooks</strong>
+</li>
+<li>Add a new entry under <strong>WebHook URLs</strong> to point to http://YOUR_APP.herokuapp.com/mrbelvedere/github/webhook/</li>
+<li>Do a commit against your repository</li>
+<li>Check the <strong>Pushs</strong> section of the Django admin.  You should see the commit appear here.  Sometimes the webhook takes a few minutes to come through for the first time.</li>
+</ol><h3>
+<a name="creating-triggers" class="anchor" href="#creating-triggers"><span class="octicon octicon-link"></span></a>Creating triggers</h3>
+
+<p>The mrbelvedere application is used by the <a href="https://github.com/SalesforceFoundation/CumulusCI">CumulusCI</a> to trigger Jenkins jobs with logic not possible through the available Jenkins plugin community.</p>
+
+<p>When mrbelvedere receives a GitHub post-commit webhook, it creates a Pull in the database.  The Pull is linked to a Repository, GithubUser, and Branch, all of which are created automatically if they did not previously exist.  These objects create a reference point to easily bind in custom trigger logic.</p>
+
+<p>The triggers pass the branch name of the commit <code>branch</code> and the email of the last committer's <code>email</code> as parameters to the build job.</p>
+
+<h4>
+<a name="manual-triggers-on-branch-commit" class="anchor" href="#manual-triggers-on-branch-commit"><span class="octicon octicon-link"></span></a>Manual triggers on branch commit</h4>
+
+<ol>
+<li>Go to the Django admin and Add a Branch Job Trigger.  Select the branch and select the job you want any commits to the branch to trigger.  So long as active is checked, any commits to the branch should trigger the job.</li>
+</ol><h4>
+<a name="automatic-triggers-on-branch-creation" class="anchor" href="#automatic-triggers-on-branch-creation"><span class="octicon octicon-link"></span></a>Automatic triggers on branch creation</h4>
+
+<p>Sometimes, it is helpful to create new job triggers against newly created branches using a prefix.  The CumulusCI process uses this for the Cumulus_feature, Cumulus_uat, and Cumulus_rel builds.</p>
+
+<p>The system treats tags as branches just with different refs.  <code>refs/heads/*</code> refers to branches while <code>refs/tags/*</code> refers to tags.  This allows for creation of new Branch Job Triggers on creation of either a branch or a tag.</p>
+
+<p>For example, the Cumulus_feature job should be triggered by any commit to a branch whose ref starts with <code>refs/heads/feature</code>.  To make the process easier for a developer, a Repository New Branch Job is created to automatically build a Branch Job Trigger on any feature branches to trigger the Cumulus_feature job.</p>
+
+<p>The Cumulus_uat job triggers on creation of a new tag.  It's Repository New Branch Job prefix is <code>refs/tags/uat</code> and it triggers the Cumulus_uat job.</p>
+
+<p>If no prefix is provided, all new branches or tags will have a Branch Job Trigger built for the specified job.</p>
+
+<h2>
+<a name="handling-forcecom-managed-package-versions" class="anchor" href="#handling-forcecom-managed-package-versions"><span class="octicon octicon-link"></span></a>Handling Force.com Managed Package Versions</h2>
+
+<p>mrbelvedere was built for use in <a href="https://github.com/SalesforceFoundation/Cumulus">Project Cumulus</a> by the <a href="http://www.salesforcefoundation.org">Salesforce.com Foundation</a>.  We encountered a use case that was easiest solved by adding the functionality to the mrbelvedere application we were already using as part of our CI process.</p>
+
+<p>Use Case: I want to fetch the current version number and corresponding repository tag for beta and production managed package releases.  We use GitHub's Releases section to publish releases.  However, a release must be tagged, then deployed to a packaging org, then published before it is available to install.  We don't want a Release's version to be published until it is available for install.  Once the managed package is available, we already paste the install url into the body of the Release on GitHub so it made sense to look for the latest Release with an install_url in the body for beta and production releases (beta = prerelease in GitHub).</p>
+
+<p>Solution:
+http://YOUR_APP.herokuapp.com/mrbelvedere/repo/REPO_NAME/version
+http://YOUR_APP.herokuapp.com/mrbelvedere/repo/REPO_NAME/version/tag</p>
+
+<p>http://YOUR_APP.herokuapp.com/mrbelvedere/repo/REPO_NAME/version/beta
+http://YOUR_APP.herokuapp.com/mrbelvedere/repo/REPO_NAME/version/beta/tag</p>
+
+<p>These links return either the version number (1.1 for production, 1.1 (Beta 3) for beta) or tag (rel/1.1 for production, uat/1.1-beta3 for beta).  The urls are called by both Jenkins and the Cumulus project's <a href="https://github.com/SalesforceFoundation/Cumulus/blob/master/build.xml">build.xml</a> file to determine the most recent managed package.</p>
+
+<p>If you use the Managed Package Version functionality on a repository, you will likely want to add GitHub authentication information (username &amp; personal access token) on the Repository object in the Django admin.  This will cause the system to use authenticate calls to the GitHub API which helps avoid errors due to GitHub API limiting.</p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
