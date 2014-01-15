@@ -2,6 +2,13 @@
 
 A build bot used to fill gaps in triggering jobs and interacting with the GitHub API for [CumulusCI](https://github.com/SalesforceFoundation/mrbelvedere).
 
+## Key Functionality
+
+* Create a framework to easily build custom logic around GitHub post-commit web hooks to trigger jobs in Jenkins
+* Create triggers for commits on individual branches to trigger builds in Jenkins
+* Automatically create new triggers for newly create jobs and branches based on their ref prefix
+* Serve up the latest available production and beta Force.com managed package for a repository using GitHub Releases in the [CumulusCI](http://salesforcefoundation.github.io/CumulusCI/) process.
+
 ## Installation
 
 mrbelvedere is a web application built on [Django](http://www.djangoproject.com).  These instructions cover deploying the app to [Heroku](https://www.heroku.com) though it should be possible to run it on your own server.
