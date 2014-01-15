@@ -195,4 +195,4 @@ http://YOUR_APP.herokuapp.com/mrbelvedere/repo/REPO_NAME/version/beta/tag
 
 These links return either the version number (1.1 for production, 1.1 (Beta 3) for beta) or tag (rel/1.1 for production, uat/1.1-beta3 for beta).  The urls are called by both Jenkins and the Cumulus project's [build.xml](https://github.com/SalesforceFoundation/Cumulus/blob/master/build.xml) file to determine the most recent managed package.
 
-If you deploy this, you will likely want to add GitHub authentication information (username & personal access token) on the Repository object in the Django admin.  This will cause the system to use authenticate calls to the GitHub API which helps avoid errors due to GitHub API limiting.
+If you use the Managed Package Version functionality on a repository, you will likely want to add GitHub authentication information (username & personal access token) on the Repository object in the Django admin.  This will cause the system to use authenticate calls to the GitHub API which helps avoid errors due to GitHub API limiting.
