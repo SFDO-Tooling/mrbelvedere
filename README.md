@@ -143,9 +143,7 @@ At this point, your app should be running on Heroku where you can login using th
 
 ## Configuration
 
-h3. Setting up the Jenkins
-
-Configuring the site is simple but requires a few manual steps which could be automated in the future for easier deployment.
+Configuring the app is simple but not necessarily the most elegant process.  At some point in the future, more work will likely be done to build custom views for the following configurations but for now we just leverage Django's out of the box admin.
 
 ### Add Jenkins Site
 
