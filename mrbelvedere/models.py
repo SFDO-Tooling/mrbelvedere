@@ -54,18 +54,28 @@ class Repository(models.Model):
     def __unicode__(self):
         return self.slug
 
+    def call_api(self, subpath, data=None):
+        """ Takes a subpath under the repository (ex: /releases) and returns the json data from the api """
+        api_url = 'https://api.github.com/repos/%s/%s%s' % (self.owner, self.slug, subpath)
+        # Use Github Authentication if available for the repo
+        kwargs = {}
+        if self.username and self.password:
+            kwargs['auth'] = (self.username, self.password)
+
+        if data:
+            resp = requests.post(api_url, data=json.dumps(data), **kwargs)
+        else:
+            resp = requests.get(api_url, **kwargs)
+
+        data = json.loads(resp.content)
+        return data
+
     def get_latest_release(self, beta=None):
         if not beta:
             beta = False
 
-        api_url = 'https://api.github.com/repos/%s/%s/releases' % (self.owner, self.slug)
-        # Use Github Authentication if available for the repo
-        if self.username and self.password:
-            resp = requests.get(api_url, auth=(self.username, self.password))
-        else:
-            resp = requests.get(api_url)
+        data = self.call_api('releases')    
 
-        data = json.loads(resp.content)
         for release in data:
             # Releases are returned in reverse chronological order.
 
@@ -89,6 +99,37 @@ class Repository(models.Model):
         rel = self.get_latest_release(beta)
         if rel:
             return rel['tag_name']
+
+    def create_webhooks(self, base_url):
+        resp = self.call_api(self, '/hooks')
+        existing = None
+        for hook in resp:
+            if hook['config']['url'].startswith(base_url):
+                existing = hook
+                break
+        if existing:
+            data = existing
+            if 'push' not in data['events']:
+                data['events'].append('push')
+            if 'pull_request' not in data['events']:
+                data['events'].append('pull_request')
+            if 'pull_request_review_comment' not in data['events']:
+                data['events'].append('pull_request_review_comment')
+            
+            return self.call_api('/hooks/%s/', data)
+
+        self.call_api('/hooks/', data={
+            'name': 'web',
+            'config': {
+                'url': base_url + '/mrbelvedere/githib-webhook',
+            },
+            events: [
+                'push',
+                'pull_request',
+                'pull_request_review_comment',
+            ],
+            active: True,
+        })
 
 
 class Branch(models.Model):
