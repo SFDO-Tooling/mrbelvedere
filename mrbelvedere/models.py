@@ -292,10 +292,20 @@ class RepositoryPullRequestJob(models.Model):
         result = api.invoke(build_params=params)
         build_url = result.get_build().baseurl
 
+        # build_url seems to return the last build.  Rather than blocking until this job starts, 
+        # we'll just presume its number is one higher than the current
+        parts = build_url.split('/')
+        build_url = '/'.join(parts[:-1]) + '/' + str(int(parts[-1])+1)
+
         # Post a comment on the pull request with link to build
-        comment = pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={
-            'body': 'OK, build is started.  You can view status at %s.  I will try to update the commit status upon completion show it shows in the pull request' % build_url,
-        })
+        can_write = source_repo.can_write(target_repo.username)
+        body = 'OK, build is started.  You can view status at %s.' % build_url,
+        if can_write:
+            body = '  I will update the build status on the pull request when the build is done'
+        else:
+            body = body + '  @%s, If you add %s as a collaborator on your fork I can set the build status for you.' % (pull_request.github_user.login, target_repo.username)
+
+        comment = pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={'body': body})
 
         # Get the current sha from head and base to record last build
         pr = pull_request.repository.call_api('/pulls/%s' % pull_request.number)
