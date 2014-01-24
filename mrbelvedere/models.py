@@ -303,7 +303,7 @@ class RepositoryPullRequestJob(models.Model):
         if can_write:
             body = '  I will update the build status on the pull request when the build is done'
         else:
-            body = body + '  @%s, If you add %s as a collaborator on your fork I can set the build status for you.' % (pull_request.github_user.login, target_repo.username)
+            body = body + '  @%s, If you add %s as a collaborator on your fork I can set the build status for you.' % (pull_request.github_user.slug, target_repo.username)
 
         comment = pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={'body': body})
 
