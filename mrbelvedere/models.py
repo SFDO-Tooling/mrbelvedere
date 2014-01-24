@@ -28,7 +28,7 @@ class JenkinsSite(models.Model):
         for job_id, job_info in J.items():
             auth_token = self.get_job_token(job_info)
             job = Job.objects.get_or_create(
-                slug = job_id,
+                name = job_id,
                 auth_token = auth_token,
                 site=self,
             )[0]
@@ -45,18 +45,19 @@ class JenkinsSite(models.Model):
             return tokens[0].firstChild.nodeValue
 
 class Repository(models.Model):
-    slug = models.SlugField()
+    name = models.CharField(max_length=255)
     owner = models.CharField(max_length=255)
-    url = models.URLField()
+    url = models.CharField(max_length=255)
     username = models.CharField(max_length=255, null=True, blank=True)
     password = models.CharField(max_length=255, null=True, blank=True)
+    forks = models.ForeignKey('self', null=True, blank=True)
 
     def __unicode__(self):
-        return self.slug
+        return '%s/%s' % (self.owner, self.name)
 
     def call_api(self, subpath, data=None):
         """ Takes a subpath under the repository (ex: /releases) and returns the json data from the api """
-        api_url = 'https://api.github.com/repos/%s/%s%s' % (self.owner, self.slug, subpath)
+        api_url = 'https://api.github.com/repos/%s/%s%s' % (self.owner, self.name, subpath)
         # Use Github Authentication if available for the repo
         kwargs = {}
         if self.username and self.password:
@@ -67,14 +68,17 @@ class Repository(models.Model):
         else:
             resp = requests.get(api_url, **kwargs)
 
-        data = json.loads(resp.content)
-        return data
+        try:
+            data = json.loads(resp.content)
+            return data
+        except:
+            return resp.status_code
 
     def get_latest_release(self, beta=None):
         if not beta:
             beta = False
 
-        data = self.call_api('releases')    
+        data = self.call_api('/releases')
 
         for release in data:
             # Releases are returned in reverse chronological order.
@@ -101,62 +105,87 @@ class Repository(models.Model):
             return rel['tag_name']
 
     def create_webhooks(self, base_url):
-        resp = self.call_api(self, '/hooks')
-        existing = None
+        resp = self.call_api('/hooks')
+        target_urls = {
+            'push': base_url + '/mrbelvedere/github/webhook/push/',
+            'issue_comment': base_url + '/mrbelvedere/github/webhook/issue_comment/',
+            'pull_request': base_url + '/mrbelvedere/github/webhook/pull_request/',
+        }
+        existing = {}
+
         for hook in resp:
-            if hook['config']['url'].startswith(base_url):
-                existing = hook
-                break
-        if existing:
-            data = existing
-            if 'push' not in data['events']:
-                data['events'].append('push')
-            if 'pull_request' not in data['events']:
-                data['events'].append('pull_request')
-            if 'pull_request_review_comment' not in data['events']:
-                data['events'].append('pull_request_review_comment')
-            
-            return self.call_api('/hooks/%s/', data)
+            # Skip non-web hooks
+            if hook['name'] != 'web':
+                continue
+            if hook['config']['url'] in target_urls.values():
+                existing[hook['config']['url']] = hook
 
-        self.call_api('/hooks/', data={
-            'name': 'web',
-            'config': {
-                'url': base_url + '/mrbelvedere/githib-webhook',
+        hooks = [
+            {
+                'name': 'web',
+                'config': {'url': target_urls['push']},
+                'events': ['push'],
+                'active': True,
             },
-            events: [
-                'push',
-                'pull_request',
-                'pull_request_review_comment',
-            ],
-            active: True,
-        })
+            {
+                'name': 'web',
+                'config': {'url': target_urls['issue_comment']},
+                'events': ['issue_comment'],
+                'active': True,
+            },
+            {
+                'name': 'web',
+                'config': {'url': target_urls['pull_request']},
+                'events': ['pull_request'],
+                'active': True,
+            },
+        ]
 
+        created = 0
+        updated = 0
+
+        for hook in hooks:
+            existing_hook = existing.get(hook['config']['url'], None)
+            if existing_hook and existing_hook != hook:
+                resp = self.call_api('/hooks/%s' % existing_hook['id'], hook)
+                updated += 1
+            else:
+                resp = self.call_api('/hooks', hook)
+                created += 1
+
+        return 'Created %s hooks and updated %s hooks' % (created, updated)
+
+    def can_write(self, username):
+        """ Takes a github username and returns True if the user has write permissions to the repository in github """
+        resp = self.call_api('/collaborators/%s' % username)
+        if resp == 204:
+            return True
 
 class Branch(models.Model):
-    slug = models.SlugField()
+    name = models.CharField(max_length=255)
     repository = models.ForeignKey(Repository)
     github_name = models.CharField(max_length=255)
     jenkins_name = models.CharField(max_length=255)
 
     def __unicode__(self):
-        return self.slug
+        return self.name
 
 class Job(models.Model):
-    slug = models.SlugField()
+    name = models.CharField(max_length=255)
     auth_token = models.CharField(max_length=255, null=True, blank=True)
     site = models.ForeignKey(JenkinsSite)
     # FIXME: re-enable field once logic is in place to populate repository from Jenkins data
     #repository = models.ForeignKey(Repository)
 
     def __unicode__(self):
-        return self.slug
+        return self.name
 
     def get_api(self, api=None):
         """ Get the jenkinsapi job object for this job """
         if not api:
             api = self.site.get_api()
             # NOTE: This will raise a KeyError if the job disappears from Jenkins
-            return api[self.slug]
+            return api[self.name]
         
 
 class RepositoryNewBranchJob(models.Model):
@@ -166,7 +195,7 @@ class RepositoryNewBranchJob(models.Model):
 
     #def __unicode__(self):
     #    if self.repository and self.job:
-    #        '%s -> %s' % (self.repository.slug, self.job.slug)
+    #        '%s -> %s' % (self.repository.name, self.job.name)
 
 class BranchJobTrigger(models.Model): 
     branch = models.ForeignKey(Branch)
@@ -175,20 +204,20 @@ class BranchJobTrigger(models.Model):
     last_trigger_date = models.DateTimeField(null=True, blank=True)
 
     #def __unicode__(self):
-    #    return '%s -> %s' (self.branch.slug, self.job.slug)
+    #    return '%s -> %s' (self.branch.name, self.job.name)
 
     @django_rq.job
     def invoke(self, push):
         api = self.job.get_api()
         api.invoke(build_params={
-            'branch': push.branch.slug,
+            'branch': push.branch.name,
             'email': push.github_user.email,
         })
 
 class GithubUser(models.Model):
     slug = models.SlugField()
-    name = models.CharField(max_length=255)
-    email = models.EmailField()
+    name = models.CharField(max_length=255, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
 
     def __unicode__(self):
         return self.slug
@@ -202,5 +231,63 @@ class Push(models.Model):
     
     def __unicode__(self):
         return self.slug
+
+class PullRequest(models.Model):
+    repository = models.ForeignKey(Repository)
+    number = models.IntegerField()
+    name = models.CharField(max_length=255)
+    message = models.TextField(null=True, blank=True)
+    source_branch = models.ForeignKey(Branch, related_name='pull_requests_source')
+    target_branch = models.ForeignKey(Branch, related_name='pull_requests_target')
+    approved = models.BooleanField(default=False)
+    github_user = models.ForeignKey(GithubUser)
+    base_sha = models.CharField(max_length=64)
+    head_sha = models.CharField(max_length=64)
+    last_build_head_sha = models.CharField(max_length=64, null=True, blank=True)
+    last_build_base_sha = models.CharField(max_length=64, null=True, blank=True)
+
+class PullRequestComment(models.Model):
+    pull_request = models.ForeignKey(PullRequest)
+    github_user = models.ForeignKey(GithubUser)
+    message = models.TextField()
+
+class RepositoryPullRequestJob(models.Model):
+    repository = models.ForeignKey(Repository)
+    job = models.ForeignKey(Job)
+    forked = models.BooleanField(default=True)
+    internal = models.BooleanField(default=False)
+    moderated = models.BooleanField(default=True)
+    repo_admins = models.BooleanField(default=True)
+    admins = models.ManyToManyField(GithubUser, null=True, blank=True)
+
+    def is_admin(self, username):
+        if not self.moderated:
+            return True
+        is_admin = self.admins.filter(slug=username).count()
+        if is_admin:
+            return True
+        if self.repo_admins and self.repository.can_write(username):
+            return True
+        return False
+        
+    @django_rq.job
+    def invoke(self, pull_request):
+        source_repo = pull_request.source_branch.repository
+        target_repo = pull_request.target_branch.repository
+        if source_repo != target_repo:
+            if not self.forked:
+                return
+        else:
+            if not self.internal:
+                return
+
+        api = self.job.get_api()
+        params={
+            'repository': pull_request.source_branch.repository.url,
+            'branch': pull_request.source_branch.name,
+        }
+        if pull_request.github_user.email:
+            params['email'] = pull_request.github_user.email
+        api.invoke(build_params=params)
 
 from mrbelvedere.handlers import *

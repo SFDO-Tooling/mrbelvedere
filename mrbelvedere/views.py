@@ -5,14 +5,16 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_page
 from mrbelvedere.models import JenkinsSite, Job
 from mrbelvedere.models import Repository, Branch, BranchJobTrigger
-from mrbelvedere.utils import GithubWebhookParser
+from mrbelvedere.utils import GithubPushLoader
+from mrbelvedere.utils import GithubPullRequestLoader
+from mrbelvedere.utils import GithubPullRequestCommentLoader
 
 GITHUB_WHITELIST = [
     '204.232.175.',
     '192.30.252.',
 ]
 
-def github_webhook(request):
+def is_github(request):
     is_github = False
 
     # If the request was forwarded to a proxy and that is passed in header, 
@@ -31,11 +33,37 @@ def github_webhook(request):
         # FIXME: raise unauthorized
         return HttpResponse('You are not Github, go away!')
 
-    data = GithubWebhookParser(request.POST['payload'])
+def push_webhook(request):
+    ip_check = is_github(request)
+    if ip_check:
+        return ip_check
+
+    data = GithubPushLoader(request.POST['payload'])
+
     push = data.push_obj
 
     return HttpResponse('OK')
     
+def pull_request_webhook(request):
+    ip_check = is_github(request)
+    if ip_check:
+        return ip_check
+    
+    data = GithubPullRequestLoader(request.POST.get('payload',None))
+    pull_request = data.pull_request_obj
+    
+    return HttpResponse('OK')
+
+def pull_request_comment_webhook(request):
+    ip_check = is_github(request)
+    if ip_check:
+        return ip_check
+    
+    data = GithubPullRequestCommentLoader(request.POST.get('payload',None))
+    comment = data.comment_obj
+    
+    return HttpResponse('OK')
+
 def jenkins_jobs(request, slug):
     """ Renders a list of jobs for the current site """
     site = get_object_or_404(JenkinsSite, slug=slug)
@@ -53,22 +81,27 @@ def jenkins_update_jobs(request, slug):
     return HttpResponse('Jobs Updated!')
 
 @cache_page(60*2)
-def latest_prod_version(request, slug):
-    repo = get_object_or_404(Repository, slug=slug)
+def latest_prod_version(request, owner, repo):
+    repo = get_object_or_404(Repository, owner=owner, name=repo)
     return HttpResponse(repo.get_latest_release_name())
     
 @cache_page(60*2)
-def latest_beta_version(request, slug):
-    repo = get_object_or_404(Repository, slug=slug)
+def latest_beta_version(request, owner, repo):
+    repo = get_object_or_404(Repository, owner=owner, name=repo)
     return HttpResponse(repo.get_latest_release_name(beta=True))
     
 @cache_page(60*2)
-def latest_prod_version_tag(request, slug):
-    repo = get_object_or_404(Repository, slug=slug)
+def latest_prod_version_tag(request, owner, repo):
+    repo = get_object_or_404(Repository, owner=owner, name=repo)
     return HttpResponse(repo.get_latest_release_tag())
     
 @cache_page(60*2)
-def latest_beta_version_tag(request, slug):
-    repo = get_object_or_404(Repository, slug=slug)
+def latest_beta_version_tag(request, owner, repo):
+    repo = get_object_or_404(Repository, owner=owner, name=repo)
     return HttpResponse(repo.get_latest_release_tag(beta=True))
-    
+
+def create_repository_webhooks(request, owner, repo):
+    repo = get_object_or_404(Repository, owner=owner, name=repo)
+    base_url = '%s://%s' % (request.META['wsgi.url_scheme'], request.META['HTTP_HOST'])
+    return HttpResponse(repo.create_webhooks(base_url))    
+
