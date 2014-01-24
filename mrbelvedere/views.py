@@ -80,6 +80,53 @@ def jenkins_update_jobs(request, slug):
     site.update_jobs()
     return HttpResponse('Jobs Updated!')
 
+def jenkins_post_build_hook(request, slug):
+    site = get_object_or_404(JenkinsSite, slug=slug)
+
+    data = json.loads(request.body)
+
+    build = data['build']
+    params = build['parameters']
+
+    status_map = {
+        'SUCCESS': {
+            'state': 'success',
+            'message': 'The build succeeded!',
+        },
+        'FAILED': {
+            'state': 'failure',
+            'message': 'The build failed!',
+        },
+        'UNSUCCESSFUL': {
+            'state': 'error',
+            'message': 'The build was unsuccessful!',
+        },
+    }
+    status = status_map.get(build['status'], None)
+    if not status:
+        return HttpResponse('OK')
+
+    # Look for pull requests against the branch and repo
+    pulls = PullRequest.objects.filter(
+        source_branch__repository__url = params['repository'],
+        source_branch__name = params['branch'],
+    )
+
+    for pull in pulls:
+        repo = pull.source_branch.repository
+        if repo.can_write(pull.repository.username):
+            repo.call_api('/statuses/%s' % pull.last_build_head_sha, data={
+              'state': status['state'],
+              'target_url': build['full_url'],
+              'description': status['message'],
+            })
+        else:
+            # Use a comment on the pull request to report build status
+            pull.repository.call_api('/issues/%s/comments' % pull.number, data={
+                'body': '**%s**: %s, view the build at %s' % (status['state'], status['message'], build['full_url']),
+            })
+
+
 @cache_page(60*2)
 def latest_prod_version(request, owner, repo):
     repo = get_object_or_404(Repository, owner=owner, name=repo)

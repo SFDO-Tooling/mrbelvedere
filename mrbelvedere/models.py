@@ -55,7 +55,7 @@ class Repository(models.Model):
     def __unicode__(self):
         return '%s/%s' % (self.owner, self.name)
 
-    def call_api(self, subpath, data=None):
+    def call_api(self, subpath, data=None, username=None, password=None):
         """ Takes a subpath under the repository (ex: /releases) and returns the json data from the api """
         api_url = 'https://api.github.com/repos/%s/%s%s' % (self.owner, self.name, subpath)
         # Use Github Authentication if available for the repo
