@@ -299,7 +299,7 @@ class RepositoryPullRequestJob(models.Model):
 
         # Post a comment on the pull request with link to build
         can_write = source_repo.can_write(target_repo.username)
-        body = 'OK, build is started.  You can view status at %s.' % build_url,
+        body = 'OK, build is started.  You can view status at %s.  If you get a 404, please try again later as the build might be queued.' % build_url
         if can_write:
             body = '  I will update the build status on the pull request when the build is done'
         else:
