@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_page
 from mrbelvedere.models import JenkinsSite, Job
 from mrbelvedere.models import Repository, Branch, BranchJobTrigger
+from mrbelvedere.models import PullRequest
 from mrbelvedere.utils import GithubPushLoader
 from mrbelvedere.utils import GithubPullRequestLoader
 from mrbelvedere.utils import GithubPullRequestCommentLoader
