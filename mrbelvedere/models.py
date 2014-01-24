@@ -298,12 +298,14 @@ class RepositoryPullRequestJob(models.Model):
         build_url = '/'.join(parts[:-1]) + '/' + str(int(parts[-1])+1)
 
         # Post a comment on the pull request with link to build
-        can_write = source_repo.can_write(target_repo.username)
+
+        # commented code because we don't need write access to set status but may at some point in the future for other reasons
+        #can_write = source_repo.can_write(target_repo.username)
         body = 'OK, build is started.  You can view status at %s.  If you get a 404, please try again later as the build might be queued.' % build_url
-        if can_write:
-            body = '%s  I will update the build status on the pull request when the build is done' % body
-        else:
-            body = '%s  @%s, If you add %s as a collaborator on your fork I can set the build status for you.' % (body, pull_request.github_user.slug, target_repo.username)
+        #if can_write:
+        body = '%s  I will update the build status on the pull request when the build is done' % body
+        #else:
+        #    body = '%s  @%s, If you add %s as a collaborator on your fork I can set the build status for you.' % (body, pull_request.github_user.slug, target_repo.username)
 
         comment = pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={'body': body})
 

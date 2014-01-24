@@ -48,14 +48,17 @@ def moderate_pull_request_build(sender, **kwargs):
     if pull_request.last_build_head_sha == pull_request.head_sha:
         return
 
+    # code below commented out since we don't need write access to set commit status
+    # commit status is set on the target repo, not the source repo
+
     # If the target repo user does not have access to the source repo, request it
-    bot_username = pull_request.repository.username
-    req_username = pull_request.github_user.slug
-    if not pull_request.source_branch.repository.can_write(username):
-        pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={
-            'body': "@%s I don't have access to the source repository.  Please add %s as a collaborator on the repository so I can set the build status on your pull request" % (bot_username, req_username),
-        })
-        # Don't return as we don't want this to block anything.  It's a nice to have but not a requirement
+    #bot_username = pull_request.repository.username
+    #req_username = pull_request.github_user.slug
+    #if not pull_request.source_branch.repository.can_write(username):
+    #    pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={
+    #        'body': "@%s I don't have access to the source repository.  Please add %s as a collaborator on the repository so I can set the build status on your pull request" % (bot_username, req_username),
+    #    })
+    #    # Don't return as we don't want this to block anything.  It's a nice to have but not a requirement
 
     # If head is behind base, comment that this needs to be resolved before a build
     compare = pull_request.repository.call_api('/compare/%s...%s' % (pull_request.base_sha, pull_request.head_sha))
