@@ -28,7 +28,7 @@ class GithubPushLoader(object):
     def repository_obj(self):
         return Repository.objects.get_or_create(
             name = self.repository['name'],
-            owner = self.repository['owner']['login'],
+            owner = self.repository['owner']['name'],
             url = self.repository['git_url'],
         )[0] 
    
