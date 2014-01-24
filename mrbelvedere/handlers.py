@@ -31,9 +31,31 @@ def trigger_jenkins_jobs_on_push(sender, **kwargs):
 def moderate_pull_request_build(sender, **kwargs):
     pull_request = kwargs['instance']
 
+    # Build a query to look for RepositoryPullRequestJob objects which require modification for the pull request 
+    forked = pull_request.source_branch.repository != pull_request.target_branch.repository
+    query = {}
+    if forked:
+        query['forked'] = True
+    else:
+        query['internal'] = True
+    triggers = pull_request.repository.repositorypullrequestjob_set.filter(**query)
+
+    # Do nothing if we have no triggers that apply to this pull request
+    if not triggers.count():
+        return
+
     # If we have already built the head, do nothing
     if pull_request.last_build_head_sha == pull_request.head_sha:
         return
+
+    # If the target repo user does not have access to the source repo, request it
+    bot_username = pull_request.repository.username
+    req_username = pull_request.github_user.slug
+    if not pull_request.source_branch.repository.can_write(username):
+        pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={
+            'body': "@%s I don't have access to the source repository.  Please add %s as a collaborator on the repository so I can set the build status on your pull request" % (bot_username, req_username),
+        })
+        # Don't return as we don't want this to block anything.  It's a nice to have but not a requirement
 
     # If head is behind base, comment that this needs to be resolved before a build
     compare = pull_request.repository.call_api('/compare/%s...%s' % (pull_request.base_sha, pull_request.head_sha))
@@ -53,7 +75,7 @@ def moderate_pull_request_build(sender, **kwargs):
         return
     
     # If approved and build is needed, trigger builds
-    for trigger in pull_request.repository.repositorypullrequestjob_set.all():
+    for trigger in triggers:
         trigger.invoke(pull_request)
 
 @receiver(post_save, sender=PullRequestComment)

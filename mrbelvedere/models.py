@@ -288,6 +288,21 @@ class RepositoryPullRequestJob(models.Model):
         }
         if pull_request.github_user.email:
             params['email'] = pull_request.github_user.email
-        api.invoke(build_params=params)
+            
+        result = api.invoke(build_params=params)
+        build_url = result.get_build().baseurl
+
+        # Post a comment on the pull request with link to build
+        comment = pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={
+            'body': 'OK, build is started.  You can view status at %s.  I will try to update the commit status upon completion show it shows in the pull request' % build_url,
+        })
+
+        # Get the current sha from head and base to record last build
+        pr = pull_request.repository.call_api('/pulls/%s' % pull_request.number)
+        pull_request.last_build_head_sha = pr['head']['sha']
+        pull_request.last_build_base_sha = pr['base']['sha']
+        pull_request.save()
+
+        return result
 
 from mrbelvedere.handlers import *
