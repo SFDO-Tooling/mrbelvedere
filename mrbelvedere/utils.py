@@ -29,7 +29,7 @@ class GithubPushLoader(object):
         return Repository.objects.get_or_create(
             name = self.repository['name'],
             owner = self.repository['owner']['name'],
-            url = self.repository['git_url'],
+            url = self.repository['url'].replace('https://','git://') + '.git',
         )[0] 
    
     @property
