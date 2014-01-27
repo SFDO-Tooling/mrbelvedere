@@ -8,6 +8,7 @@ A build bot used to fill gaps in triggering jobs and interacting with the GitHub
 * Create triggers for commits on individual branches to trigger builds in Jenkins
 * Automatically create new triggers for newly create jobs and branches based on their ref prefix
 * Serve up the latest available production and beta Force.com managed package for a repository using GitHub Releases in the [CumulusCI](http://salesforcefoundation.github.io/CumulusCI/) process.
+* Handle build authorization of pull requests via pull request comments posted by admin users
 
 ## Installation
 
@@ -155,9 +156,9 @@ Configuring the app is simple but not necessarily the most elegant process.  At 
 
 ### Create GitHub Webhook
 
-1. Go to your repositories and click the **Settings** link.
-2. Go to **Service Hooks**
-3. Add a new entry under **WebHook URLs** to point to http://YOUR_APP.herokuapp.com/mrbelvedere/github/webhook/
+1. In GitHub, login as your robot user account and click Account Settings -> Applications.  Create a new personal access token.  Copy the token when shown on screen.
+2. In the Django admin, create a new repository.  Use the format git@github.com/SalesforceFoundation/mrbelvedere.git for the url.  NOTE: the format of the url is important as it is used as a key to lookup the repository by the webhook handlers.  Enter the Owner (i.e. SalesforceFoundation), the robot user's username, and the personal access token created in step 1 as the password.
+3. Go to the url http://YOUR_APP.herokuapp.com/mrbelvedere/repo/OWNER/REPO_NAME/webhooks/create which will create the necessary webhooks agains the repository using the access information setup in step 2.
 4. Do a commit against your repository
 5. Check the **Pushs** section of the Django admin.  You should see the commit appear here.  Sometimes the webhook takes a few minutes to come through for the first time.
 
@@ -189,15 +190,39 @@ If no prefix is provided, all new branches or tags will have a Branch Job Trigge
 
 mrbelvedere was built for use in [Project Cumulus](https://github.com/SalesforceFoundation/Cumulus) by the [Salesforce.com Foundation](http://www.salesforcefoundation.org).  We encountered a use case that was easiest solved by adding the functionality to the mrbelvedere application we were already using as part of our CI process.
 
-Use Case: I want to fetch the current version number and corresponding repository tag for beta and production managed package releases.  We use GitHub's Releases section to publish releases.  However, a release must be tagged, then deployed to a packaging org, then published before it is available to install.  We don't want a Release's version to be published until it is available for install.  Once the managed package is available, we already paste the install url into the body of the Release on GitHub so it made sense to look for the latest Release with an install_url in the body for beta and production releases (beta = prerelease in GitHub).
+**Use Case**: I want to fetch the current version number and corresponding repository tag for beta and production managed package releases.  We use GitHub's Releases section to publish releases.  However, a release must be tagged, then deployed to a packaging org, then published before it is available to install.  We don't want a Release's version to be published until it is available for install.  Once the managed package is available, we already paste the install url into the body of the Release on GitHub so it made sense to look for the latest Release with an install_url in the body for beta and production releases (beta = prerelease in GitHub).
 
 Solution:
-http://YOUR_APP.herokuapp.com/mrbelvedere/repo/REPO_NAME/version
-http://YOUR_APP.herokuapp.com/mrbelvedere/repo/REPO_NAME/version/tag
+http://YOUR_APP.herokuapp.com/mrbelvedere/repo/OWNER/REPO_NAME/version
+http://YOUR_APP.herokuapp.com/mrbelvedere/repo/OWNER/REPO_NAME/version/tag
 
-http://YOUR_APP.herokuapp.com/mrbelvedere/repo/REPO_NAME/version/beta
-http://YOUR_APP.herokuapp.com/mrbelvedere/repo/REPO_NAME/version/beta/tag
+http://YOUR_APP.herokuapp.com/mrbelvedere/repo/OWNER/REPO_NAME/version/beta
+http://YOUR_APP.herokuapp.com/mrbelvedere/repo/OWNER/REPO_NAME/version/beta/tag
 
 These links return either the version number (1.1 for production, 1.1 (Beta 3) for beta) or tag (rel/1.1 for production, uat/1.1-beta3 for beta).  The urls are called by both Jenkins and the Cumulus project's [build.xml](https://github.com/SalesforceFoundation/Cumulus/blob/master/build.xml) file to determine the most recent managed package.
 
-If you use the Managed Package Version functionality on a repository, you will likely want to add GitHub authentication information (username & personal access token) on the Repository object in the Django admin.  This will cause the system to use authenticate calls to the GitHub API which helps avoid errors due to GitHub API limiting.
+## Pull Request Build Moderation
+
+**Use Case**: I want to moderate builds of certain pull requests (submitted from within the repository and/or submitted through a fork).  If a pull request with a RepositoryPullRequestJob configuration matching the pull request is found, first check that the source branch is not behind the target branch by any commits.  If the source branch is behind, comment on the pull request that the target branch needs to be merged with the source branch.  Once the source branch is not beind the target branch, post a comment requesting an admin to approve build.  When an admin then posts `**mrbelvedere: approved**` anywhere in a comment on the pull request, the job configured in the RepositoryPullRequestJob will be triggered to build the source branch.  The pull request is then marked as approved and any subsequent commits will automatically re-trigger the build.  Whenever a build is triggered, post a comment that the build has started with a link to the build status page in Jenkins.  Whenever a build is completed, update the Commit Status in GitHub so the build shows on the pull request.
+
+### Implementation
+
+1. Create a Jenkins job which receives the `repository`, `branch`, and `email` parameters.  `email` should have a default value configured in Jenkins in case the email is not available from information in the GitHub API in which case no email parameter is passed to trigger the build.
+
+2. Set the git repository to `${repository}` and branch to `origin/${branch}`
+
+3. Using the Jenkins Notification Plugin, configure a Notification Endpoint under Job Notifications.  The endpoint should send JSON via HTTP to http://YOUR_APP.herokuapp.com/mrbelvedere/jenkins/YOUR_SLUG/post_build_webhook where YOUR_SLUG is the slug you entered for the Jenkins Site created earlier in the Django control panel.
+
+4. Refresh your jobs: http://YOUR_APP.herokuapp.com/mrbelvedere/jenkins/YOUR_SLUG/update_jobs
+
+5. In the Django control panel, add a new RepositoryPullRequestJob:
+  
+   **Repository**: Select the repository you want to monitor for pull requests
+   **Job**: Select the Jenkins job you created in step 3
+   **Moderated**: If checked, pull request builds must first be approved by an admin.  If unchecked, any matching pull request will automatically be built (dangerous, especially if building forks of a public repository)
+   **Forked**: If checked, this rule applies to pull requests submitted from a forked repository (typically by external contributors)
+   **Internal**: If checked, this rule applies to pull requests submitted from a branch within the main repository (typically by internal developers)
+   **Repo admins**: If checked, any user with write access to the selected repository is automatically an admin capable of approving build of a pull request
+   **Admins**: A manual list of authorized users.  Useful if you want to have admin users who can comment on a pull request but not write to the repository.  Also useful if you want to have only a subset of users with write access to the repository able to approve builds (Repo admins = False).
+
+At this point, a new pull request submitted to the selected repository should have the use case fully implemented.
