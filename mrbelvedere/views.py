@@ -159,4 +159,4 @@ def job_build_status(request, site, job):
     job = get_object_or_404(Job, site__slug=site, name=job)
     icon = requests.get('%s/buildStatus/icon?job=%s' % (job.site.url, job.name), auth=(job.site.user, job.site.password))
     response = HttpResponse(content=icon.content, mimetype=icon.headers['content-type'])
-    return resp.content
+    return response
