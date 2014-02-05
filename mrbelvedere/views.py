@@ -1,4 +1,5 @@
 import json
+import requests
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.shortcuts import get_object_or_404
@@ -153,3 +154,9 @@ def create_repository_webhooks(request, owner, repo):
     base_url = '%s://%s' % (request.META['wsgi.url_scheme'], request.META['HTTP_HOST'])
     return HttpResponse(repo.create_webhooks(base_url))    
 
+@cache_page(60*2)
+def job_build_status(request, site, job):
+    job = get_object_or_404(Job, site__slug=site, name=job)
+    icon = requests.get('%s/buildStatus/icon?job=%s' % (job.site.url, job.name), auth=(job.site.user, job.site.password))
+    response = HttpResponse(content=icon.content, mimetype=icon.headers['content-type'])
+    return resp.content
