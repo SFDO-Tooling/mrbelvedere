@@ -282,7 +282,7 @@ class RepositoryPullRequestJob(models.Model):
                 return
 
         api = self.job.get_api()
-        repo_url = pull_request.source_branch.repository.url.replace('git://','git@').replace('github.com/',' github.com:')
+        repo_url = pull_request.source_branch.repository.url.replace('git://github.com/','git@github.com:')
         params={
             'repository': repo_url,
             'branch': pull_request.source_branch.name,
