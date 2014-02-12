@@ -1,0 +1,202 @@
+{% load bootstrap3 %}
+
+{# Load CSS and JavaScript #}
+
+{% bootstrap_css %}
+{% bootstrap_javascript True %}
+
+{% bootstrap_messages %}
+
+
+<h1>{{ package }}</h1>
+
+<div id="oauth-connection-status">
+{% if login_url %}
+You are not connected to a Salesforce.com organization.  <a href="{{ login_url }}">Connect to my Org</a>
+{% else %}
+You are connected to your org and ready for install.  <a href="{{ logout_url }}">Logout</a>
+{% endif %}
+</div>
+
+{% if install_map_prod %}
+<div id="production-version" class="version-install panel panel-default">
+  <div class="panel-heading">Current Production: {% with pkg=install_map_prod|last %}{{ pkg.version }}{% endwith %}</div>
+  <div class="panel-body">
+    <h3>Required Package Versions</h3>
+    <ul>
+    {% for pkg in install_map_prod %}
+      {% if forloop.last != True %}
+      <li>{{ pkg.package }}: {{ pkg.version }}</li>
+      {% endif %}
+    {% endfor %}
+    </ul>
+    <a class="link-install" href="">Install</a>
+    <a class="link-uninstall" href="" />Uninstall</a>
+  </div>
+</div>
+{% endif %}
+
+{% if install_map_beta %}
+<div id="beta-version" class="version-install panel panel-default">
+  <div class="panel-heading">Current Beta: {% with pkg=install_map_beta|last %}{{ pkg.version }}{% endwith %}</div>
+  <div class="panel-body">
+    <h3>Required Package Versions</h3>
+    <ul>
+    {% for pkg in install_map_beta %}
+      {% if forloop.last != True %}
+      <li>{{ pkg.package }}: {{ pkg.version }}</li>
+      {% endif %}
+    {% endfor %}
+    </ul>
+    <a class="link-install" href="">Install</a>
+    <a class="link-uninstall" href="" />Uninstall</a>
+  </div>
+</div>
+{% endif %}
+
+<div id="deploy-console" class="panel panel-default">
+  <div class="panel-heading">Deploy Log</div>
+  <div class="panel-body"></div>
+</div>
+
+{% comment %}
+<form action="/url/to/submit/" method="post" class="form">
+{% csrf_token %} {% bootstrap_form form %} {% buttons %}
+
+<button type="submit" class="btn btn-primary">
+{% bootstrap_icon "star" %} Submit
+
+</button>
+{% endbuttons %}
+
+</form>
+{% endcomment %}
+
+<script type="text/javascript">
+{% autoescape off %}
+    var install_map_prod = {{ install_map_prod_json }};
+    var install_map_beta = {{ install_map_beta_json }};
+    var mpinstaller_base_url = '{{ base_url }}';
+{% endautoescape %}
+
+    var mpinstaller_package = null;
+    var mpinstaller_process_id = null;
+    var mpinstaller_state = null;
+
+    function deployPackage(map, action) {
+        $.each(map, function (index, value) {
+            // If there is a current package which is not completed or errored, skip other packages
+            if (mpinstaller_package != value['package'] && mpinstaller_package != null) {
+                // Continue to the next item in the loop
+                return true;
+            }
+        
+            // If the current state is Error, alert and exit
+            if (mpinstaller_state == 'Error') {
+                alert('Installation of ' + mpinstaller_package + 'failed');
+                mpinstaller_package = null;
+                mpinstaller_process_id = null;
+                mpinstaller_state = null;
+
+                // Break out of the loop to cancel the deployment
+                return false;
+            }
+                
+            // If the current package is Completed, clear variables to allow next loop to execute then continue
+            if (mpinstaller_state == 'Completed') {
+                mpinstaller_package = null;
+                mpinstaller_process_id = null;
+                mpinstaller_state = null;
+
+                // Continue to the next item in the loop
+                return true;
+            }
+
+            if (mpinstaller_state == null) {
+                // Start the deployment
+                mpinstaller_package = value['package'];
+
+                if (action == 'Install') {
+                    version_action_url = mpinstaller_base_url + value['package'] + '/' + value['version'] + '/install';
+                } else if (action == 'Uninstall') {
+                    version_action_url = mpinstaller_base_url + value['package'] + '/uninstall';
+                }
+    
+                log_message = $('<div><h3>' + action + 'ing ' + value['package'] + ' version ' + value['version'] + '</h3></div>');
+                $('#deploy-console .panel-body').append(log_message);
+                $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+
+    
+                // Call the action_url and get back a process_id
+                $.ajax(version_action_url, {
+                    'dataType': 'json',
+                    'success': function (data) {
+                        mpinstaller_process_id = data['process_id'];
+                        log_message = $('<div>Started process id ' + mpinstaller_process_id + '</div>');
+                        $('#deploy-console .panel-body').append(log_message);
+                        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                      
+                        // Set state to Queued to trigger a status check
+                        mpinstaller_state = 'Queued';
+                        deployPackage(map, action);
+                    }
+                });
+
+                // Break out of the loop to wait for callback
+                return false;
+            }
+
+            // If queued or in progress, check the status    
+            if (mpinstaller_state == 'Queued' || mpinstaller_state == 'InProgress') {
+                // Check Status
+                status_url = mpinstaller_base_url + 'check_deploy_status?id=' + mpinstaller_process_id;
+                $.ajax(status_url, {
+                    'dataType': 'json',
+                    'success': function (data) {
+                        mpinstaller_state = data['state'];
+                        log_message = $('<div>Status: ' + data['state'] + '</div>');
+                        $('#deploy-console .panel-body').append(log_message);
+                        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+
+                        if (data['done'] == true) {
+                            // If the package is done, perform the callback immediately
+                            deployPackage(map, action);
+                        } else {
+                            // If not done, check the status again in a second
+                            setTimeout(function () {deployPackage(map, action)}, 1000 );
+                        }
+                    }
+                });
+
+                // Break out of the loop to wait for callback
+                return false;
+            }
+        });
+    }
+
+
+    $('#prod-version.version-install').each(function () {
+        $(this).find('a.link-install').click(function () {
+            deployPackage(install_map_prod, 'Install');
+            return false;
+        })
+        $(this).find('a.link-uninstall').click(function () {
+            uninstall_map_prod = install_map_prod;
+            uninstall_map_prod.reverse();
+            deployPackage(uninstall_map_prod, 'Uninstall');
+            return false;
+        })
+    })
+    $('#beta-version.version-install').each(function () {
+        $(this).find('a.link-install').click(function () {
+            deployPackage(install_map_beta, 'Install');
+            return false;
+        })
+        $(this).find('a.link-uninstall').click(function () {
+            uninstall_map_beta = install_map_beta;
+            uninstall_map_beta.reverse();
+            deployPackage(uninstall_map_beta, 'Uninstall');
+            return false;
+        })
+    })
+</script>

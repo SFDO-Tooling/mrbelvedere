@@ -11,8 +11,8 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': '', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '',                      # Or path to database file if using sqlite3.
+        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'devbot.db',                      # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': '',
         'PASSWORD': '',
@@ -20,6 +20,10 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default.
     }
 }
+
+# Parse database configuration from $DATABASE_URL
+import dj_database_url
+DATABASES['default'] =  dj_database_url.config()
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
@@ -124,7 +128,9 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'south',
     'django_rq',
+    'bootstrap3',
     'mrbelvedere',
+    'mpinstaller',
 )
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
@@ -165,10 +171,6 @@ CACHES = {
     }
 }
 
-# Parse database configuration from $DATABASE_URL
-import dj_database_url
-DATABASES['default'] =  dj_database_url.config()
-
 # Honor the 'X-Forwarded-Proto' header for request.is_secure()
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -195,3 +197,7 @@ RQ_QUEUES = {
         'DB': 0,
     },
 }
+
+MPINSTALLER_CLIENT_ID = os.environ.get('MPINSTALLER_CLIENT_ID')
+MPINSTALLER_CLIENT_SECRET = os.environ.get('MPINSTALLER_CLIENT_SECRET')
+MPINSTALLER_CALLBACK_URL = os.environ.get('MPINSTALLER_CALLBACK_URL')
