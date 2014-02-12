@@ -7,10 +7,12 @@
 
 {% bootstrap_messages %}
 
+<div class="jumbotron">
+  <h1>{{ package }}</h1>
+  <p>{{ package.description }}</p>
+</div>
 
-<h1>{{ package }}</h1>
-
-<div id="oauth-connection-status">
+<div id="oauth-connection-status" class="jumbotron">
 {% if login_url %}
 You are not connected to a Salesforce.com organization.  <a href="{{ login_url }}">Connect to my Org</a>
 {% else %}
@@ -20,36 +22,40 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
 
 {% if install_map_prod %}
 <div id="production-version" class="version-install panel panel-default">
-  <div class="panel-heading">Current Production: {% with pkg=install_map_prod|last %}{{ pkg.version }}{% endwith %}</div>
+  <div class="panel-heading">Production: {% with pkg=install_map_prod|last %}{{ pkg.version }}{% endwith %}</div>
   <div class="panel-body">
-    <h3>Required Package Versions</h3>
+    <h5>Required Package Versions</h5>
     <ul>
     {% for pkg in install_map_prod %}
       {% if forloop.last != True %}
-      <li>{{ pkg.package }}: {{ pkg.version }}</li>
+      <li>{{ pkg.package }} ({{ pkg.namespace }}): {{ pkg.version }}</li>
       {% endif %}
     {% endfor %}
     </ul>
-    <a class="link-install" href="">Install</a>
-    <a class="link-uninstall" href="" />Uninstall</a>
+    <div class="button-grp">
+      <a class="btn btn-warning link-install" href="">Install</a>
+      <a class="btn btn-danger link-uninstall" href="" />Uninstall</a>
+    </div>
   </div>
 </div>
 {% endif %}
 
 {% if install_map_beta %}
 <div id="beta-version" class="version-install panel panel-default">
-  <div class="panel-heading">Current Beta: {% with pkg=install_map_beta|last %}{{ pkg.version }}{% endwith %}</div>
+  <div class="panel-heading">Beta: {% with pkg=install_map_beta|last %}{{ pkg.version }}{% endwith %}</div>
   <div class="panel-body">
-    <h3>Required Package Versions</h3>
+    <h5>Required Package Versions</h5>
     <ul>
     {% for pkg in install_map_beta %}
       {% if forloop.last != True %}
-      <li>{{ pkg.package }}: {{ pkg.version }}</li>
+      <li>{{ pkg.package }} ({{ pkg.namespace }}): {{ pkg.version }}</li>
       {% endif %}
     {% endfor %}
     </ul>
-    <a class="link-install" href="">Install</a>
-    <a class="link-uninstall" href="" />Uninstall</a>
+    <div class="button-grp">
+      <a class="btn btn-warning link-install" href="">Install</a>
+      <a class="btn btn-danger link-uninstall" href="" />Uninstall</a>
+    </div>
   </div>
 </div>
 {% endif %}
@@ -86,7 +92,7 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
     function deployPackage(map, action) {
         $.each(map, function (index, value) {
             // If there is a current package which is not completed or errored, skip other packages
-            if (mpinstaller_package != value['package'] && mpinstaller_package != null) {
+            if (mpinstaller_package != value['namespace'] && mpinstaller_package != null) {
                 // Continue to the next item in the loop
                 return true;
             }
@@ -114,15 +120,15 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
 
             if (mpinstaller_state == null) {
                 // Start the deployment
-                mpinstaller_package = value['package'];
+                mpinstaller_package = value['namespace'];
 
                 if (action == 'Install') {
-                    version_action_url = mpinstaller_base_url + value['package'] + '/' + value['version'] + '/install';
+                    version_action_url = mpinstaller_base_url + value['namespace'] + '/' + value['version'] + '/install';
                 } else if (action == 'Uninstall') {
-                    version_action_url = mpinstaller_base_url + value['package'] + '/uninstall';
+                    version_action_url = mpinstaller_base_url + value['namespace'] + '/uninstall';
                 }
     
-                log_message = $('<div><h3>' + action + 'ing ' + value['package'] + ' version ' + value['version'] + '</h3></div>');
+                log_message = $('<div><h3>' + action + 'ing ' + value['package'] + ' (' + value['namespace'] + ') version ' + value['version'] + '</h3></div>');
                 $('#deploy-console .panel-body').append(log_message);
                 $("html, body").animate({ scrollTop: $(document).height() }, "slow");
 
@@ -153,10 +159,15 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
                 $.ajax(status_url, {
                     'dataType': 'json',
                     'success': function (data) {
+                        // Only write to the console if state has changed
+                        if (mpinstaller_state != data['state']) {
+                            log_message = $('<div>Status: ' + data['state'] + '</div>');
+                            $('#deploy-console .panel-body').append(log_message);
+                            $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                        }
+
+                        // Set the state for next iteration
                         mpinstaller_state = data['state'];
-                        log_message = $('<div>Status: ' + data['state'] + '</div>');
-                        $('#deploy-console .panel-body').append(log_message);
-                        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
 
                         if (data['done'] == true) {
                             // If the package is done, perform the callback immediately

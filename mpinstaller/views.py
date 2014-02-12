@@ -105,12 +105,14 @@ def version_install_map(namespace, number):
 
     for dependency in version.dependencies.all():
         packages.append({
-            'package': dependency.requires.package.namespace,
+            'package': dependency.requires.package.name,
+            'namespace': dependency.requires.package.namespace,
             'version': dependency.requires.number,
         })
   
     packages.append({
-       'package': version.package.namespace,
+       'package': version.package.name,
+       'namespace': version.package.namespace,
        'version': version.number,
     })
 
