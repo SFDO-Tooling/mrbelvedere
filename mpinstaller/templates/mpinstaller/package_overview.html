@@ -1,9 +1,12 @@
+{% extends 'bootstrap3/bootstrap3.html' %}
 {% load bootstrap3 %}
-
-{# Load CSS and JavaScript #}
 
 {% bootstrap_css %}
 {% bootstrap_javascript True %}
+
+{% block bootstrap3_title %}{% block title %}{{ package }} Installer{% endblock %}{% endblock %}
+
+{% block bootstrap3_content %}
 
 {% bootstrap_messages %}
 
@@ -235,3 +238,5 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
         })
     })
 </script>
+
+{% endblock %}
