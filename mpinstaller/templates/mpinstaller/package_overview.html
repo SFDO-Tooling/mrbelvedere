@@ -63,6 +63,7 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
       {% endif %}
     {% endfor %}
     </ul>
+    <div class="alert alert-warning">WARNING: Installing a beta managed package is a destructive operation.  Once installed, you cannot upgrade the package.  Installing a beta should only be done against a Sandbox or Development Edition org dedicated to the purpose of testing the beta.</div>
     {% if login_url %}
       <div class="alert alert-info">You are not currently connect to an org.  Once connected, you will see links to install and uninstall here.</div>
     {% else %}
