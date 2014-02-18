@@ -1,8 +1,6 @@
-{% extends 'bootstrap3/bootstrap3.html' %}
-{% load bootstrap3 %}
+{% extends 'mpinstaller/base.html' %}
 
-{% bootstrap_css %}
-{% bootstrap_javascript True %}
+{% load bootstrap3 %}
 
 {% block bootstrap3_title %}{% block title %}{{ package }} Installer{% endblock %}{% endblock %}
 
@@ -101,6 +99,9 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
 </form>
 {% endcomment %}
 
+{% endblock %}
+
+{% block page_js %}
 <script type="text/javascript">
 {% autoescape off %}
     var install_map_prod = {{ install_map_prod_json }};
