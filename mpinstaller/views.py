@@ -12,6 +12,7 @@ from mpinstaller.auth import SalesforceOAuth2
 from mpinstaller.models import Package
 from mpinstaller.models import PackageVersion
 from mpinstaller.package import PackageZipBuilder
+from simple_salesforce import Salesforce
 
 SOAP_DEPLOY = """<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -46,9 +47,10 @@ SOAP_CHECK_STATUS = """<?xml version="1.0" encoding="utf-8"?>
     </SessionHeader>
   </soap:Header>
   <soap:Body>
-    <checkStatus xmlns="http://soap.sforce.com/2006/04/metadata">
+    <checkDeployStatus xmlns="http://soap.sforce.com/2006/04/metadata">
       <asyncProcessId>%(process_id)s</asyncProcessId>
-    </checkStatus>
+      <includeDetails>true</includeDetails>
+    </checkDeployStatus>
   </soap:Body>
 </soap:Envelope>"""
 
@@ -74,6 +76,7 @@ def package_overview(request, namespace):
 
     data = {
         'package': package,
+        'oauth': request.session.get('oauth_response',None),
         'login_url': login_url,
         'logout_url': logout_url,
         'base_url': request.build_absolute_uri('/mpinstaller/'),
@@ -98,6 +101,27 @@ def build_endpoint_url(oauth):
     endpoint = '%s/services/Soap/m/29.0/%s' % (endpoint_base, org_id)
     return endpoint
 
+def get_oauth_org(oauth):
+    if not oauth:
+        return 'Not connected'
+    sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
+
+    # Parse org id from id which ends in /ORGID/USERID
+    org_id = oauth['id'].split('/')[-2]
+
+    org = sf.Organization.get(org_id)
+    return org
+
+def get_oauth_user(oauth):
+    if not oauth:
+        return 'Not connected'
+    sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
+    # Parse user id from id which ends in /ORGID/USERID
+    user_id = oauth['id'].split('/')[-1]
+
+    user = sf.User.get(user_id)
+    return user
+    
 def version_install_map(namespace, number):
     version = get_object_or_404(PackageVersion, package__namespace = namespace, number = number)
 
@@ -120,10 +144,14 @@ def version_install_map(namespace, number):
 
 def oauth_login(request):
     redirect = request.GET['redirect']
+
+    sandbox = request.GET.get('sandbox', False)
+    if sandbox == 'true':
+        sandbox = True
    
     oauth = request.session.get('oauth_response', None)
     if not oauth:
-        sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL)
+        sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL, sandbox = sandbox)
         request.session['mpinstaller_redirect'] = redirect 
         return HttpResponseRedirect(sf.authorize_url())
 
@@ -136,7 +164,21 @@ def oauth_callback(request):
     if not code:
         return HttpResponse('ERROR: No code provided')
 
-    request.session['oauth_response'] = sf.get_token(code)
+    resp = sf.get_token(code)
+
+    # Call the REST API to get the org name for display on screen
+    org = get_oauth_org(resp)
+
+    resp['org_id'] = org['Id']
+    resp['org_name'] = org['Name']
+    resp['org_type'] = org['OrganizationType']
+
+    # Call the REST API to get the user's login for display on screen
+    user = get_oauth_user(resp)
+    resp['username'] = user['Username']
+
+    # Set the response in the session
+    request.session['oauth_response'] = resp
 
     return HttpResponseRedirect(request.session['mpinstaller_redirect'])
 
@@ -214,7 +256,7 @@ def uninstall_package(request, namespace):
 def check_deploy_status(request):
     id = request.GET['id']
     oauth = request.session['oauth_response']
-   
+
     endpoint = build_endpoint_url(oauth)
 
     # Construct the SOAP envelope message
@@ -225,12 +267,22 @@ def check_deploy_status(request):
     headers = {
         'Content-Type': "text/xml; charset=UTF-8",
         'Content-Length': len(message),
-        'SOAPAction': 'checkStatus',
+        'SOAPAction': 'checkDeployStatus',
     }
 
     response = requests.post(url=endpoint, headers=headers, data=message, verify=False)
 
     done = parseString(response.content).getElementsByTagName('done')[0].firstChild.nodeValue == 'true'
-    state = parseString(response.content).getElementsByTagName('state')[0].firstChild.nodeValue
+    status = parseString(response.content).getElementsByTagName('status')[0].firstChild.nodeValue
 
-    return HttpResponse(json.dumps({'done': done, 'state': state}), content_type="application/json")
+    message = None
+    if status == 'Failed':
+        message = parseString(response.content).getElementsByTagName('problem')[0].firstChild.nodeValue
+        
+    data = {
+        'done': done,
+        'status': status,
+        'message': message,
+    }
+
+    return HttpResponse(json.dumps(data), content_type="application/json")

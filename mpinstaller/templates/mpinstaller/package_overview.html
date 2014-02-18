@@ -14,9 +14,16 @@
 
 <div id="oauth-connection-status" class="jumbotron">
 {% if login_url %}
-You are not connected to a Salesforce.com organization.  <a href="{{ login_url }}">Connect to my Org</a>
+You are not connected to a Salesforce.com organization.  
+<div class="button-grp">
+  <a class="btn btn-primary" href="{{ login_url }}">Login</a>
+  <a class="btn btn-default" href="{{ login_url }}&sandbox=true">Sandbox Login</a>
+</div>
 {% else %}
-You are connected to your org and ready for install.  <a href="{{ logout_url }}">Logout</a>
+You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org_id }}) as {{ oauth.username }}.
+<div class="button-grp">
+  <a class="btn btn-primary" href="{{ logout_url }}">Logout</a>
+</div>
 {% endif %}
 </div>
 
@@ -32,10 +39,14 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
       {% endif %}
     {% endfor %}
     </ul>
+    {% if login_url %}
+    <div class="alert alert-info">You are not currently connect to an org.  Once connected, you will see links to install and uninstall here.</div>
+    {% else %}
     <div class="button-grp">
       <a class="btn btn-warning link-install" href="">Install</a>
       <a class="btn btn-danger link-uninstall" href="" />Uninstall</a>
     </div>
+    {% endif %}
   </div>
 </div>
 {% endif %}
@@ -52,10 +63,18 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
       {% endif %}
     {% endfor %}
     </ul>
-    <div class="button-grp">
-      <a class="btn btn-warning link-install" href="">Install</a>
-      <a class="btn btn-danger link-uninstall" href="" />Uninstall</a>
-    </div>
+    {% if login_url %}
+      <div class="alert alert-info">You are not currently connect to an org.  Once connected, you will see links to install and uninstall here.</div>
+    {% else %}
+      {% if oauth.org_type == 'Enterprise Edition' or oauth.org_type == 'Unlimited Edition' %}
+        <div class="alert alert-info">You cannot install a beta package in a production org.  Please connect to a sandbox or Development Edition org to install the beta</div>
+      {% else %}
+        <div class="button-grp">
+          <a class="btn btn-warning link-install" href="">Install</a>
+          <a class="btn btn-danger link-uninstall" href="" />Uninstall</a>
+        </div>
+      {% endif %}
+    {% endif %}
   </div>
 </div>
 {% endif %}
@@ -87,7 +106,7 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
 
     var mpinstaller_package = null;
     var mpinstaller_process_id = null;
-    var mpinstaller_state = null;
+    var mpinstaller_status = null;
 
     function deployPackage(map, action) {
         $.each(map, function (index, value) {
@@ -97,29 +116,29 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
                 return true;
             }
         
-            // If the current state is Error, alert and exit
-            if (mpinstaller_state == 'Error') {
+            // If the current status is Error, alert and exit
+            if (mpinstaller_status == 'Failed') {
                 alert('Installation of ' + mpinstaller_package + 'failed');
                 mpinstaller_package = null;
                 mpinstaller_process_id = null;
-                mpinstaller_state = null;
+                mpinstaller_status = null;
 
                 // Break out of the loop to cancel the deployment
                 return false;
             }
                 
-            // If the current package is Completed, clear variables to allow next loop to execute then continue
-            if (mpinstaller_state == 'Completed') {
+            // If the current package is Succeeded, clear variables to allow next loop to execute then continue
+            if (mpinstaller_status == 'Succeeded') {
                 mpinstaller_package = null;
                 mpinstaller_process_id = null;
-                mpinstaller_state = null;
+                mpinstaller_status = null;
 
                 // Continue to the next item in the loop
                 return true;
             }
 
-            if (mpinstaller_state == null) {
-                // Start the deployment
+            // Start the deployment
+            if (mpinstaller_status == null) {
                 mpinstaller_package = value['namespace'];
 
                 if (action == 'Install') {
@@ -142,8 +161,8 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
                         $('#deploy-console .panel-body').append(log_message);
                         $("html, body").animate({ scrollTop: $(document).height() }, "slow");
                       
-                        // Set state to Queued to trigger a status check
-                        mpinstaller_state = 'Queued';
+                        // Set status to Queued to trigger a status check
+                        mpinstaller_status = 'Pending';
                         deployPackage(map, action);
                     }
                 });
@@ -153,21 +172,25 @@ You are connected to your org and ready for install.  <a href="{{ logout_url }}"
             }
 
             // If queued or in progress, check the status    
-            if (mpinstaller_state == 'Queued' || mpinstaller_state == 'InProgress') {
+            if (mpinstaller_status == 'Pending' || mpinstaller_status == 'InProgress') {
                 // Check Status
                 status_url = mpinstaller_base_url + 'check_deploy_status?id=' + mpinstaller_process_id;
                 $.ajax(status_url, {
                     'dataType': 'json',
                     'success': function (data) {
-                        // Only write to the console if state has changed
-                        if (mpinstaller_state != data['state']) {
-                            log_message = $('<div>Status: ' + data['state'] + '</div>');
+                        // Only write to the console if status has changed
+                        if (mpinstaller_status != data['status']) {
+                            status_message = data['status'];
+                            if (status_message == 'Failed') {
+                                status_message = status_message + ': ' + data['message'];
+                            }
+                            log_message = $('<div>Status: ' + status_message + '</div>');
                             $('#deploy-console .panel-body').append(log_message);
                             $("html, body").animate({ scrollTop: $(document).height() }, "slow");
                         }
 
-                        // Set the state for next iteration
-                        mpinstaller_state = data['state'];
+                        // Set the status for next iteration
+                        mpinstaller_status = data['status'];
 
                         if (data['done'] == true) {
                             // If the package is done, perform the callback immediately
