@@ -148,17 +148,20 @@ def oauth_login(request):
     sandbox = request.GET.get('sandbox', False)
     if sandbox == 'true':
         sandbox = True
-   
+  
+    request.session['oauth_sandbox'] = sandbox
+ 
     oauth = request.session.get('oauth_response', None)
     if not oauth:
-        sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL, sandbox = sandbox)
+        sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL, sandbox=sandbox)
         request.session['mpinstaller_redirect'] = redirect 
         return HttpResponseRedirect(sf.authorize_url())
 
     return HttpResponseRedirect(redirect)
 
 def oauth_callback(request):
-    sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL)
+    sandbox = request.session.get('oauth_sandbox', False)
+    sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL, sandbox=sandbox)
 
     code = request.GET.get('code',None)
     if not code:
@@ -172,6 +175,10 @@ def oauth_callback(request):
     resp['org_id'] = org['Id']
     resp['org_name'] = org['Name']
     resp['org_type'] = org['OrganizationType']
+
+    # Append (Sandbox) to org type if sandbox
+    if request.session.get('oauth_sandbox', False):
+        resp['org_type'] = '%s (Sandbox)' % resp['org_type']
 
     # Call the REST API to get the user's login for display on screen
     user = get_oauth_user(resp)
