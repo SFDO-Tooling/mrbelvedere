@@ -40,3 +40,15 @@ class PackageVersionDependency(models.Model):
 
     class Meta:
         ordering = ['order',]
+
+class PackageInstallation(models.Model):
+    package = models.ForeignKey(Package)
+    version = models.ForeignKey(PackageVersion)
+    action = models.CharField(max_length=32)
+    org_id = models.CharField(max_length=32)
+    org_type = models.CharField(max_length=255)
+    status = models.CharField(max_length=32)
+    username = models.CharField(max_length=255)
+    log = models.TextField(null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)

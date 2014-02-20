@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
 from mpinstaller.auth import SalesforceOAuth2
 from mpinstaller.models import Package
+from mpinstaller.models import PackageInstallation
 from mpinstaller.models import PackageVersion
 from mpinstaller.package import PackageZipBuilder
 from simple_salesforce import Salesforce
@@ -208,6 +209,20 @@ def install_package_version(request, namespace, number):
 
     version = get_object_or_404(PackageVersion, package__namespace = namespace, number = number)
 
+    # Log the install
+    install = PackageInstallation(
+        package = version.package, 
+        version = version, 
+        action = 'install', 
+        username = oauth['username'], 
+        org_id = oauth['org_id'],
+        org_type = oauth['org_type'],
+        status = 'Starting',
+    )
+    install.save()
+
+    request.session['mpinstaller_current_install'] = install.id
+
     endpoint = build_endpoint_url(oauth)
 
     # Build a zip for the install package
@@ -238,6 +253,20 @@ def uninstall_package(request, namespace):
         request.session['mpinstaller_package'] = namespace
         request.session['mpinstaller_version'] = 'uninstall'
         return HttpResponseRedirect(sf.authorize_url())
+
+    # Log the install
+    install = PackageInstallation(
+        package = version.package, 
+        version = version, 
+        action = 'uninstall', 
+        username = oauth['username'], 
+        org_id = oauth['org_id'],
+        org_type = oauth['org_type'],
+        status = 'Starting',
+    )
+    install.save()
+
+    request.session['mpinstaller_current_install'] = install.id
 
     endpoint = build_endpoint_url(oauth)
 
@@ -285,6 +314,15 @@ def check_deploy_status(request):
     message = None
     if status == 'Failed':
         message = parseString(response.content).getElementsByTagName('problem')[0].firstChild.nodeValue
+
+    # Update the PackageInstallation status field
+    install_id = request.session.get('mpinstaller_current_install', None)
+    if install_id:
+        install = PackageInstallation.objects.get(id=install_id)
+        if install.status != status:
+            install.status = status
+            install.log = message
+            install.save()
         
     data = {
         'done': done,
