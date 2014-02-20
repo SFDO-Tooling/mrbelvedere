@@ -43,7 +43,7 @@ class PackageVersionDependency(models.Model):
 
 class PackageInstallation(models.Model):
     package = models.ForeignKey(Package)
-    version = models.ForeignKey(PackageVersion)
+    version = models.ForeignKey(PackageVersion, null=True, blank=True)
     action = models.CharField(max_length=32)
     org_id = models.CharField(max_length=32)
     org_type = models.CharField(max_length=255)

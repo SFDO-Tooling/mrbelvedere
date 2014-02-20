@@ -257,7 +257,6 @@ def uninstall_package(request, namespace):
     # Log the install
     install = PackageInstallation(
         package = version.package, 
-        version = version, 
         action = 'uninstall', 
         username = oauth['username'], 
         org_id = oauth['org_id'],
