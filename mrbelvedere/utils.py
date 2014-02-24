@@ -84,6 +84,8 @@ class GithubPullRequestLoader(object):
         self.target_branch = payload['pull_request']['base']
         self.target_repository = self.target_branch['repo']
         self.source_branch = payload['pull_request']['head']
+        self.source_repository = self.source_branch['repo']
+
     
     @property
     def repository_obj(self):
