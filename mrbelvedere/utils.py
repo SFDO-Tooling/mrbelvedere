@@ -79,11 +79,11 @@ class GithubPullRequestLoader(object):
         self.title = payload['pull_request']['title']
         self.body = payload['pull_request']['body']
         self.username = payload['sender']['login']
+        self.state = payload['pull_request']['state']
 
         self.target_branch = payload['pull_request']['base']
         self.target_repository = self.target_branch['repo']
         self.source_branch = payload['pull_request']['head']
-        self.source_repository = self.source_branch['repo']
     
     @property
     def repository_obj(self):
@@ -132,12 +132,14 @@ class GithubPullRequestLoader(object):
             pull = PullRequest.objects.get(repository=repo, number=self.number)
             pull.head_sha = self.source_branch['sha']
             pull.base_sha = self.target_branch['sha']
+            pull.state = self.state
             pull.save()
         except PullRequest.DoesNotExist:
             pull = PullRequest(
                 repository = repo,
                 number = self.number,
                 name = self.title,
+                state = self.state,
                 message = self.body,
                 source_branch = self.source_branch_obj,
                 target_branch = self.target_branch_obj,

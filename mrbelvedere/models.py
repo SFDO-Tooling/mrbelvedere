@@ -245,6 +245,7 @@ class PullRequest(models.Model):
     head_sha = models.CharField(max_length=64)
     last_build_head_sha = models.CharField(max_length=64, null=True, blank=True)
     last_build_base_sha = models.CharField(max_length=64, null=True, blank=True)
+    state = models.CharField(max_length=32, default='open')
 
 class PullRequestComment(models.Model):
     pull_request = models.ForeignKey(PullRequest)
