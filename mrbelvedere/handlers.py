@@ -57,25 +57,27 @@ def moderate_pull_request_build(sender, **kwargs):
         })
 
     # Attempt to parse the integer issue number from the branch name, fail with comment if it can't be parsed
-    issue_number = pull_request.source_branch.name.replace('feature/','').split('-')[0]
-    try:
-        int(issue_number)
-    except:
-        valid_branch = False
-        pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={
-            'body': 'Your branch does not meet the feature branch naming requirements.  I was unable to parse an issue number from the branch name.  The format should be feature/NNN-description-of-feature where NNN is the issue number.  Please rename your branch and submit a new pull request.',
-        })
-
-    issue = pull_request.repository.call_api('/issues/%s' % issue_number)
-    if issue == 404:
-        valid_branch = False
-        pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={
-            'body': 'Your branch name specifies an issue number of %s which does not exist in the main repository.  Please rename the branch and open a new pull request.' % issue_number,
-        })
+    if valid_branch:
+        issue_number = pull_request.source_branch.name.replace('feature/','').split('-')[0]
+        try:
+            int(issue_number)
+        except:
+            valid_branch = False
+            pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={
+                'body': 'Your branch does not meet the feature branch naming requirements.  I was unable to parse an issue number from the branch name.  The format should be feature/NNN-description-of-feature where NNN is the issue number.  Please rename your branch and submit a new pull request.',
+            })
+   
+    if valid_branch: 
+        issue = pull_request.repository.call_api('/issues/%s' % issue_number)
+        if issue == 404:
+            valid_branch = False
+            pull_request.repository.call_api('/issues/%s/comments' % pull_request.number, data={
+                'body': 'Your branch name specifies an issue number of %s which does not exist in the main repository.  Please rename the branch and open a new pull request.' % issue_number,
+            })
 
     # If the branch name was invalid, close the pull request as a new one will need to be submitted from the renamed branch.
     if not valid_branch:
-        pull_request.repository.call_api('/pulls/%s' % pull_request.number, data={'status': 'closed'})
+        pull_request.repository.call_api('/pulls/%s' % pull_request.number, data={'state': 'closed'})
         return
         
     # code below commented out since we don't need write access to set commit status
