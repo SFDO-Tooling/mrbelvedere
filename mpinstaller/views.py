@@ -4,6 +4,7 @@ import json
 from urllib import quote
 from xml.dom.minidom import parseString
 from django.conf import settings
+from django.db import transaction
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -19,7 +20,7 @@ SOAP_DEPLOY = """<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <soap:Header>
     <SessionHeader xmlns="http://soap.sforce.com/2006/04/metadata">
-      <sessionId>%(session_id)s</sessionId>
+      <sessionId>###SESSION_ID###</sessionId>
     </SessionHeader>
   </soap:Header>
   <soap:Body>
@@ -44,7 +45,7 @@ SOAP_CHECK_STATUS = """<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <soap:Header>
     <SessionHeader xmlns="http://soap.sforce.com/2006/04/metadata">
-      <sessionId>%(session_id)s</sessionId>
+      <sessionId>###SESSION_ID###</sessionId>
     </SessionHeader>
   </soap:Header>
   <soap:Body>
@@ -54,6 +55,53 @@ SOAP_CHECK_STATUS = """<?xml version="1.0" encoding="utf-8"?>
     </checkDeployStatus>
   </soap:Body>
 </soap:Envelope>"""
+
+@transaction.commit_manually
+def call_mdapi(request, url, headers, data, refresh=None):
+    oauth = request.session.get('oauth_response',None)
+    session_id = oauth['access_token']
+    
+    response = requests.post(url, headers=headers, data=data.replace('###SESSION_ID###', session_id), verify=False)
+    faultcode = parseString(response.content).getElementsByTagName('faultcode')
+
+    # refresh = False can be passed to prevent a loop if refresh fails
+    if refresh is None:
+        refresh = True
+
+    if not faultcode:
+        return response
+    
+    # Error in SOAP request, handle the error
+    faultcode = faultcode[0].firstChild.nodeValue
+    faultstring = parseString(response.content).getElementsByTagName('faultstring')
+    if faultstring:
+        faultstring = faultstring[0].firstChild.nodeValue
+    else:
+        faultstring = ''
+
+    # Log the error on the PackageInstallation
+    install_id = request.session.get('mpinstaller_current_install', None)
+    if install_id:
+        install = PackageInstallation.objects.get(id=install_id)
+        install.status = 'SOAP Fault'
+        install.log = '%s: %s' % (faultcode, faultstring)
+        install.save()
+        transaction.commit()
+    
+    if faultcode == 'sf:INVALID_SESSION_ID' and oauth and oauth['refresh_token']:
+        # Attempt to refresh token and recall request
+        sandbox = request.session.get('oauth_sandbox', False)
+        sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL, sandbox=sandbox)
+        refresh_response = sf.refresh_token(oauth['refresh_token'])
+        if refresh_response.get('access_token', None):
+            # Set the new token in the session
+            request.session['oauth_response'].update(refresh_response)
+            
+            if refresh:
+                return call_mdapi(request, url, headers, data, refresh=False)
+
+    # No automated error handling possible, return back the raw response
+    return response
 
 def package_overview(request, namespace):
     package = get_object_or_404(Package, namespace = namespace)
@@ -229,8 +277,7 @@ def install_package_version(request, namespace, number):
     package_zip = PackageZipBuilder(namespace, number).install_package() 
 
     # Construct the SOAP envelope message
-    session_id = oauth['access_token']   
-    message = SOAP_DEPLOY % {'session_id': session_id, 'package_zip': package_zip}
+    message = SOAP_DEPLOY % {'package_zip': package_zip}
     message = message.encode('utf-8')
     
     headers = {
@@ -239,7 +286,7 @@ def install_package_version(request, namespace, number):
         'SOAPAction': 'deploy',
     }
 
-    response = requests.post(url=endpoint, headers=headers, data=message, verify=False)
+    response = call_mdapi(request, url=endpoint, headers=headers, data=message)
 
     id = parseString(response.content).getElementsByTagName('id')[0].firstChild.nodeValue
     return HttpResponse(json.dumps({'process_id': id}), content_type='application/json')
@@ -273,8 +320,7 @@ def uninstall_package(request, namespace):
     package_zip = PackageZipBuilder(namespace).uninstall_package() 
 
     # Construct the SOAP envelope message
-    session_id = oauth['access_token']   
-    message = SOAP_DEPLOY % {'session_id': session_id, 'package_zip': package_zip}
+    message = SOAP_DEPLOY % {'package_zip': package_zip}
     message = message.encode('utf-8')
     
     headers = {
@@ -283,7 +329,7 @@ def uninstall_package(request, namespace):
         'SOAPAction': 'deploy',
     }
 
-    response = requests.post(url=endpoint, headers=headers, data=message, verify=False)
+    response = call_mdapi(request, url=endpoint, headers=headers, data=message)
 
     id = parseString(response.content).getElementsByTagName('id')[0].firstChild.nodeValue
     return HttpResponse(json.dumps({'process_id': id}), content_type='application/json')
@@ -296,7 +342,7 @@ def check_deploy_status(request):
 
     # Construct the SOAP envelope message
     session_id = oauth['access_token']   
-    message = SOAP_CHECK_STATUS % {'session_id': session_id, 'process_id': id}
+    message = SOAP_CHECK_STATUS % {'process_id': id}
     message = message.encode('utf-8')
     
     headers = {
@@ -305,7 +351,7 @@ def check_deploy_status(request):
         'SOAPAction': 'checkDeployStatus',
     }
 
-    response = requests.post(url=endpoint, headers=headers, data=message, verify=False)
+    response = call_mdapi(request, url=endpoint, headers=headers, data=message)
 
     done = parseString(response.content).getElementsByTagName('done')[0].firstChild.nodeValue == 'true'
     status = parseString(response.content).getElementsByTagName('status')[0].firstChild.nodeValue
