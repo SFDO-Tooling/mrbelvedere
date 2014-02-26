@@ -1,3 +1,4 @@
+import re
 import requests
 import time
 import json
@@ -106,6 +107,8 @@ def call_mdapi(request, url, headers, data, refresh=None):
 def package_overview(request, namespace):
     package = get_object_or_404(Package, namespace = namespace)
 
+    import pdb; pdb.set_trace()
+
     install_map_prod = []
     if package.current_prod:
         install_map_prod = version_install_map(namespace, package.current_prod.number)
@@ -145,8 +148,15 @@ def build_endpoint_url(oauth):
     # Parse org id from id which ends in /ORGID/USERID
     org_id = oauth['id'].split('/')[-2]
 
+    # If "My Domain" is configured in the org, the instance_url needs to be parsed differently
+    instance_url = oauth['instance_url']
+    if instance_url.find('.my.salesforce.com') != -1:
+        # Parse instance_url with My Domain configured
+        # URL will be in the format https://name--name.na11.my.salesforce.com and should be https://na11.salesforce.com
+        instance_url = re.sub(r'https://.*\.(\w+)\.my\.salesforce\.com', r'https://\1.salesforce.com', instance_url)
+
     # Build the endpoint url from the instance_url
-    endpoint_base = oauth['instance_url'].replace('.salesforce.com','-api.salesforce.com')
+    endpoint_base = instance_url.replace('.salesforce.com','-api.salesforce.com')
     endpoint = '%s/services/Soap/m/29.0/%s' % (endpoint_base, org_id)
     return endpoint
 
