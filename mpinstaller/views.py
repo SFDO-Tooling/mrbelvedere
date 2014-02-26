@@ -107,8 +107,6 @@ def call_mdapi(request, url, headers, data, refresh=None):
 def package_overview(request, namespace):
     package = get_object_or_404(Package, namespace = namespace)
 
-    import pdb; pdb.set_trace()
-
     install_map_prod = []
     if package.current_prod:
         install_map_prod = version_install_map(namespace, package.current_prod.number)
