@@ -2,6 +2,7 @@ import re
 import requests
 import time
 import json
+import logging
 from urllib import quote
 from xml.dom.minidom import parseString
 from django.conf import settings
@@ -16,6 +17,8 @@ from mpinstaller.models import PackageInstallation
 from mpinstaller.models import PackageVersion
 from mpinstaller.package import PackageZipBuilder
 from simple_salesforce import Salesforce
+
+logger = logging.getLogger(__name__)
 
 SOAP_DEPLOY = """<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -56,6 +59,45 @@ SOAP_CHECK_STATUS = """<?xml version="1.0" encoding="utf-8"?>
     </checkDeployStatus>
   </soap:Body>
 </soap:Envelope>"""
+
+SOAP_CHECK_STATUS = """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Header>
+    <SessionHeader xmlns="http://soap.sforce.com/2006/04/metadata">
+      <sessionId>###SESSION_ID###</sessionId>
+    </SessionHeader>
+  </soap:Header>
+  <soap:Body>
+    <checkDeployStatus xmlns="http://soap.sforce.com/2006/04/metadata">
+      <asyncProcessId>%(process_id)s</asyncProcessId>
+      <includeDetails>true</includeDetails>
+    </checkDeployStatus>
+  </soap:Body>
+</soap:Envelope>"""
+
+SOAP_RETRIEVE = """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Header>
+    <SessionHeader xmlns="http://soap.sforce.com/2006/04/metadata">
+      <sessionId>###SESSION_ID###</sessionId>
+    </SessionHeader>
+  </soap:Header>
+  <soap:Body>
+    <retrieve xmlns="http://soap.sforce.com/2006/04/metadata">
+      <apiVersion>29.0</apiVersion>
+      <unpackaged>%{package_xml}</unpackaged>
+    </retrieve>
+  </soap:Body>
+</soap:Envelope>"""
+
+PACKAGE_XML_INSTALLEDPACKAGE = """<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+  <type>
+    <members>*</members>
+    <name>InstalledPackage</name>
+  </types>
+  <apiVersion>29.0</apiVersion>
+</Package>"""
 
 @transaction.commit_manually
 def call_mdapi(request, url, headers, data, refresh=None):
@@ -241,6 +283,9 @@ def oauth_callback(request):
     user = get_oauth_user(resp)
     resp['username'] = user['Username']
 
+    # Log the info
+    logger.info(resp)
+
     # Set the response in the session
     request.session['oauth_response'] = resp
 
@@ -384,3 +429,8 @@ def check_deploy_status(request):
     }
 
     return HttpResponse(json.dumps(data), content_type="application/json")
+
+def get_current_packages(oauth):
+    endpoint = build_endpoint_url(oauth)
+    
+    # Issue a retrieve call
