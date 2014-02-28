@@ -28,15 +28,27 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
 {% endif %}
 </div>
 
-{% if install_map_prod %}
+{% if package.current_prod %}
 <div id="production-version" class="version-install panel panel-default">
-  <div class="panel-heading">Production: {% with pkg=install_map_prod|last %}{{ pkg.version }}{% endwith %}</div>
+  <div class="panel-heading">Production: {{ package.current_prod.version.number }}</div>
   <div class="panel-body">
     <h5>Required Package Versions</h5>
     <ul>
-    {% for pkg in install_map_prod %}
-      {% if forloop.last != True %}
-      <li>{{ pkg.package }} ({{ pkg.namespace }}): {{ pkg.version }}</li>
+    {% for pkg in package_list_prod %}
+      {% if not forloop.last %}
+      <li>{{ pkg.package }} ({{ pkg.namespace }}): {{ pkg.version }}
+          {% if pkg.uninstall and pkg.install %}
+            <div class="alert alert-warning">Currently installed version {{ pkg.installed }} will be uninstalled and {{ pkg.version }} will then be installed</div>
+          {% elif pkg.uninstall %}
+            <div class="alert alert-warning">Currently installed version {{ pkg.installed }} will be uninstalled</div>
+          {% elif pkg.installed and pkg.install %}
+            <div class="alert alert-info">Currently installed version {{ pkg.installed }} will be upgraded to {{ pkg.version }}</div>
+          {% elif pkg.install %}
+            <div class="alert alert-info">Package not currently installed.  {{ pkg.version }} will be installed</div>
+          {% elif pkg.installed %}
+            <div class="alert alert-success">Currently installed version {{ pkg.version }} will be unchanged</div>
+          {% endif %}
+      </li>
       {% endif %}
     {% endfor %}
     </ul>
@@ -45,25 +57,47 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
     {% else %}
     <div class="button-grp">
       <a class="btn btn-warning link-install" href="">Install</a>
-      <a class="btn btn-danger link-uninstall" href="" />Uninstall</a>
     </div>
     {% endif %}
   </div>
 </div>
 {% endif %}
 
-{% if install_map_beta %}
+{% if package.current_beta %}
 <div id="beta-version" class="version-install panel panel-default">
-  <div class="panel-heading">Beta: {% with pkg=install_map_beta|last %}{{ pkg.version }}{% endwith %}</div>
+  <div class="panel-heading">Beta: {{ package.current_beta.number }}</div>
   <div class="panel-body">
     <h5>Required Package Versions</h5>
-    <ul>
-    {% for pkg in install_map_beta %}
-      {% if forloop.last != True %}
-      <li>{{ pkg.package }} ({{ pkg.namespace }}): {{ pkg.version }}</li>
-      {% endif %}
+    <table class="table">
+      <tr>
+        <th>Package Name</th>
+        <th>Namespace</th>
+        <th>Required Version</th>
+        <th>Current Version in Org</th>
+        <th>Installer Actions</th>
+      </tr>
+    {% for pkg in package_list_beta %}
+      <tr>
+        <td>{{ pkg.package }}</td>
+        <td>{{ pkg.namespace }}</td>
+        <td>{{ pkg.version }}</td>
+        <td>{% if pkg.installed %}{{ pkg.installed }}{% else %}Not Installed{% endif %}</td>
+        <td>
+          {% if pkg.uninstall and pkg.install %}
+            Uninstall &amp; Install
+          {% elif pkg.uninstall %}
+            Uninstall
+          {% elif pkg.installed and pkg.install %}
+            Upgrade
+          {% elif pkg.install %}
+            Install
+          {% else %}
+            Skip
+          {% endif %}
+        </td>
+      </tr>
     {% endfor %}
-    </ul>
+    </table>
     <div class="alert alert-warning">WARNING: Installing a beta managed package is a destructive operation.  Once installed, you cannot upgrade the package.  Installing a beta should only be done against a Sandbox or Development Edition org dedicated to the purpose of testing the beta.</div>
     {% if login_url %}
       <div class="alert alert-info">You are not currently connect to an org.  Once connected, you will see links to install and uninstall here.</div>
@@ -73,7 +107,6 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
       {% else %}
         <div class="button-grp">
           <a class="btn btn-warning link-install" href="">Install</a>
-          <a class="btn btn-danger link-uninstall" href="" />Uninstall</a>
         </div>
       {% endif %}
     {% endif %}
@@ -110,13 +143,14 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
 {% endautoescape %}
 
     var mpinstaller_package = null;
+    var mpinstaller_action = null
     var mpinstaller_process_id = null;
     var mpinstaller_status = null;
 
-    function deployPackage(map, action) {
+    function deployPackage(map) {
         $.each(map, function (index, value) {
             // If there is a current package which is not completed or errored, skip other packages
-            if (mpinstaller_package != value['namespace'] && mpinstaller_package != null) {
+            if ((mpinstaller_package != value['namespace'] || mpinstaller_action != value['action']) && mpinstaller_package != null) {
                 // Continue to the next item in the loop
                 return true;
             }
@@ -125,6 +159,7 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
             if (mpinstaller_status == 'Failed') {
                 alert('Installation of ' + mpinstaller_package + 'failed');
                 mpinstaller_package = null;
+                mpinstaller_action = null;
                 mpinstaller_process_id = null;
                 mpinstaller_status = null;
 
@@ -135,6 +170,7 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
             // If the current package is Succeeded, clear variables to allow next loop to execute then continue
             if (mpinstaller_status == 'Succeeded') {
                 mpinstaller_package = null;
+                mpinstaller_action = null;
                 mpinstaller_process_id = null;
                 mpinstaller_status = null;
 
@@ -142,17 +178,24 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
                 return true;
             }
 
+            // If we are starting a new package and action is skip, skip the package
+            if (mpinstaller_status == null && value['action'] == 'skip') {
+                return true;
+            }
+    
             // Start the deployment
             if (mpinstaller_status == null) {
                 mpinstaller_package = value['namespace'];
+                mpinstaller_action = value['action'];
 
-                if (action == 'Install') {
+                if (value['action'] == 'install') {
                     version_action_url = mpinstaller_base_url + value['namespace'] + '/' + value['version'] + '/install';
-                } else if (action == 'Uninstall') {
+                    log_message = $('<div><h3>Installing ' + value['package'] + ' (' + value['namespace'] + ') version ' + value['version'] + '</h3></div>');
+                } else if (value['action'] == 'uninstall') {
                     version_action_url = mpinstaller_base_url + value['namespace'] + '/uninstall';
+                    log_message = $('<div><h3>Uninstalling ' + value['package'] + ' (' + value['namespace'] + ') version ' + value['installed'] + '</h3></div>');
                 }
-    
-                log_message = $('<div><h3>' + action + 'ing ' + value['package'] + ' (' + value['namespace'] + ') version ' + value['version'] + '</h3></div>');
+   
                 $('#deploy-console .panel-body').append(log_message);
                 $("html, body").animate({ scrollTop: $(document).height() }, "slow");
 
@@ -168,7 +211,7 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
                       
                         // Set status to Queued to trigger a status check
                         mpinstaller_status = 'Pending';
-                        deployPackage(map, action);
+                        deployPackage(map);
                     }
                 });
 
@@ -199,10 +242,10 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
 
                         if (data['done'] == true) {
                             // If the package is done, perform the callback immediately
-                            deployPackage(map, action);
+                            deployPackage(map);
                         } else {
                             // If not done, check the status again in a second
-                            setTimeout(function () {deployPackage(map, action)}, 1000 );
+                            setTimeout(function () {deployPackage(map)}, 1000 );
                         }
                     }
                 });
@@ -210,31 +253,21 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
                 // Break out of the loop to wait for callback
                 return false;
             }
+
+            // End of deployment
+            return false;
         });
     }
 
-
     $('#prod-version.version-install').each(function () {
         $(this).find('a.link-install').click(function () {
-            deployPackage(install_map_prod, 'Install');
-            return false;
-        })
-        $(this).find('a.link-uninstall').click(function () {
-            uninstall_map_prod = install_map_prod;
-            uninstall_map_prod.reverse();
-            deployPackage(uninstall_map_prod, 'Uninstall');
+            deployPackage(install_map_prod);
             return false;
         })
     })
     $('#beta-version.version-install').each(function () {
         $(this).find('a.link-install').click(function () {
-            deployPackage(install_map_beta, 'Install');
-            return false;
-        })
-        $(this).find('a.link-uninstall').click(function () {
-            uninstall_map_beta = install_map_beta;
-            uninstall_map_beta.reverse();
-            deployPackage(uninstall_map_beta, 'Uninstall');
+            deployPackage(install_map_beta);
             return false;
         })
     })
