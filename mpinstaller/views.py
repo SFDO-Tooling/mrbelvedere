@@ -7,6 +7,7 @@ import base64
 from tempfile import TemporaryFile
 from zipfile import ZipFile
 from urllib import quote
+from distutils.version import LooseVersion
 from xml.dom.minidom import parseString
 from django.conf import settings
 from django.db import transaction
@@ -247,7 +248,7 @@ def get_oauth_user(oauth):
 
     user = sf.User.get(user_id)
     return user
-    
+
 def version_install_map(namespace, number, installed=None):
     version = get_object_or_404(PackageVersion, package__namespace = namespace, number = number)
 
@@ -277,8 +278,8 @@ def version_install_map(namespace, number, installed=None):
             if installed_version != requested_version:
                 uninstall = True
         elif requested_version.find('Beta') == -1:
-            installed_version_f = float(installed_version)
-            requested_version_f = float(requested_version)
+            installed_version_f = LooseVersion(installed_version)
+            requested_version_f = LooseVersion(requested_version)
             if installed_version_f < requested_version_f:
                 uninstall = True
 
@@ -307,8 +308,8 @@ def version_install_map(namespace, number, installed=None):
             if installed_version != version.number:
                 uninstall = True
         else:
-            installed_version_f = float(installed_version)
-            requested_version_f = float(version.number)
+            installed_version_f = LooseVersion(installed_version)
+            requested_version_f = LooseVersion(version.number)
             if installed_version_f > requested_version_f:
                 uninstall = True
 
