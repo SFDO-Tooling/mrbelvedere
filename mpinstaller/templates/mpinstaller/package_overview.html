@@ -236,6 +236,8 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
 
             // If we are starting a new package and action is skip, skip the package
             if (mpinstaller_status == null && value['action'] == 'skip') {
+                log_message = $('<div><h3>Skipping already installed package ' + value['package'] + ' (' + value['namespace'] + ') version ' + value['version'] + '</h3></div>');
+                $('#deploy-console .panel-body').append(log_message);
                 return true;
             }
     
@@ -311,6 +313,9 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
             }
 
             // End of deployment
+            log_message = $('<div>Status: Installation Complete</div>');
+            $('#deploy-console .panel-body').append(log_message);
+            $("html, body").animate({ scrollTop: $(document).height() }, "slow");
             return false;
         });
     }
