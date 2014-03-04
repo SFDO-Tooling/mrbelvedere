@@ -1,8 +1,13 @@
 from django.contrib import admin
+from mpinstaller.models import MetadataCondition
 from mpinstaller.models import Package
 from mpinstaller.models import PackageInstallation
 from mpinstaller.models import PackageVersion
 from mpinstaller.models import PackageVersionDependency
+
+class MetadataConditionAdmin(admin.ModelAdmin):
+    pass
+admin.site.register(MetadataCondition, MetadataConditionAdmin)
 
 class PackageAdmin(admin.ModelAdmin):
     list_display = ('name','namespace','description')
@@ -14,7 +19,7 @@ admin.site.register(PackageInstallation, PackageInstallationAdmin)
 
 class PackageVersionAdmin(admin.ModelAdmin):
     list_display = ('package', 'number', 'name')
-    list_filter = ('package','beta')
+    list_filter = ('package',)
 admin.site.register(PackageVersion, PackageVersionAdmin)
 
 class PackageVersionDependencyAdmin(admin.ModelAdmin):

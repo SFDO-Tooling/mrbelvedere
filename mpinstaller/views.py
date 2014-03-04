@@ -4,6 +4,8 @@ import time
 import json
 import logging
 import base64
+import datetime
+import dateutil.parser
 from tempfile import TemporaryFile
 from zipfile import ZipFile
 from urllib import quote
@@ -84,6 +86,22 @@ SOAP_RETRIEVE_INSTALLEDPACKAGE = """<?xml version="1.0" encoding="utf-8"?>
         </unpackaged>
       </retrieveRequest>
     </retrieve>
+  </soap:Body>
+</soap:Envelope>"""
+
+SOAP_LIST_METADATA = """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Header>
+    <SessionHeader xmlns="http://soap.sforce.com/2006/04/metadata">
+      <sessionId>###SESSION_ID###</sessionId>
+    </SessionHeader>
+  </soap:Header>
+  <soap:Body>
+    <listMetadata xmlns="http://soap.sforce.com/2006/04/metadata">
+      <queries>
+        <type>%(metatype)s</type>
+      </queries>
+    </listMetadata>
   </soap:Body>
 </soap:Envelope>"""
 
@@ -176,13 +194,13 @@ def package_overview(request, namespace):
     install_map_prod = []
     package_list_prod = []
     if package.current_prod:
-        install_map_prod = version_install_map(namespace, package.current_prod.number, installed)
+        install_map_prod = version_install_map(request, namespace, package.current_prod.number, installed)
         package_list_prod = install_map_to_package_list(install_map_prod)
 
     install_map_beta = []
     package_list_beta = []
     if package.current_beta:
-        install_map_beta = version_install_map(namespace, package.current_beta.number, installed)
+        install_map_beta = version_install_map(request, namespace, package.current_beta.number, installed)
         package_list_beta = install_map_to_package_list(install_map_beta)
 
     logged_in = False
@@ -249,7 +267,7 @@ def get_oauth_user(oauth):
     user = sf.User.get(user_id)
     return user
 
-def version_install_map(namespace, number, installed=None):
+def version_install_map(request, namespace, number, installed=None):
     version = get_object_or_404(PackageVersion, package__namespace = namespace, number = number)
 
     packages = []
@@ -262,6 +280,9 @@ def version_install_map(namespace, number, installed=None):
 
         namespace = dependency.requires.package.namespace
         requested_version = dependency.requires.number
+
+        if not requested_version:
+            continue
 
         if installed:
             installed_version = installed.get(namespace, None)
@@ -291,6 +312,7 @@ def version_install_map(namespace, number, installed=None):
 
         packages.append({
             'package': dependency.requires.package.name,
+            'description': dependency.requires.package.description,
             'namespace': namespace,
             'version': requested_version,
             'installed': installed_version,
@@ -316,6 +338,7 @@ def version_install_map(namespace, number, installed=None):
     if uninstall:
         packages.append({
             'package': version.package.name,
+            'description': version.package.description,
             'namespace': version.package.namespace,
             'version': version.number,
             'installed': installed_version,
@@ -334,13 +357,21 @@ def version_install_map(namespace, number, installed=None):
         namespace = dependency.requires.package.namespace
         requested_version = dependency.requires.number
 
+        # Check if the org matches all metadata conditions for the version
+        passed_conditions = True
+        for condition in dependency.requires.conditions.all():
+            passes = check_metadata_condition(request, condition)
+            if not passes:
+                passed_conditions = False
+    
         if installed:
             installed_version = installed.get(dependency.requires.package.namespace, None)
-
-        if installed_version and namespace not in uninstalled:
-            if installed_version == requested_version:
+    
+        if not passed_conditions or (installed_version and namespace not in uninstalled):
+            if not passed_conditions or installed_version == requested_version:
                 packages.append({
                     'package': dependency.requires.package.name,
+                    'description': dependency.requires.package.description,
                     'namespace': namespace,
                     'version': requested_version,
                     'installed': installed_version,
@@ -350,6 +381,7 @@ def version_install_map(namespace, number, installed=None):
 
         packages.append({
             'package': dependency.requires.package.name,
+            'description': dependency.requires.package.description,
             'namespace': namespace,
             'version': requested_version,
             'installed': installed_version,
@@ -361,17 +393,48 @@ def version_install_map(namespace, number, installed=None):
 
     if installed:
         installed_version = installed.get(version.package.namespace, None)
-    if installed_version != version.number:
-        packages.append({
-            'package': version.package.name,
-            'namespace': version.package.namespace,
-            'version': version.number,
-            'installed': installed_version,
-            'action': 'install',
-        })
+
+    # Check if the org matches all metadata conditions for the version
+    passed_conditions = True
+    for condition in version.conditions.all():
+        passes = check_metadata_condition(request, condition)
+        if not passes:
+            passed_conditions = False
+
+    if passed_conditions:
+        if installed_version != version.number:
+            packages.append({
+                'package': version.package.name,
+                'description': version.package.description,
+                'namespace': version.package.namespace,
+                'version': version.number,
+                'installed': installed_version,
+                'action': 'install',
+            })
+        # If this is not a managed package, always install it
+        elif not version.number:
+            packages.append({
+                'package': version.package.name,
+                'description': version.package.description,
+                'namespace': version.package.namespace,
+                'version': version.number,
+                'installed': installed_version,
+                'action': 'install',
+            })
+        # Otherwise, skip the main package
+        else:
+            packages.append({
+                'package': version.package.name,
+                'description': version.package.description,
+                'namespace': version.package.namespace,
+                'version': version.number,
+                'installed': installed_version,
+                'action': 'skip',
+            })
     else:
         packages.append({
             'package': version.package.name,
+            'description': version.package.description,
             'namespace': version.package.namespace,
             'version': version.number,
             'installed': installed_version,
@@ -379,6 +442,44 @@ def version_install_map(namespace, number, installed=None):
         })
 
     return packages
+
+def check_metadata_condition(request, condition):
+    if not request.session.get('oauth_response', None):
+        return False
+
+    metadata = request.session.get('metadata', {})
+    updated = False
+    if not metadata.has_key(condition.metadata_type):
+        # Fetch the metadata for this type
+        metadata.update(list_org_metadata(request, condition.metadata_type))
+        # Cache the metadata in session for future use
+        request.session['metadata'] = metadata
+    matched = False
+    exclude_namespaces = []
+    if condition.exclude_namespaces:
+        exclude_namespaces = condition.exclude_namespaces.split(',')
+    for item in metadata[condition.metadata_type]:
+        if item.get('namespace','') in exclude_namespaces:
+            continue
+
+        value = item.get(condition.field, None)
+        if not value:
+            continue
+
+        # If no method was provided, do a straight string compare
+        if not condition.method:
+            if value == condition.search:
+                matched = True
+        else:
+            # Lookup the method dynamically and call it with the search string
+            method = getattr(value, condition.method)
+            if method(condition.search):
+                matched = True
+
+    if condition.no_match:
+        return not matched
+    else:
+        return matched
 
 def install_map_to_package_list(install_map):
     namespaces = {}
@@ -472,6 +573,12 @@ def oauth_logout(request):
     if request.session.get('mpinstaller_org_packages', None) != None:
         del request.session['mpinstaller_org_packages']
 
+    if request.session.get('oauth_sandbox', None) != None:
+        del request.session['oauth_sandbox']
+
+    if request.session.get('metadata', None) != None:
+        del request.session['metadata']
+
     return HttpResponseRedirect(redirect)
 
 def install_package_version(request, namespace, number):
@@ -497,8 +604,23 @@ def install_package_version(request, namespace, number):
 
     endpoint = build_endpoint_url(oauth)
 
-    # Build a zip for the install package
-    package_zip = PackageZipBuilder(namespace, number).install_package() 
+    # If we have a version number, install via a custom built metadata package using InstalledPackage
+    if version.number:
+        # Build a zip for the install package
+        package_zip = PackageZipBuilder(namespace, number).install_package() 
+    else:
+        try:
+            import pdb; pdb.set_trace()
+            zip_resp = requests.get(version.zip_url)
+            zipfp = TemporaryFile()
+            zipfp.write(zip_resp.content)
+            zipfile = ZipFile(zipfp, 'r')
+            zipfile.close()
+            zipfp.seek(0)
+            package_zip = base64.b64encode(zipfp.read())
+            # FIXME: Implement handling of the subdir field   
+        except:
+            raise ValueError('Failed to fetch zip from %s' % version.zip_url)
 
     # Construct the SOAP envelope message
     message = SOAP_DEPLOY % {'package_zip': package_zip}
@@ -689,3 +811,77 @@ def retrieve_org_packages_result(request, id):
     request.session['mpinstaller_org_packages'] = packages
 
     return HttpResponseRedirect(request.session.get('mpinstaller_redirect'))
+
+def get_element_value(dom, tag):
+    """ A simple helper function to fetch the text value of the first element found in an xml document """
+    result = dom.getElementsByTagName(tag)
+    if result:
+        return result[0].firstChild.nodeValue
+
+def list_org_metadata(request, metatype):
+    oauth = request.session['oauth_response']
+    endpoint = build_endpoint_url(oauth)
+    
+    # Issue a retrieve call
+    message = SOAP_LIST_METADATA % {'metatype': metatype}
+
+    message = message.encode('utf-8')
+
+    headers = {
+        'Content-Type': "text/xml; charset=UTF-8",
+        'Content-Length': len(message),
+        'SOAPAction': 'listMetadata',
+    }
+
+    response = call_mdapi(request, url=endpoint, headers=headers, data=message)
+
+    metadata = {metatype: []}
+
+    tags = [
+        'createdById',
+        'createdByName',
+        'createdDate',
+        'fileName',
+        'fullName',
+        'id',
+        'lastModifiedById',
+        'lastModifiedByName',
+        'lastModifiedDate',
+        'manageableState',
+        'namespacePrefix',
+        'type',
+    ]
+
+    # These tags will be interpreted into dates
+    parse_dates = [
+        'createdDate',
+        'lastModifiedDate',
+    ]
+    
+    for result in parseString(response.content).getElementsByTagName('result'):
+        result_data = {}
+
+        # Parse fields
+        for tag in tags:
+            result_data[tag] = get_element_value(result, tag)
+  
+        # Parse dates 
+        # FIXME: This was breaking things
+        #for key in parse_dates:
+        #    if result_data[key]:
+        #        result_data[key] = dateutil.parser.parse(result_data[key])
+
+        metadata[result_data['type']].append(result_data)
+
+    return metadata
+
+def list_org_metadata_json(request, metatype):
+    metadata = list_org_metadata(request, metatype)
+
+    dthandler = lambda obj: (
+        obj.isoformat()
+        if isinstance(obj, datetime.datetime)
+        or isinstance(obj, datetime.date)
+        else None)
+
+    return HttpResponse(json.dumps(metadata, default=dthandler), content_type="application/json")
