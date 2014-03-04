@@ -33,25 +33,51 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
   <div class="panel-heading">Production: {{ package.current_prod.version.number }}</div>
   <div class="panel-body">
     <h5>Required Package Versions</h5>
-    <ul>
-    {% for pkg in package_list_prod %}
-      {% if not forloop.last %}
-      <li>{{ pkg.package }} ({{ pkg.namespace }}): {{ pkg.version }}
-          {% if pkg.uninstall and pkg.install %}
-            <div class="alert alert-warning">Currently installed version {{ pkg.installed }} will be uninstalled and {{ pkg.version }} will then be installed</div>
-          {% elif pkg.uninstall %}
-            <div class="alert alert-warning">Currently installed version {{ pkg.installed }} will be uninstalled</div>
-          {% elif pkg.installed and pkg.install %}
-            <div class="alert alert-info">Currently installed version {{ pkg.installed }} will be upgraded to {{ pkg.version }}</div>
-          {% elif pkg.install %}
-            <div class="alert alert-info">Package not currently installed.  {{ pkg.version }} will be installed</div>
-          {% elif pkg.installed %}
-            <div class="alert alert-success">Currently installed version {{ pkg.version }} will be unchanged</div>
-          {% endif %}
-      </li>
-      {% endif %}
-    {% endfor %}
-    </ul>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Package Name</th>
+          <th>Description</th>
+          <th>Namespace</th>
+          <th>Required Version</th>
+          <th>Current Version in Org</th>
+          <th>Installer Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for pkg in package_list_prod %}
+        <tr>
+          <td>{{ pkg.package }}</td>
+          <td>{{ pkg.description }}</td>
+          <td>{{ pkg.namespace }}</td>
+          <td>{{ pkg.version }}</td>
+          <td>
+            {% if not login_url %}
+              {% if pkg.installed %}{{ pkg.installed }}{% else %}Not Installed{% endif %}</td>
+            {% else %}
+              N/A
+            {% endif %}
+          <td>
+            {% if not login_url %}
+              {% if pkg.uninstall and pkg.install %}
+                Uninstall &amp; Install
+              {% elif pkg.uninstall %}
+                Uninstall
+              {% elif pkg.installed and pkg.install %}
+                Upgrade
+              {% elif pkg.install %}
+                Install
+              {% else %}
+                Skip
+              {% endif %}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
     {% if login_url %}
     <div class="alert alert-info">You are not currently connect to an org.  Once connected, you will see links to install and uninstall here.</div>
     {% else %}
@@ -112,7 +138,6 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
         </tr>
       {% endfor %}
       </tbody>
-    </table>
     </table>
     <div class="alert alert-warning">WARNING: Installing a beta managed package is a destructive operation.  Once installed, you cannot upgrade the package.  Installing a beta should only be done against a Sandbox or Development Edition org dedicated to the purpose of testing the beta.</div>
     {% if login_url %}

@@ -488,6 +488,7 @@ def install_map_to_package_list(install_map):
         if not namespaces.has_key(action['namespace']):
             namespaces[action['namespace']] = {
                 'package': action['package'],
+                'description': action['description'],
                 'install': False,
                 'uninstall': False,
                 'namespace': action['namespace'],
@@ -610,7 +611,6 @@ def install_package_version(request, namespace, number):
         package_zip = PackageZipBuilder(namespace, number).install_package() 
     else:
         try:
-            import pdb; pdb.set_trace()
             zip_resp = requests.get(version.zip_url)
             zipfp = TemporaryFile()
             zipfp.write(zip_resp.content)
