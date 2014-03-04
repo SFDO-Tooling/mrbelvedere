@@ -139,7 +139,22 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
       {% endfor %}
       </tbody>
     </table>
-    <div class="alert alert-warning">WARNING: Installing a beta managed package is a destructive operation.  Once installed, you cannot upgrade the package.  Installing a beta should only be done against a Sandbox or Development Edition org dedicated to the purpose of testing the beta.</div>
+    <div class="alert alert-warning">WARNING: Installing a beta managed package is a destructive operation.  Once installed, you cannot upgrade the package.  Installing a beta should only be done against a Sandbox or Development Edition org dedicated to the purpose of testing the beta.
+      <div class="confirm-warning">
+        <input type="checkbox" id="confirm-warning-beta" name="confirm_warning_beta" />
+        <label for="confirm-warning-beta">Yes, I understand this risk and wish to install the beta package in my org.</label>
+      </div>
+    </div>
+    {% for pkg in package_list_beta %}
+      {% if pkg.uninstall %}
+        <div class="alert alert-danger">WARNING: Package {{ pkg.package }} ({{ pkg.namespace }}) will be uninstalled from your org as part of the installation.  Uninstalling a managed package will destroy all data stored in custom objects, custom fields, and custom settings from this package.
+          <div class="confirm-warning">
+            <input type="checkbox" id="confirm-warning-{{ pkg.namespace }}" name="confirm_warning_{{ pkg.namespace }}" />
+            <label for="confirm-warning-{{ pkg.namespace }}">Yes, I understand this risk and wish to install the beta package in my org.</label>
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
     {% if login_url %}
       <div class="alert alert-info">You are not currently connect to an org.  Once connected, you will see links to install and uninstall here.</div>
     {% else %}
@@ -308,6 +323,11 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
     })
     $('#beta-version.version-install').each(function () {
         $(this).find('a.link-install').click(function () {
+            // Ensure all confirm-warning checkboxes are checked before installing
+            if ($('.confirm-warning input:not(:checked)').length != 0) {
+                alert('You must check the box on all warnings before you can install');
+                return false;
+            }
             deployPackage(install_map_beta);
             return false;
         })
