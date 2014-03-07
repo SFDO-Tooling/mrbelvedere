@@ -289,19 +289,18 @@ def version_install_map(request, namespace, number, installed=None):
         if not installed_version:
             continue
 
-        if installed_version == requested_version:
-            continue
-
         uninstall = False
         if child_uninstalled:
             uninstall = True
+        elif installed_version == requested_version:
+            continue
         elif installed_version.find('Beta') != -1:
             if installed_version != requested_version:
                 uninstall = True
         elif requested_version.find('Beta') == -1:
             installed_version_f = LooseVersion(installed_version)
             requested_version_f = LooseVersion(requested_version)
-            if installed_version_f < requested_version_f:
+            if installed_version_f > requested_version_f:
                 uninstall = True
 
         if not uninstall:
