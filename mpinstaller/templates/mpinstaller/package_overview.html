@@ -139,15 +139,22 @@ You are connected to {{ oauth.org_type }} org {{ oauth.org_name }} ({{ oauth.org
       {% endfor %}
       </tbody>
     </table>
-    <div class="alert alert-warning">WARNING: Installing a beta managed package is a destructive operation.  Once installed, you cannot upgrade the package.  Installing a beta should only be done against a Sandbox or Development Edition org dedicated to the purpose of testing the beta.
+    <div class="alert alert-warning"><strong>WARNING:</strong> Installing a beta managed package is a destructive operation.  Once installed, you cannot upgrade the package.  Installing a beta should only be done against a Sandbox or Development Edition org dedicated to the purpose of testing the beta.
       <div class="confirm-warning">
         <input type="checkbox" id="confirm-warning-beta" name="confirm_warning_beta" />
         <label for="confirm-warning-beta">Yes, I understand this risk and wish to install the beta package in my org.</label>
       </div>
     </div>
+    <div class="alert alert-info"><strong>If Install Fails:</strong> If the installation of the beta fails, there are a few things you can do to fix issues with your org:
+      <ul>
+        <li>Try uninstalling the package from the web UI under Settings -> Installed Packages.  If the installed failed due to dependencies, this will provide a list of dependency issues</li>
+        <li>If you have made references to parts of the managed package such as record types, layouts, and custom fields since installing the package, those will likely cause errors in installing the package.  You will need to manually remove the references and re-run the installer</li>
+        <li>If you have created data using record types from the beta package, you may need to delete the data and clear the recycle bin.</li>
+      </ul>
+    </div>
     {% for pkg in package_list_beta %}
       {% if pkg.uninstall %}
-        <div class="alert alert-danger">WARNING: Package {{ pkg.package }} ({{ pkg.namespace }}) will be uninstalled from your org as part of the installation.  Uninstalling a managed package will destroy all data stored in custom objects, custom fields, and custom settings from this package.
+        <div class="alert alert-danger"><strong>WARNING:</strong> Package {{ pkg.package }} ({{ pkg.namespace }}) will be uninstalled from your org as part of the installation.  Uninstalling a managed package will destroy all data stored in custom objects, custom fields, and custom settings from this package.
           <div class="confirm-warning">
             <input type="checkbox" id="confirm-warning-{{ pkg.namespace }}" name="confirm_warning_{{ pkg.namespace }}" />
             <label for="confirm-warning-{{ pkg.namespace }}">Yes, I understand this risk and wish to install the beta package in my org.</label>
