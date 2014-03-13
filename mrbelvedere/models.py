@@ -327,14 +327,14 @@ class SalesforceOAuth(models.Model):
     oauth_id = models.URLField()
     username = models.CharField(max_length=255)
     org_name = models.CharField(max_length=255)
-    org_id = models.CharField(max_length=24)
-    org_type = models.CharField(max_length=64)
+    org_id = models.CharField(max_length=255)
+    org_type = models.CharField(max_length=255)
     instance_url = models.URLField()
-    scope = models.CharField(max_length=64)
+    scope = models.CharField(max_length=255)
     access_token = models.CharField(max_length=255)
-    refresh_token = models.CharField(max_length=64)
-    signature = models.CharField(max_length=32)
-    issued_at = models.CharField(max_length=32)
+    refresh_token = models.CharField(max_length=255)
+    signature = models.CharField(max_length=255)
+    issued_at = models.CharField(max_length=255)
 
     def __unicode__(self):
         return self.username
