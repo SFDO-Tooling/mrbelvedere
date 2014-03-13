@@ -359,7 +359,7 @@ class SalesforceOAuth(models.Model):
         desired_capabilities = webdriver.DesiredCapabilities.CHROME
         driver = webdriver.Remote(
             desired_capabilities=desired_capabilities,
-            command_executor="http://%s:%s@ondemand.saucelabs.com:80/wd/hub" % (settings.SAUCELABS_USER, settings_SAUCELABS_KEY),
+            command_executor="http://%s:%s@ondemand.saucelabs.com:80/wd/hub" % (settings.SAUCELABS_USER, settings.SAUCELABS_KEY),
         )
         driver.get(start_url)
         return driver
