@@ -164,7 +164,6 @@ def queue_build_package(sender, **kwargs):
     build_package.delay(build)
     
 @django_rq.job('default', timeout=1800)
-@transaction.commit_manually
 def build_package(build):
     """ Builds a managed package by calling SauceLabs via Selenium to click the Upload button """ 
     # Update Status
