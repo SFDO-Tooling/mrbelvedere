@@ -519,11 +519,13 @@ def oauth_login(request):
   
     request.session['oauth_sandbox'] = sandbox
 
+    scope = request.GET.get('scope', quote('full refresh_token'))
+
     oauth = request.session.get('oauth_response', None)
     if not oauth:
         sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL, sandbox=sandbox)
         request.session['mpinstaller_redirect'] = redirect 
-        return HttpResponseRedirect(sf.authorize_url())
+        return HttpResponseRedirect(sf.authorize_url(scope=scope))
 
     return HttpResponseRedirect(redirect)
 

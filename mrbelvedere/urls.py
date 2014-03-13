@@ -12,4 +12,8 @@ urlpatterns = patterns('',
     url(r'^repo/(?P<owner>\w+)/(?P<repo>\w+)/version/tag$', 'mrbelvedere.views.latest_prod_version_tag'),
     url(r'^repo/(?P<owner>\w+)/(?P<repo>\w+)/version/beta$', 'mrbelvedere.views.latest_beta_version'),
     url(r'^repo/(?P<owner>\w+)/(?P<repo>\w+)/version$', 'mrbelvedere.views.latest_prod_version'),
+    url(r'^package-builder/create$', 'mrbelvedere.views.create_package_builder'),
+    url(r'^package-builder/(?P<namespace>\w+)$', 'mrbelvedere.views.package_builder_overview'),
+    url(r'^package-builder/(?P<namespace>\w+)/build$', 'mrbelvedere.views.package_builder_build'),
+    url(r'^package-builder/(?P<namespace>\w+)/build/(?P<id>\w+)$', 'mrbelvedere.views.package_builder_build_status'),
 )

@@ -1,10 +1,14 @@
+from django.conf import settings
 from django.db import models
 from django.template.defaultfilters import slugify
 from jenkinsapi.jenkins import Jenkins
 from xml.dom import minidom
+from time import sleep
 import requests
 import json
 import django_rq
+import selenium
+from selenium import webdriver
 
 class JenkinsSite(models.Model):
     slug = models.SlugField()
@@ -318,5 +322,63 @@ class RepositoryPullRequestJob(models.Model):
         pull_request.save()
 
         return result
+
+class SalesforceOAuth(models.Model):
+    oauth_id = models.URLField()
+    username = models.CharField(max_length=255)
+    org_name = models.CharField(max_length=255)
+    org_id = models.CharField(max_length=24)
+    org_type = models.CharField(max_length=64)
+    instance_url = models.URLField()
+    scope = models.CharField(max_length=64)
+    access_token = models.CharField(max_length=255)
+    refresh_token = models.CharField(max_length=64)
+    signature = models.CharField(max_length=32)
+    issued_at = models.CharField(max_length=32)
+
+    def __unicode__(self):
+        return self.username
+
+    def refresh(self):
+        from mpinstaller.auth import SalesforceOAuth2
+
+        sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL)
+        refresh_response = sf.refresh_token(self.refresh_token)
+        if refresh_response.get('access_token', None):
+            self.scope = refresh_response['scope']
+            self.access_token = refresh_response['access_token']
+            self.issued_at = refresh_response['issued_at']
+            self.signature = refresh_response['signature']
+            self.save()
+
+    def saucelabs_connect(self):
+        # Always refresh the token to ensure a long enough session to build the package
+        self.refresh()
+        start_url = '%s/secur/frontdoor.jsp?sid=%s' % (self.instance_url, self.access_token)
+        
+        desired_capabilities = webdriver.DesiredCapabilities.CHROME
+        driver = webdriver.Remote(
+            desired_capabilities=desired_capabilities,
+            command_executor="http://%s:%s@ondemand.saucelabs.com:80/wd/hub" % (settings.SAUCELABS_USER, settings_SAUCELABS_KEY),
+        )
+        driver.get(start_url)
+        return driver
+
+class PackageBuilder(models.Model):
+    namespace = models.SlugField(help_text=u'The managed package namespace')
+    repository = models.ForeignKey(Repository, help_text=u'Select the GitHub Repository.  If you do not see the repository you are looking for, add it first through the admin')
+    package_name = models.CharField(max_length=255, help_text=u'The name of the package in the packaging org')
+    org = models.ForeignKey(SalesforceOAuth)
+    key = models.CharField(max_length=255)
+
+class PackageBuilderBuild(models.Model):
+    builder = models.ForeignKey(PackageBuilder, related_name='builds')
+    name = models.CharField(max_length=255)
+    version = models.CharField(max_length=255, null=True, blank=True)
+    install_url = models.URLField(null=True, blank=True)
+    status = models.CharField(max_length=255, default='Pending')
+    message = models.TextField(null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    revision = models.CharField(max_length=255, null=True, blank=True)
 
 from mrbelvedere.handlers import *

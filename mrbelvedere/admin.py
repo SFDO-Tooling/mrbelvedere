@@ -11,6 +11,9 @@ from mrbelvedere.models import Push
 from mrbelvedere.models import PullRequest
 from mrbelvedere.models import PullRequestComment
 from mrbelvedere.models import RepositoryPullRequestJob
+from mrbelvedere.models import SalesforceOAuth
+from mrbelvedere.models import PackageBuilder
+from mrbelvedere.models import PackageBuilderBuild
 
 class JenkinsSiteAdmin(admin.ModelAdmin):
     list_display = ('slug','url','user')
@@ -56,3 +59,15 @@ admin.site.register(PullRequestComment, PullRequestCommentAdmin)
 class RepositoryPullRequestJobAdmin(admin.ModelAdmin):
     list_display = ('id','repository','job','forked','internal','moderated')
 admin.site.register(RepositoryPullRequestJob, RepositoryPullRequestJobAdmin)
+
+class SalesforceOAuthAdmin(admin.ModelAdmin):
+    list_display = ('username', 'org_id', 'org_type', 'scope')
+admin.site.register(SalesforceOAuth, SalesforceOAuthAdmin)
+
+class PackageBuilderAdmin(admin.ModelAdmin):
+    list_display = ('namespace', 'package_name', 'repository', 'org')
+admin.site.register(PackageBuilder, PackageBuilderAdmin)
+
+class PackageBuilderBuildAdmin(admin.ModelAdmin):
+    list_display = ('builder', 'name', 'version', 'status', 'created')
+admin.site.register(PackageBuilderBuild, PackageBuilderBuildAdmin)

@@ -1,12 +1,18 @@
 import json
 import requests
+import datetime
+from urllib import quote
+from django import forms
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_page
 from mrbelvedere.models import JenkinsSite, Job
 from mrbelvedere.models import Repository, Branch, BranchJobTrigger
 from mrbelvedere.models import PullRequest
+from mrbelvedere.models import SalesforceOAuth
+from mrbelvedere.models import PackageBuilder, PackageBuilderBuild
 from mrbelvedere.utils import GithubPushLoader
 from mrbelvedere.utils import GithubPullRequestLoader
 from mrbelvedere.utils import GithubPullRequestCommentLoader
@@ -160,3 +166,98 @@ def job_build_status(request, site, job):
     icon = requests.get('%s/buildStatus/icon?job=%s' % (job.site.url, job.name), auth=(job.site.user, job.site.password))
     response = HttpResponse(content=icon.content, mimetype=icon.headers['content-type'])
     return response
+
+class CreatePackageBuilderForm(forms.ModelForm):
+    namespace = forms.CharField
+    
+    class Meta:
+        model = PackageBuilder
+        fields = ['repository','namespace','package_name','key','org']
+
+    def __init__(self, oauth, *args, **kwargs):
+        super(CreatePackageBuilderForm, self).__init__(*args, **kwargs)
+        self.fields['org'].initial = self.get_or_create_org(oauth).id
+        self.fields['org'].widget = forms.HiddenInput()
+
+    def get_or_create_org(self, oauth):
+        try:
+            org = SalesforceOAuth.objects.get(oauth_id = oauth['id'], scope__contains='web')
+        except SalesforceOAuth.DoesNotExist:
+            org = SalesforceOAuth(
+                oauth_id = oauth['id'],
+                username = oauth['username'],
+                org_name = oauth['org_name'],
+                org_id = oauth['org_id'],
+                org_type = oauth['org_type'],
+                instance_url = oauth['instance_url'],
+                scope = oauth['scope'],
+                access_token = oauth['access_token'],
+                refresh_token = oauth['refresh_token'],
+            )
+            org.save()
+        return org
+
+def create_package_builder(request):
+    oauth = request.session.get('oauth_response', None)
+    if not oauth:
+        redirect = quote(request.build_absolute_uri('/mrbelvedere/package-builder/create'))
+        return HttpResponseRedirect('/mpinstaller/oauth/login?scope=full%%20refresh_token%%20web&redirect=%s' % redirect)
+    if request.method == 'POST':
+        form = CreatePackageBuilderForm(oauth, request.POST)
+        form.save()
+        return HttpResponseRedirect(request.build_absolute_uri('/mrbelvedere/package-builder/%s' % form.instance.namespace))
+    else:
+        form = CreatePackageBuilderForm(oauth)
+        redirect = quote(request.build_absolute_uri('/mrbelvedere/package-builder/create'))
+        data = {
+            'form': form,
+            'oauth': oauth,
+            'logout_url': request.build_absolute_uri('/mpinstaller/oauth/login?redirect=%s' % redirect),
+        }
+        return render_to_response('mrbelvedere/create_package_builder.html', data)
+
+def package_builder_overview(request, namespace):
+    builder = get_object_or_404(PackageBuilder, namespace=namespace)
+    data = {
+        'builder': builder,
+        'recent_builds': builder.builds.order_by('-created')[:10],
+    }
+    return render_to_response('mrbelvedere/package_builder_overview.html', data)
+
+def package_builder_build(request, namespace):
+    builder = get_object_or_404(PackageBuilder, namespace=namespace)
+
+    if builder.key != request.META.get('HTTP_AUTHORIZATION', None):
+        return HttpResponse('Unauthorized', status=401)
+
+    # Block concurrent builds
+    active_builds = builder.builds.exclude(status = 'Complete').count()
+    if active_builds:
+        return HttpResponse('ERROR: A build is already running for this package')
+    
+    name = request.GET.get('name','Beta Release')
+
+    build = PackageBuilderBuild(
+        builder = builder,
+        name = name,
+    )
+    build.save()
+    return HttpResponseRedirect(request.build_absolute_uri('/mrbelvedere/package-builder/%s/build/%s' % (builder.namespace, build.id)))
+
+def package_builder_build_status(request, namespace, id):
+    build = get_object_or_404(PackageBuilderBuild, builder__namespace=namespace, id=id)
+
+    # Handle json response
+    format = request.GET.get('format', None)
+    if format == 'json':
+        dthandler = lambda obj: (
+            obj.isoformat()
+            if isinstance(obj, datetime.datetime)
+            or isinstance(obj, datetime.date)
+            else None)
+        return HttpResponse(json.dumps(build.__dict__, default=dthandler), content_type="application/json")
+
+    data = {
+        'build': build,
+    }
+    return render_to_response('mrbelvedere/package_builder_build.html', data)

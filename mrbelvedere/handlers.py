@@ -1,6 +1,11 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from mrbelvedere.models import Branch, Push, BranchJobTrigger, PullRequest, PullRequestComment
+from time import sleep
+import django_rq
+import selenium
+from selenium import webdriver
+from django.db import transaction
+from mrbelvedere.models import Branch, Push, BranchJobTrigger, PullRequest, PullRequestComment, PackageBuilderBuild
 
 @receiver(post_save, sender=Branch)
 def create_new_branch_job_triggers(sender, **kwargs):
@@ -144,3 +149,105 @@ def check_for_build_approval(sender, **kwargs):
         if comment.pull_request.approved == False:
             comment.pull_request.approved = True
             comment.pull_request.save()
+
+@receiver(post_save, sender=PackageBuilderBuild)
+def queue_build_package(sender, **kwargs):
+    # Only run when the build object is created
+    if not kwargs.get('created', False):
+        return
+    build = kwargs['instance']
+
+    build.status = 'Queued'
+    build.message = 'Added to background job queue'
+    build.save()
+    
+    build_package.delay(build)
+    
+@django_rq.job('default', timeout=1800)
+@transaction.commit_manually
+def build_package(build):
+    """ Builds a managed package by calling SauceLabs via Selenium to click the Upload button """ 
+    # Update Status
+    build.status = 'Starting'
+    build.message = 'Starting browser at SauceLabs'
+    build.save()
+    transaction.commit()
+
+    driver = build.builder.org.saucelabs_connect()
+
+    # Load the packages list page
+    driver.get('%s/0A2' % build.builder.org.instance_url)
+
+    # Update Status
+    build.status = 'Starting'
+    build.message = 'Loaded package listing page'
+    build.save()
+    transaction.commit()
+
+    # Click the link to the package
+    driver.find_element_by_xpath("//th[contains(@class,'dataCell')]/a[text()='Cumulus']").click()
+
+    # Update Status
+    build.status = 'Starting'
+    build.message = 'Loaded package page'
+    build.save()
+    transaction.commit()
+
+    # Click the Upload button to open the upload form
+    driver.find_element_by_xpath("//input[@class='btn' and @value='Upload']").click()
+
+    # Update Status
+    build.status = 'Starting'
+    build.message = 'Loaded Upload form'
+    build.save()
+    transaction.commit()
+
+    # Update Status
+    build.status = 'Loaded Upload Form'
+    build.save()
+    transaction.commit()
+
+    # Populate and submit the upload form to create a beta managed package
+    name_input = driver.find_element_by_id('ExportPackagePage:UploadPackageForm:PackageDetailsPageBlock:PackageDetailsBlockSection:VersionInfoSectionItem:VersionText')
+    name_input.clear()
+    name_input.send_keys(build.name)
+    driver.find_element_by_id('ExportPackagePage:UploadPackageForm:PackageDetailsPageBlock:PackageDetailsPageBlockButtons:bottom:upload').click()
+
+    # Update Status
+    build.status = 'Uploading'
+    build.message = 'Upload Submitted'
+    build.save()
+    transaction.commit()
+
+    # Monitor the package upload progress
+    while True:
+        try:
+            status_message = driver.find_element_by_css_selector('.messageText').text
+        except selenium.common.exceptions.StaleElementReferenceException:
+            # These come up, possibly if you catch the page in the middle of updating the text via javascript
+            sleep(1)
+            continue
+        if status_message.startswith('Upload Complete'):
+            # Update Status
+            build.status = 'Complete'
+            build.message = status_message
+            build.save()
+            transaction.commit()
+            break
+
+        # Update Status
+        build.status = 'Uploading'
+        build.message = status_message
+        build.save()
+        transaction.commit()
+
+        sleep(1)
+
+    # Get the version number and install url
+    version = driver.find_element_by_xpath("//th[text()='Version Number']/following-sibling::td/span").text
+    install_url = driver.find_element_by_xpath("//a[contains(@name, ':pkgInstallUrl')]").get_attribute('href')
+
+    build.version = version
+    build.install_url = install_url
+    build.save()
+    transaction.commit()

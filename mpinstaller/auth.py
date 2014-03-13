@@ -43,7 +43,7 @@ class SalesforceOAuth2(object):
 
     def authorize_url(self, **kwargs):
         from urllib import quote
-        scope = kwargs.get('scope', quote('full refresh_token'))
+        scope = kwargs.get('scope', quote('full'))
         fields = {
             'site': self.auth_site,
             'authorize_url': self.authorization_url,

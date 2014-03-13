@@ -9,6 +9,8 @@ urlpatterns = patterns('',
     # url(r'^cumulus_devbot/', include('cumulus_devbot.foo.urls')),
     url(r'^mrbelvedere/', include('mrbelvedere.urls')),
     url(r'^mpinstaller/', include('mpinstaller.urls')),
+    url(r'^django-rq/', include('django_rq.urls')),
+
 
     # django admin routes
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
