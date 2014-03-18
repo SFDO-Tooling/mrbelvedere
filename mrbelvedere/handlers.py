@@ -170,7 +170,6 @@ def build_package(build):
     build.status = 'Starting'
     build.message = 'Starting browser at SauceLabs'
     build.save()
-    #transaction.commit()
 
     driver = build.builder.org.saucelabs_connect()
 
@@ -181,7 +180,6 @@ def build_package(build):
     build.status = 'Starting'
     build.message = 'Loaded package listing page'
     build.save()
-    #transaction.commit()
 
     # Click the link to the package
     driver.find_element_by_xpath("//th[contains(@class,'dataCell')]/a[text()='Cumulus']").click()
@@ -190,7 +188,6 @@ def build_package(build):
     build.status = 'Starting'
     build.message = 'Loaded package page'
     build.save()
-    #transaction.commit()
 
     # Click the Upload button to open the upload form
     driver.find_element_by_xpath("//input[@class='btn' and @value='Upload']").click()
@@ -199,12 +196,10 @@ def build_package(build):
     build.status = 'Starting'
     build.message = 'Loaded Upload form'
     build.save()
-    #transaction.commit()
 
     # Update Status
     build.status = 'Loaded Upload Form'
     build.save()
-    #transaction.commit()
 
     # Populate and submit the upload form to create a beta managed package
     name_input = driver.find_element_by_id('ExportPackagePage:UploadPackageForm:PackageDetailsPageBlock:PackageDetailsBlockSection:VersionInfoSectionItem:VersionText')
@@ -216,7 +211,6 @@ def build_package(build):
     build.status = 'Uploading'
     build.message = 'Upload Submitted'
     build.save()
-    #transaction.commit()
 
     # Monitor the package upload progress
     while True:
@@ -230,23 +224,22 @@ def build_package(build):
             # Update Status
             build.status = 'Complete'
             build.message = status_message
+
+            # Get the version number and install url
+            version = driver.find_element_by_xpath("//th[text()='Version Number']/following-sibling::td/span").text
+            install_url = driver.find_element_by_xpath("//a[contains(@name, ':pkgInstallUrl')]").get_attribute('href')
+        
+            build.version = version
+            build.install_url = install_url
             build.save()
-            #transaction.commit()
+
             break
 
         # Update Status
         build.status = 'Uploading'
         build.message = status_message
         build.save()
-        #transaction.commit()
 
         sleep(1)
 
-    # Get the version number and install url
-    version = driver.find_element_by_xpath("//th[text()='Version Number']/following-sibling::td/span").text
-    install_url = driver.find_element_by_xpath("//a[contains(@name, ':pkgInstallUrl')]").get_attribute('href')
-
-    build.version = version
-    build.install_url = install_url
     build.save()
-    #transaction.commit()
