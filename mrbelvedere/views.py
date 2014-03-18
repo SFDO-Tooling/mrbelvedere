@@ -236,10 +236,12 @@ def package_builder_build(request, namespace):
         return HttpResponse('ERROR: A build is already running for this package')
     
     name = request.GET.get('name','Beta Release')
+    revision = request.GET.get('revision',None)
 
     build = PackageBuilderBuild(
         builder = builder,
         name = name,
+        revision = revision,
     )
     build.save()
     return HttpResponseRedirect(request.build_absolute_uri('/mrbelvedere/package-builder/%s/build/%s' % (builder.namespace, build.id)))
