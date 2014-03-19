@@ -78,6 +78,31 @@ class Repository(models.Model):
         except:
             return resp.status_code
 
+    def get_latest_build(self, namespace=None):
+        last_build = None
+        query = {}
+        if namespace:
+            query['namespace'] = namespace
+        for builder in self.builders.filter(**query):
+            build = builder.builds.filter(status='Complete').order_by('-created')[:1]
+            if build:
+                if last_build:
+                    if last_build.created < build.created:
+                        last_build = build
+                else:
+                    last_build = build
+        return last_build
+
+    def get_latest_build_name(self, namespace=None):
+        last_build = self.get_latest_build(namespace)
+        if last_build:
+            return last_build.version
+
+    def get_latest_build_revision(self, namespace=None):
+        last_build = self.get_latest_build(namespace)
+        if last_build:
+            return last_build.revision
+
     def get_latest_release(self, beta=None):
         if not beta:
             beta = False
@@ -92,7 +117,7 @@ class Repository(models.Model):
                 continue
 
             # If release does not have an install link in the body, skip it
-            if release['body'].find('https://login.salesforce.com/packaging/installPackage.apexp') == -1:
+            if release.get('body',None) and release['body'].find('https://login.salesforce.com/packaging/installPackage.apexp') == -1:
                 continue
 
             # If we got here, this is the release we're looking for
@@ -366,9 +391,9 @@ class SalesforceOAuth(models.Model):
 
 class PackageBuilder(models.Model):
     namespace = models.SlugField(help_text=u'The managed package namespace')
-    repository = models.ForeignKey(Repository, help_text=u'Select the GitHub Repository.  If you do not see the repository you are looking for, add it first through the admin')
+    repository = models.ForeignKey(Repository, related_name='builders', help_text=u'Select the GitHub Repository.  If you do not see the repository you are looking for, add it first through the admin')
     package_name = models.CharField(max_length=255, help_text=u'The name of the package in the packaging org')
-    org = models.ForeignKey(SalesforceOAuth)
+    org = models.ForeignKey(SalesforceOAuth, related_name='builders')
     key = models.CharField(max_length=255)
 
 class PackageBuilderBuild(models.Model):
