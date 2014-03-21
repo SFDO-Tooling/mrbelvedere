@@ -75,7 +75,8 @@ class Package(models.Model):
 
         versions = {}
         for dependency in parent.dependencies.all():
-            versions[version.package.namespace] = dependency.requires
+            versions[dependency.requires.package.namespace] = dependency.requires
+        versions[self.namespace] = parent
 
         # Start the order at 10 leaving room for manual dependencies
         order = 10
@@ -86,7 +87,10 @@ class Package(models.Model):
                 # We don't create new dependencies through this process, only update existing ones
                 continue
 
-            version.number = dependency.get('number',None)
+            number = dependency.get('number',None)
+            if number:
+                version.name = number
+            version.number = number
             version.zip_url = dependency.get('zip_url',None)
             version.order = order
             version.save()
