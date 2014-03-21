@@ -886,3 +886,14 @@ def list_org_metadata_json(request, metatype):
         else None)
 
     return HttpResponse(json.dumps(metadata, default=dthandler), content_type="application/json")
+
+def package_dependencies(request, namespace, beta=None):
+    package = get_object_or_404(Package, namespace=namespace)
+    return HttpResponse(json.dumps(package.get_dependencies(beta)), content_type='application/json')
+
+    if request.method == 'POST':
+        if not package.key or package.key != request.META.get('HTTP_AUTHORIZATION', None):
+            return HttpResponse('Unauthorized', status=401)
+        dependencies = json.loads(request.raw_post_data)
+        new_dependencies = package.update_dependencies(beta, dependencies)
+        return HttpResponse(json.dumps(new_dependencies), content_type='application/json')

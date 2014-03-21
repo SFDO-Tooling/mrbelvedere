@@ -35,9 +35,65 @@ class Package(models.Model):
     description = models.TextField(null=True, blank=True)
     current_prod = models.ForeignKey('mpinstaller.PackageVersion', related_name='current_prod', null=True, blank=True)
     current_beta = models.ForeignKey('mpinstaller.PackageVersion', related_name='current_beta', null=True, blank=True)
+    key = models.CharField(max_length=255, null=True, blank=True)
 
     def __unicode__(self):
         return '%s (%s)' % (self.name, self.namespace)
+
+    def get_dependencies(self, beta):
+        if not beta and not self.current_prod:
+            raise LookupError('No current_prod found')
+        if beta and not self.current_beta:
+            raise LookupError('No current_beta found')
+        
+        if beta: 
+            parent = self.current_beta
+        else:
+            parent = self.current_prod
+
+        dependencies = []
+
+        for version in parent.dependencies.all():
+            dependencies.append({
+                'namespace': version.requires.package.namespace,
+                'number': version.requires.number,
+                'zip_url': version.requires.zip_url,
+            })
+
+        dependencies.append({
+            'namespace': self.namespace,
+            'number': parent.number,
+            'zip_url': parent.zip_url,
+        })
+        return dependencies
+        
+    def update_dependencies(self, beta, dependencies):
+        if beta: 
+            parent = self.current_beta
+        else:
+            parent = self.current_prod
+
+        versions = {}
+        for dependency in parent.dependencies.all():
+            versions[version.package.namespace] = dependency.requires
+
+        # Start the order at 10 leaving room for manual dependencies
+        order = 10
+
+        for dependency in dependencies:
+            version = versions.get(dependency['namespace'])
+            if not version:
+                # We don't create new dependencies through this process, only update existing ones
+                continue
+
+            version.number = dependency.get('number',None)
+            version.zip_url = dependency.get('zip_url',None)
+            version.order = order
+            version.save()
+
+            order = order + 10
+    
+        return self.get_dependencies(beta)
 
     class Meta:
         ordering = ['namespace',]

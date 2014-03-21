@@ -231,7 +231,7 @@ def package_builder_build(request, namespace):
         return HttpResponse('Unauthorized', status=401)
 
     # Block concurrent builds
-    active_builds = builder.builds.exclude(status = 'Complete').count()
+    active_builds = builder.builds.exclude(status__in = ['Complete','Failed']).count()
     if active_builds:
         return HttpResponse('ERROR: A build is already running for this package')
     

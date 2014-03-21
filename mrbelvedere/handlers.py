@@ -235,6 +235,12 @@ def build_package(build):
 
             break
 
+        if status_message.startswith('Upload Failed'):
+            build.status = 'Failed'
+            build.message = status_message
+            build.save()
+            break 
+
         # Update Status
         build.status = 'Uploading'
         build.message = status_message
@@ -243,3 +249,5 @@ def build_package(build):
         sleep(1)
 
     build.save()
+
+    driver.quit()
