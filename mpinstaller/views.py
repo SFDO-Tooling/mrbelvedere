@@ -756,6 +756,8 @@ def retrieve_org_packages(request):
 def retrieve_org_packages_result(request, id):
     oauth = request.session['oauth_response']
     endpoint = build_endpoint_url(oauth)
+    num = request.GET.get('num',1)
+    num = int(num)
 
     # First, use checkStatus to see if the async task is done   
     message = SOAP_CHECK_STATUS % {'process_id': id}
@@ -774,10 +776,16 @@ def retrieve_org_packages_result(request, id):
             'done': False,
             'id': False,
         }
-        # Sleep for 1 second before redirecting for next check
-        time.sleep(1)
+        # Sleep for num seconds before redirecting for next check
+        if num > 5:
+            time.sleep(5)
+        else:
+            time.sleep(num)
 
-        return HttpResponseRedirect('/mpinstaller/retrieve_org_packages/%s' % id)
+        # Increment num to not look like a redirect loop
+        num += 1
+
+        return HttpResponseRedirect('/mpinstaller/retrieve_org_packages/%s?num=%s' % (id, num))
 
 
     # If the async task is done, call checkRetrieveStatus to get the results
