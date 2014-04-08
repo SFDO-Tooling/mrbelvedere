@@ -34,10 +34,10 @@ class GithubPushLoader(object):
    
     @property
     def branch_obj(self):
-        jenkins_name = self.ref.replace('ref/heads','origin')
-        jenkins_name = jenkins_name.replace('refs/tags','origin/tags')
+        jenkins_name = self.ref.replace('refs/heads/','')
+        jenkins_name = jenkins_name.replace('refs/tags/','tags/')
         return Branch.objects.get_or_create(
-            name = self.ref.replace('refs/heads/', ''),
+            name = jenkins_name,
             repository = self.repository_obj,
             github_name = self.ref,
             jenkins_name = jenkins_name,
