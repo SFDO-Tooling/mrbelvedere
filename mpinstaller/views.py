@@ -46,6 +46,7 @@ def package_version_overview(request, namespace, version_id):
 
     request.session['mpinstaller_current_version'] = version.id
 
+    install_map = []
     package_list = []
     if oauth and oauth.get('access_token', None):
         org_packages = request.session.get('org_packages', {})
@@ -73,6 +74,7 @@ def package_version_overview(request, namespace, version_id):
         'install_url': install_url,
         'base_url': request.build_absolute_uri('/mpinstaller/'),
         'package_list': package_list,
+        'install_map': install_map,
     }
 
     return render_to_response('mpinstaller/package_version_overview.html', data)
