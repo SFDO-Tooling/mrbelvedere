@@ -120,6 +120,8 @@ def start_package_installation(request, namespace, version_id):
     )
     session_obj.save()
 
+    order = 0
+
     for step in install_map:
         step_obj = PackageInstallationStep(
             installation = installation_obj,
@@ -128,7 +130,9 @@ def start_package_installation(request, namespace, version_id):
             previous_version = step['installed'],
             action = step['action'],
             status = 'Pending',
+            order = order,
         )
+        order += 1
         if step_obj.action == 'skip':
             step_obj.status = 'Succeeded'
         step_obj.save()

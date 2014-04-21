@@ -233,6 +233,10 @@ class PackageInstallationStep(models.Model):
     log = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
+    order = models.IntegerField()
+
+    class Meta:
+        ordering = ['order',]
 
     def __unicode__(self):
         return '%s %s' % (self.action, self.version)
