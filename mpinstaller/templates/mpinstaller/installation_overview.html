@@ -18,6 +18,8 @@
     {% if installation.status != 'Succeeded' and installation.status != 'Failed' %}
     <div class="alert alert-info">
       Your installation is running.  This page will refresh every 5 seconds until the installation is complete.  Depending on how many packages need to be changed in your org, the installation may take up to 15 minutes to complete in normal conditions.
+
+      You can close this page if needed and the installation will continue.  You will receive emails from Salesforce with the status of each install/uninstall of a managed package.
     </div>
     {% endif %}
 
