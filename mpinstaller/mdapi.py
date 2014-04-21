@@ -214,6 +214,7 @@ class BaseMetadataApiCall(object):
         else:
             # Check the result and return when done
             while self.status != 'Succeeded' and self.status != 'Failed':
+                time.sleep(self.check_interval)
                 envelope = self.build_envelope_result()
                 envelope = envelope.encode('utf-8')
                 headers = self.build_headers(self.soap_action_result, envelope)

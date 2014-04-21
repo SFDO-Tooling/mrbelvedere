@@ -17,7 +17,7 @@
 {% bootstrap_messages %}
     {% if installation.status != 'Succeeded' and installation.status != 'Failed' %}
     <div class="alert alert-info">
-      Your installation is running.  This page will refresh every 5 seconds until the installation is complete.
+      Your installation is running.  This page will refresh every 5 seconds until the installation is complete.  Depending on how many packages need to be changed in your org, the installation may take up to 15 minutes to complete in normal conditions.
     </div>
     {% endif %}
 
@@ -54,7 +54,7 @@
           {% elif installation.status == 'Pending' %}
           <div class="progress progress-striped active">
             <div class="progress-bar progress-bar-info"  role="progressbar" aria-valuenow="{{ installation.get_progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ installation.get_progress }}%">
-              {{ installation.status }}
+              Queued
             </div>
           </div>
           {% elif installation.status == 'InProgress' %}
@@ -70,13 +70,13 @@
       </div>
     </div>
 
+    {% if installation.status == 'Succeeded' or installation.status == 'Failed' %}
     <div class="panel">
       <div class="panel-heading">
         <h3 class="panel-title">Installation Steps</h3>
       </div>
       <div class="panel-body">
         
-    {% if installation.status == 'Succeeded' or installation.status == 'Failed' %}
         <ul class="list-group" id="installation-steps">
           {% for step in installation.steps.all %}
           <li class="list-group-item{% if step.status == 'Succeeded' %} list-group-item-success{% elif step.status == 'Failed' %} list-group-item-danger{% elif step.status == 'InProgress' %} list-group-item-primary{% elif step.status == 'Pending' %} list-group-item-info{% endif %}">
@@ -136,7 +136,8 @@
                   {% elif step.version.number %}
                     <span class="text-muted">- {{ step.version.number }}
                   {% endif %}
-                </h4>
+                </h3>
+                <p>{{ step.version.package.description }}</p>
               </div>
   
               <div class="col-md-2">
@@ -155,9 +156,9 @@
      
         </ul>
         </div>
-   {% endif %} 
       </div>
     
     </div>
+   {% endif %} 
 
 {% endblock %}
