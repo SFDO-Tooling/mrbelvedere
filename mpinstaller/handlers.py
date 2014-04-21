@@ -83,6 +83,7 @@ def install_package_version(installation_id):
                     continue
 
                 installation.log = 'Running Step: %s' % step
+                installation.save()
                 
                 if step.action in ['install','upgrade']:
                     api = ApiInstallVersion(oauth, step.version, step)
