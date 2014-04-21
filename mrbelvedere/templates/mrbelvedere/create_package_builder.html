@@ -2,7 +2,9 @@
 
 {% load bootstrap3 %}
 
-{% block bootstrap3_title %}{% block title %}{{ package }} Installer{% endblock %}{% endblock %}
+{% block bootstrap3_title %}Create a Package Builder{% endblock %}
+{% block bootstrap3_page_title %}Create a Package Builder{% endblock %}
+{% block bootstrap3_page_description %}Fill out the form below to create a package builder.  Once built, you will have a rest api to call which will trigger a build of the managed package in your package org using the currently configured package components.  After you submit, you will be taken to the overview page for your package builder with additional instructions.{% endblock %}
 
 {% block bootstrap3_content %}
 
@@ -10,7 +12,6 @@
 
 <div class="jumbotron">
   <h1>Create a Package Builder</h1>
-  <p>Fill out the form below to create a package builder.  Once built, you will have a rest api to call which will trigger a build of the managed package in your package org using the currently configured package components.  After you submit, you will be taken to the overview page for your package builder with additional instructions.</p>
 </div>
 
 <div class="panel">

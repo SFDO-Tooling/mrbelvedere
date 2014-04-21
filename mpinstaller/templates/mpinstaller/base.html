@@ -1,14 +1,91 @@
 <!DOCTYPE html>
 {% load bootstrap3 %}
-<html>
+{% load staticfiles %}
+<html lang="en">
   <head>
-    <title>{% block bootstrap3_title %}{% endblock %}</title>
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% bootstrap_css %}
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="Salesforce.com Foundation">
+
+    <title>
+      {% block bootstrap3_title %}{% endblock %}
+    </title>
+
+    <link rel="stylesheet" href="{% static "foundationtheme/css/bootstrap.css" %}" />
+    {% bootstrap_javascript jquery=True %}
+
+    <style type="text/css">
+      .navbar-brand {padding-top: 0; padding-bottom: 0;}
+      .page-header a {color: white;}
+      .modal-content {padding: 2em; padding-top: 0;}
+      .progress-bar {padding-left: 1em; text-align: left;}
+    </style>
+
+    <style>pre code { background: transparent; }</style>
+    <!--[if lt IE 9]><script src="../dist/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    {% block extra_head %}{% endblock %}
   </head>
   <body>
-    {% block bootstrap3_content %}{% endblock %}
-    {% bootstrap_javascript jquery=True %}
+    <a class="sr-only" href="#content">Skip to main content</a>
+
+    <!-- Docs master nav -->
+    <header class="navbar navbar-default navbar-static-top bs-docs-nav" role="banner">
+  <div class="container">
+    <div class="navbar-header">
+{% comment %}
+      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+{% endcomment %}
+      <a href="http://www.salesforcefoundation.org" class="navbar-brand" target="_blank">
+        <img src="{% static "logo.png" %}" alt="Salesforce.com Foundation" />
+      </a>
+    </div>
+{% comment %}
+    <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+      <ul class="nav navbar-nav">
+        <li class="active">
+          <a href="../pages/theme.html">Theme</a>
+        </li>
+        <li>
+          <a href="../pages/icons.html">New Icons</a>
+        </li>
+      </ul>
+    </nav>
+{% endcomment %}
+  </div>
+</header>
+
+
+    <!-- Docs page layout -->
+    <div class="page-header page-header-anchor" id="content">
+      <div class="container">
+        <h1>{% block bootstrap3_page_title %}Page Title{% endblock %}</h1>
+        <p>{% block bootstrap3_page_description %}Page Description{% endblock %}</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        {% block bootstrap3_content %}{% endblock %}
+      </div>
+    </div>
+          
+
     {% block page_js %}{% endblock %}
   </body>
 </html>

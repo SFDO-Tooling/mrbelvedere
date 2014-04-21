@@ -1,0 +1,28 @@
+{% extends 'mpinstaller/base.html' %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}{{ package }} Installer{% endblock %}
+{% block bootstrap3_page_title %}{{ package }} Installer{% endblock %}
+{% block bootstrap3_page_description %}{{ package.description }}{% endblock %}
+
+{% block bootstrap3_content %}
+
+{% bootstrap_messages %}
+
+<div class="panel panel-warning">
+  <div class="panel-heading">
+    <h3 class="panel-title">Release not found</h3>
+  </div>
+     
+  <div class="panel-body"> 
+    This package has not yet published a {% if beta %}beta{% else %}production{% endif %} release.  Please check back later.
+
+    {% if not beta and package.current_beta %}
+    This package does have a <a href="{{ package.namespace }}/beta">published beta release which can be installed here.</a>
+    {% endif %}
+  </div>
+</div>
+
+
+{% endblock %}

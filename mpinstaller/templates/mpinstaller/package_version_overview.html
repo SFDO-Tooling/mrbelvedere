@@ -1,0 +1,170 @@
+{% extends 'mpinstaller/base.html' %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}{% block title %}{{ version.package }} Installer - {{ version.number }}{% endblock %}{% endblock %}
+{% block bootstrap3_page_title %}{{ version.package }} Installer - {{ version.number }}{% endblock %}
+{% block bootstrap3_page_description %}{{ version.package.description }}{% endblock %}
+
+{% block bootstrap3_content %}
+
+{% bootstrap_messages %}
+
+<div class="row">
+  <div class="col-md-3 col-xs-12 col-sm-12">
+    <div class="panel{% if not oauth.access_token %} panel-primary{% else %} panel-default{% endif %}">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          {% if oauth.access_token %}<span class="glyphicon glyphicon-ok"></span>{% endif %}
+          Connected Org
+        </h3>
+      </div>
+      <div class="panel-body">
+      {% if login_url %}
+        <div class="btn-group clearfix">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            <span class="glyphicon glyphicon-log-in"></span>
+            Login <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="{{ login_url }}">Production or Developer Edition</a></li>
+            <li><a href="{{ login_url }}?sandbox=true">Sandbox</a></li>
+          </ul>
+        </div>
+      {% else %}
+        <div><strong>User:</strong> <span id="oauth-username">{{ oauth.username }}</span></div>
+        <div><strong>Org:</strong> {{ oauth.org_name }}</div>
+        <div><strong>Type:</strong> {{ oauth.org_type }}</div>
+        <br />
+        <div class="button-grp">
+          <a class="btn btn-info" href="{{ logout_url }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a>
+        </div>
+      {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-9 col-sm-12 col-xs-12">
+
+    <div class="panel{% if oauth.access_token %} panel-primary{% else %} panel-default{% endif %}">
+      <div class="panel-heading">
+        <h3 class="panel-title">Installation Steps</h3>
+      </div>
+     
+      <div class="panel-body"> 
+      {% if not oauth.access_token %}
+        Use the Connected Org box to connect to a Salesforce Org.  After connecting, you will see the installation steps here.
+      {% else %}
+        <p>The following packages are required to install {{ version.package }}.  The list below shows the actions the installer will take against your org.</p>
+    
+        <ul class="list-group">
+          {% for step in package_list %}
+          <li class="list-group-item{% if step.uninstall %} list-group-item-danger{% elif step.install %} list-group-item-success{% elif step.upgrade %} list-group-item-info{% endif %}">
+            <div class="row">
+              <div class="col-md-3">
+                {% if step.uninstall %}
+                <div class="text-warning"><span class="glyphicon glyphicon-cloud-download"></span> Uninstall</span></div>
+                {% endif %}
+                {% if step.install %}
+                <div class="text-primary"><span class="glyphicon glyphicon-cloud-upload"></span> Install</span></div>
+                {% endif %}
+                {% if step.upgrade %}
+                <div class="text-info"><span class="glyphicon glyphicon-cloud-upload"></span> Upgrade</span></div>
+                {% endif %}
+                {% if step.skip %}
+                <div class="text-muted"><span class="glyphicon glyphicon-ok"></span> No change</span></div>
+                {% endif %}
+              </div>
+    
+              <div class="col-md-6">
+                <h4 class="list-group-item-heading">
+                  {{ step.version.package.name }}
+                  {% if step.version.number %}
+                    <span class="text-muted">({{ step.version.number }})
+                  {% endif %}
+                </h4>
+                <p>{{ step.version.package.description }}</p>
+              </div>
+    
+              <div class="col-md-2">
+                {% if step.version.number %}
+                <span class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
+                {% elif step.version.zip_url %}
+                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata Bundle</span>
+                {% endif %}
+    
+                {% if step.version.is_beta %}
+                <span class="badge alert-warning"><span class="glyphicon glyphicon-warning-sign"></span> Beta</span>
+                {% endif %}
+              </div>
+            </div>
+          </li>
+          {% endfor %} 
+        </ul>
+    
+        <div class="btn-group">
+          <a class="btn btn-info" data-toggle="modal" data-target=".install-confirm-modal"><span class="glyphicon glyphicon-cloud-upload"></span> Install</a>
+        </div>
+      {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade install-confirm-modal" tabindex="-1" role="dialog" aria-labelledby="Confirm Installation" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <h3 class="modal-heading">Confirm Installation</h3>
+      {% for step in install_map %}
+      {% if step.version.is_beta and step.action == 'install' %}
+      <div class="alert alert-warning">
+        <h5>Warning: Beta Package Installation</h5>
+        <p>The package {{ step.version.package }} is a managed beta release.  Managed beta releases cannot be upgraded.  Once installed, upgrading to a new beta release in the same org will require uninstalling the first beta which will destroy any test data created while using the beta.</p>
+        <input type="checkbox" class="install-confirm-checkbox" id="beta-warning-version-{{ step.version.id }}">
+        <label for="beta-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with installing this beta package in my org</label>
+      </div>
+      {% endif %}
+      {% if step.action == 'uninstall' %}
+      <div class="alert alert-danger">
+        <h5>Warning: Package Uninstall</h5>
+        <p>The package {{ step.version.package }} will be uninstalled.  Any data created which references metadata from this package will be destroyed.</p>
+        <input type="checkbox" class="install-confirm-checkbox" id="uninstall-warning-version-{{ step.version.id }}">
+        <label for="uninstall-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with uninstalling this package from my org</label>
+      </div>
+      {% endif %}
+      {% endfor %}
+
+      <div class="alert alert-primary">
+        <h5>Verify Your Connected Org</h5>
+        <p>To ensure you are installing into the correct org, please retype the Salesforce.com username you used to connect to your org.  This username must match the username from the connection for the install to proceed</p>
+
+        <input type="text" id="verify-org-username" placeholder="{{ oauth.username }}" />
+      </div>
+
+      <button type="button" class="btn btn-primary" id="confirm-install-button">Install</button>
+      <script type="text/javascript">
+        {% autoescape off %}
+        $('#confirm-install-button').click(function () {
+            modal = $(this).closest('.modal-content');
+            unchecked = $('.install-confirm-checkbox:not(:checked)');
+            if (unchecked.length > 0) {
+                alert('Please check all confirm boxes on all warnings to continue');
+                return false;
+            }
+
+            if ($('#verify-org-username').val() != $('#oauth-username').text()) {
+                alert('Username did not match your connected org.  Please retype your username to continue.');
+                return false;
+            }
+            window.location = '{{ install_url }}'
+            
+        });
+        {% endautoescape %}
+      </script>
+      <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
