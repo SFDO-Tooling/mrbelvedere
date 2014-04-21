@@ -2,7 +2,9 @@
 
 {% load bootstrap3 %}
 
-{% block bootstrap3_title %}{% block title %}{{ package }} Installer{% endblock %}{% endblock %}
+{% block bootstrap3_title %}Package Upload: {{ build.builder.namespace }} - {{ build.version }}{% endblock %}
+{% block bootstrap3_page_title %}{{ build.builder.namespace }} - {{ build.version }}{% endblock %}
+{% block bootstrap3_page_description %}This page shows the results of uploading a managed beta release of {{ build.builder.namespace }}{% endblock %}
 
 {% block bootstrap3_content %}
 
