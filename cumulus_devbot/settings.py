@@ -104,6 +104,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'hirefire.contrib.django.middleware.HireFireMiddleware',
 )
 
 ROOT_URLCONF = 'cumulus_devbot.urls'
@@ -131,6 +132,7 @@ INSTALLED_APPS = (
     'bootstrap3',
     'mrbelvedere',
     'mpinstaller',
+    'djangular',
 )
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
@@ -205,3 +207,5 @@ MPINSTALLER_CALLBACK_URL = os.environ.get('MPINSTALLER_CALLBACK_URL')
 
 SAUCELABS_USER = os.environ.get('SAUCELABS_USER')
 SAUCELABS_KEY = os.environ.get('SAUCELABS_KEY')
+
+HIREFIRE_PROCS = ['cumulus_devbot.procs.WorkerProc']
