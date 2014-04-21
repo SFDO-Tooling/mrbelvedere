@@ -202,25 +202,6 @@ def oauth_callback(request):
 
     resp = sf.get_token(code)
 
-    # Call the REST API to get the org name for display on screen
-    org = get_oauth_org(resp)
-
-    resp['org_id'] = org['Id']
-    resp['org_name'] = org['Name']
-    resp['org_type'] = org['OrganizationType']
-
-    # Append (Sandbox) to org type if sandbox
-    if sandbox:
-        resp['org_type'] = '%s (Sandbox)' % resp['org_type']
-
-    # Call the REST API to get the user's login for display on screen
-    user = get_oauth_user(resp)
-    resp['username'] = user['Username']
-    resp['perm_modifyalldata'] = user['Profile']['PermissionsModifyAllData']
-
-    # Log the info
-    logger.info(resp)
-
     # Set the response in the session
     request.session['oauth'] = resp
 
