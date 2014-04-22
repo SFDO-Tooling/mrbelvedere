@@ -97,6 +97,7 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    'hirefire.contrib.django.middleware.HireFireMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     #'django.middleware.csrf.CsrfViewMiddleware',
@@ -104,7 +105,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    #'hirefire.contrib.django.middleware.HireFireMiddleware',
 )
 
 ROOT_URLCONF = 'cumulus_devbot.urls'
@@ -133,6 +133,7 @@ INSTALLED_APPS = (
     'mrbelvedere',
     'mpinstaller',
     'djangular',
+    'cumulus_devbot',
 )
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
@@ -199,6 +200,16 @@ RQ_QUEUES = {
         'DB': 0,
         'timeout': 1800,
     },
+    'high': {
+        'URL': os.getenv('REDISTOGO_URL', 'redis://localhost:6379'), # If you're on Heroku
+        'DB': 0,
+        'timeout': 1800,
+    },
+    'low': {
+        'URL': os.getenv('REDISTOGO_URL', 'redis://localhost:6379'), # If you're on Heroku
+        'DB': 0,
+        'timeout': 1800,
+    },
 }
 
 MPINSTALLER_CLIENT_ID = os.environ.get('MPINSTALLER_CLIENT_ID')
@@ -208,4 +219,4 @@ MPINSTALLER_CALLBACK_URL = os.environ.get('MPINSTALLER_CALLBACK_URL')
 SAUCELABS_USER = os.environ.get('SAUCELABS_USER')
 SAUCELABS_KEY = os.environ.get('SAUCELABS_KEY')
 
-HIREFIRE_PROCS = ['cumulus_devbot.procs.WorkerProc']
+HIREFIRE_PROCS = ['cumulus_devbot.procs.WorkerProc',]
