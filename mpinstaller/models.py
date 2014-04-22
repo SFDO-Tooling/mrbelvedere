@@ -195,7 +195,7 @@ class PackageInstallation(models.Model):
     modified = models.DateTimeField(auto_now=True)
 
     def get_progress(self):
-        if self.status in ['Succeeded','Failed']:
+        if self.status in ['Succeeded','Failed','Cancelled']:
             return 100
         if self.status == 'Pending':
             return 0
@@ -203,7 +203,7 @@ class PackageInstallation(models.Model):
         pending = 0
         in_progress = 0
         for step in self.steps.all():
-            if step.status in ['Succeeded','Failed']:
+            if step.status in ['Succeeded','Failed','Cancelled']:
                 done += 1
             elif step.status == 'Pending':
                 pending += 1

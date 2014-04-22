@@ -24,7 +24,8 @@ class PackageInstallationSessionAdmin(admin.ModelAdmin):
 admin.site.register(PackageInstallationSession, PackageInstallationSessionAdmin)
 
 class PackageInstallationStepAdmin(admin.ModelAdmin):
-    list_display = ('package','version','status')
+    list_display = ('package','version','status','action','created','modified')
+    list_filter = ('package','status','action')
 admin.site.register(PackageInstallationStep, PackageInstallationStepAdmin)
 
 class PackageVersionAdmin(admin.ModelAdmin):

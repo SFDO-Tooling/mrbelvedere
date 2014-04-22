@@ -49,8 +49,11 @@ def package_version_overview(request, namespace, version_id):
     install_map = []
     package_list = []
     if oauth and oauth.get('access_token', None):
-        org_packages = request.session.get('org_packages', {})
-        metadata = request.session.get('metadata', {})
+        org_packages = request.session.get('org_packages', None)
+        metadata = request.session.get('metadata', None)
+        if org_packages is None or metadata is None:
+            request.session['mpinstaller_redirect'] = request.build_absolute_uri(request.path)
+            return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
         # Get the install map and package list
         install_map = version_install_map(version, org_packages, metadata)
         package_list = install_map_to_package_list(install_map)
@@ -136,6 +139,12 @@ def start_package_installation(request, namespace, version_id):
         if step_obj.action == 'skip':
             step_obj.status = 'Succeeded'
         step_obj.save()
+
+    # Clear out the org_packages and metadata cached in session
+    if 'org_packages' in request.session:
+        del request.session['org_packages']
+    if 'metadata' in request.session:
+        del request.session['metadata']
 
     return HttpResponseRedirect('/mpinstaller/installation/%s' % installation_obj.id)
 
