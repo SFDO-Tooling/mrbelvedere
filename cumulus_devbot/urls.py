@@ -12,6 +12,7 @@ urlpatterns = patterns('',
 
 
 urlpatterns = [
+    url(r'^api/', include('api.urls')),
     url(r'^mrbelvedere/', include('mrbelvedere.urls')),
     url(r'^mpinstaller/', include('mpinstaller.urls')),
     url(r'^django-rq/', include('django_rq.urls')),

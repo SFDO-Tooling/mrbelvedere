@@ -1,6 +1,26 @@
 from django.db import models
 from tinymce.models import HTMLField
 
+INSTALLATION_STATUS_CHOICES = (
+    ('Pending','Pending'),
+    ('InProgress', 'In Progress'),
+    ('Succeeded', 'Succeeded'),
+    ('Failed', 'Failed'),
+)
+INSTALLATION_STEP_STATUS_CHOICES = (
+    ('Pending','Pending'),
+    ('InProgress','In Progress'),
+    ('Succeeded','Succeeded'),
+    ('Failed','Failed'),
+    ('Cancelled','Cancelled'),
+)
+INSTALLATION_ACTION_CHOICES = (
+    ('install','Install'),
+    ('upgrade','Upgrade'),
+    ('uninstall','Uninstall'),
+    ('skip','No change'),
+)
+
 class MetadataCondition(models.Model):
     metadata_type = models.CharField(max_length=255)
     field = models.CharField(max_length=255)
@@ -252,7 +272,7 @@ class PackageInstallation(models.Model):
     version = models.ForeignKey(PackageVersion, related_name='installations', null=True, blank=True)
     org_id = models.CharField(max_length=32)
     org_type = models.CharField(max_length=255)
-    status = models.CharField(max_length=32)
+    status = models.CharField(choices=INSTALLATION_STATUS_CHOICES, max_length=32)
     username = models.CharField(max_length=255)
     install_map = models.TextField(null=True, blank=True)
     log = models.TextField(null=True, blank=True)
@@ -344,8 +364,8 @@ class PackageInstallationStep(models.Model):
     package = models.ForeignKey(Package, related_name='installation_steps', null=True, blank=True)
     version = models.ForeignKey(PackageVersion, related_name='installation_steps', null=True, blank=True)
     previous_version = models.CharField(max_length=255, null=True, blank=True)
-    action = models.CharField(max_length=32)
-    status = models.CharField(max_length=32)
+    action = models.CharField(choices=INSTALLATION_ACTION_CHOICES, max_length=32)
+    status = models.CharField(choices=INSTALLATION_STEP_STATUS_CHOICES, max_length=32)
     log = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
