@@ -78,6 +78,7 @@ def package_version_overview(request, namespace, version_id):
         'base_url': request.build_absolute_uri('/mpinstaller/'),
         'package_list': package_list,
         'install_map': install_map,
+        'content_intro': version.get_content_intro(),
     }
 
     return render_to_response('mpinstaller/package_version_overview.html', data)
