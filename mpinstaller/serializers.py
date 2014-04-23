@@ -18,9 +18,10 @@ class MetadataConditionSerializer(serializers.ModelSerializer):
 
 class RequiredPackageVersionSerializer(serializers.ModelSerializer):
     package = PackageSerializer()
+    content_intro = serializers.Field(source='get_content_intro')
     class Meta:
         model = PackageVersion
-        fields = ('id','name','number','zip_url','conditions','package')
+        fields = ('id','name','number','zip_url','conditions','package','content_intro')
 
 class PackageVersionDependencySerializer(serializers.ModelSerializer):
     requires = RequiredPackageVersionSerializer()
@@ -45,6 +46,8 @@ class InstallationStepSerializer(serializers.ModelSerializer):
 class InstallationSerializer(serializers.ModelSerializer):
     version = PackageVersionSerializer()
     steps = InstallationStepSerializer(many=True)
+    content_success = serializers.Field(source="get_content_success") 
+    content_failure = serializers.Field(source="get_content_failure")
     class Meta:
         model = PackageInstallation
-        fields = ('id', 'org_type', 'status', 'log', 'created', 'modified', 'version', 'steps')
+        fields = ('id', 'org_type', 'status', 'log', 'created', 'modified', 'version', 'steps', 'content_success', 'content_failure')
