@@ -221,3 +221,9 @@ SAUCELABS_USER = os.environ.get('SAUCELABS_USER')
 SAUCELABS_KEY = os.environ.get('SAUCELABS_KEY')
 
 HIREFIRE_PROCS = ['cumulus_devbot.procs.WorkerProc',]
+
+TINYMCE_DEFAULT_CONFIG = {
+    'plugins': "table,paste,searchreplace",
+    'theme': "advanced",
+    'custom_undo_redo_levels': 10,
+}
