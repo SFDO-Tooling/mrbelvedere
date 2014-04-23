@@ -72,7 +72,37 @@
       </div>
     </div>
 
-    {% if installation.status == 'Succeeded' or installation.status == 'Failed' %}
+    {% if content_success or content_failure %}
+    <div class="panel {% if installation.status == 'Succeeded' %}panel-success{% elif installation.status == 'Failed' %}panel-danger{% endif %}">
+      <div class="panel-heading">
+        <h3 class="panel-title"><span class="glyphicon glyphicon-question-sign"></span> Next Steps</h3>
+      </div>
+      <div class="panel-body">
+      {% if installation.status == 'Succeeded' %}
+        {% for content in content_success %}
+          <h5>{{ content.heading }}</h5>
+          {% autoescape off %}
+          <div class="well">{{ content.body }}</div>
+          {% endautoescape %}
+        {% endfor %}
+      {% elif installation.status == 'Failed' %}
+        {% for content in content_failure %}
+          <h5>{{ content.heading }}</h5>
+          {% autoescape off %}
+          <div class="well">{{ content.body }}</div>
+          {% endautoescape %}
+        {% endfor %}
+      {% endif %}
+      </div>
+      {% if installation.status == 'Failed' %}
+      <div class="panel-footer">
+        <a href="{{ version.get_installer_url }}"><span class="glyphicon glyphicon-arrow-left"></span> Return to package overview to retry the installation</a>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+   
+    {% if installation.status == 'Succeeded' or installation.status == 'Failed' %} 
     <div class="panel">
       <div class="panel-heading">
         <h3 class="panel-title">Installation Steps</h3>
@@ -149,6 +179,11 @@
                 {% endif %}
               </div>
             </div>
+            {% if step.status == 'Failed' and step.log %}
+            <div class="well">
+              {{ step.log }}
+            </div>
+            {% endif %}
           </li>
           {% endfor %} 
      

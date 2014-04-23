@@ -213,7 +213,7 @@ class BaseMetadataApiCall(object):
                 return response
         else:
             # Check the result and return when done
-            while self.status != 'Succeeded' and self.status != 'Failed':
+            while self.status not in ['Succeeded','Failed','Cancelled']:
                 time.sleep(self.check_interval)
                 envelope = self.build_envelope_result()
                 envelope = envelope.encode('utf-8')

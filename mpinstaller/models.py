@@ -1,4 +1,5 @@
 from django.db import models
+from tinymce.models import HTMLField
 
 class MetadataCondition(models.Model):
     metadata_type = models.CharField(max_length=255)
@@ -36,6 +37,11 @@ class Package(models.Model):
     current_prod = models.ForeignKey('mpinstaller.PackageVersion', related_name='current_prod', null=True, blank=True)
     current_beta = models.ForeignKey('mpinstaller.PackageVersion', related_name='current_beta', null=True, blank=True)
     key = models.CharField(max_length=255, null=True, blank=True)
+    content_intro = HTMLField(null=True, blank=True, help_text="Shown on the page to start an installation in the Package Information panel if provided.")
+    content_success = HTMLField(null=True, blank=True, help_text="Shown on the installation status page after a successful installation in the Next Steps panel if provided.")
+    content_failure = HTMLField(null=True, blank=True, help_text="Shown on the installation status page after a failed installation in the Next Steps panel if provided.")
+    content_success_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content success if the package is a beta.")
+    content_failure_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content failure if the package is a beta.")
 
     def __unicode__(self):
         return self.name
@@ -108,9 +114,14 @@ class PackageVersion(models.Model):
     number = models.CharField(max_length=32, null=True, blank=True)
     zip_url = models.URLField(null=True, blank=True)
     conditions = models.ManyToManyField(MetadataCondition, null=True, blank=True)
+    content_intro = HTMLField(null=True, blank=True, help_text="Optional version specific text to show in Package Information panel")
+    content_success = HTMLField(null=True, blank=True, help_text="Optional version specific text shown after a successful installation.")
+    content_failure = HTMLField(null=True, blank=True, help_text="Optional version specific text shown after a failed installation.")
 
     def __unicode__(self):
-        return '%s (%s)' % (self.number, self.package.namespace)
+        if self.number:
+            return '%s %s (%s)' % (self.name, self.number, self.package.namespace)
+        return self.name
 
     def is_beta(self):
         if self.number and self.number.find('(Beta ') != -1:
@@ -163,6 +174,60 @@ class PackageVersion(models.Model):
 
         return passes
 
+    def get_content_intro(self):
+        # Look for content from the package
+        content = []
+        if self.package.content_intro:
+            content.append(self.package.content_intro)
+
+        # Append version specific information if available
+        if self.content_intro:
+            content.append(self.content_intro)
+
+        if content:
+            return {
+                'heading': self.package.name,
+                'body': '\n'.join(content),
+            }
+
+    def get_content_success(self):
+        # Look for content from the package
+        content = []
+        if self.is_beta():
+            if self.package.content_success_beta:
+                content.append(self.package.content_success_beta)
+        if not content and self.package.content_success:
+            content.append(self.package.content_success)
+
+        # Append version specific information if available
+        if self.content_success:
+            content.append(self.content_success)
+
+        if content:
+            return {
+                'heading': self.package.name,
+                'body': '\n'.join(content),
+            }
+
+    def get_content_failure(self):
+        # Look for content from the package
+        content = []
+        if self.is_beta():
+            if self.package.content_failure_beta:
+                content.append(self.package.content_failure_beta)
+        if not content and self.package.content_failure:
+            content.append(self.package.content_failure)
+
+        # Append version specific information if available
+        if self.content_failure:
+            content.append(self.content_failure)
+
+        if content:
+            return {
+                'heading': self.package.name,
+                'body': '\n'.join(content),
+            }
+
     class Meta:
         ordering = ['package__namespace','number']
 
@@ -194,6 +259,9 @@ class PackageInstallation(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
+    def __unicode__(self):
+        return '%s: Install %s' % (self.id, self.version)
+
     def get_progress(self):
         if self.status in ['Succeeded','Failed','Cancelled']:
             return 100
@@ -213,6 +281,53 @@ class PackageInstallation(models.Model):
         total = done + pending + in_progress
         progress = int(((done + (in_progress * .5)) * 100) / total)
         return progress
+
+    def get_content_success(self):
+        content = []
+
+        if self.status != 'Succeeded':
+            return content
+
+        # Add content from the package and version
+        version_content = self.version.get_content_success()
+        if version_content:
+            content.append(version_content)
+   
+        # Add content from dependent packages and versions
+        packages = []
+        for step in self.steps.filter(status = 'Succeeded').exclude(action = 'skip'):
+            if step.package.id in packages:
+                continue
+            packages.append(step.package.id)
+            step_content = step.version.get_content_success()
+            if step_content:
+                content.append(step_content)
+        
+        return content
+    
+    def get_content_failure(self):
+        content = []
+
+        if self.status != 'Failed':
+            return content
+
+        # Add content from the package and version
+        version_content = self.version.get_content_failure()
+        if version_content:
+            content.append(version_content)
+   
+        # Add content from dependent packages and versions
+        packages = []
+        packages.append(self.package.id)
+        for step in self.steps.filter(status = 'Failed').exclude(action = 'skip'):
+            if step.package.id in packages:
+                continue
+            packages.append(step.package.id)
+            step_content = step.version.get_content_failure()
+            if step_content:
+                content.append(step_content)
+        
+        return content
 
     def get_status_from_steps(self):
         pass

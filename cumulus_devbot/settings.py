@@ -134,6 +134,7 @@ INSTALLED_APPS = (
     'mpinstaller',
     'djangular',
     'cumulus_devbot',
+    'tinymce',
 )
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'

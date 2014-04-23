@@ -20,5 +20,7 @@ urlpatterns = [
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url('^django-rq/', include('django_rq.urls')),
+    url(r'^tinymce/', include('tinymce.urls')),
+
     # ... the rest of your URLconf goes here ...
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -169,6 +169,8 @@ def installation_overview(request, installation_id):
         'oauth': request.session.get('oauth',None),
         'login_url': login_url,
         'logout_url': logout_url,
+        'content_success': installation.get_content_success(),
+        'content_failure': installation.get_content_failure(),
         'base_url': request.build_absolute_uri('/mpinstaller/'),
     }
 
