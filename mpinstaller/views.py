@@ -252,7 +252,7 @@ def oauth_post_login(request):
         sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
         res = sf.query('Select Id from Organization')
     except SalesforceExpiredSession:
-        oauth_refresh(request)
+        return oauth_refresh(request)
 
     # Setup the list of actions to take after page load
     actions = []
@@ -293,12 +293,13 @@ def oauth_refresh(request):
     if refresh_response.get('access_token', None):
         # Set the new token in the session
         request.session['oauth'].update(refresh_response)
+        request.session.save()
 
-    redirect = request.session.get('mpinstaller_redirect',None)
-    if redirect is None:
-        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
-    else:
-        return HttpResponseRedirect(redirect)
+    #redirect = request.session.get('mpinstaller_redirect',None)
+    #if redirect is None:
+    return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
+    #else:
+        #return HttpResponseRedirect(redirect)
 
 def org_user(request):
     oauth = request.session.get('oauth', None)
