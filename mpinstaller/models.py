@@ -155,7 +155,7 @@ class PackageVersion(models.Model):
         elif self.package.current_beta and self.package.current_beta.id == self.id:
             redirect = '/mpinstaller/%s/beta' %  self.package.namespace
         else:
-            redirect = '/mpinstaller/%s/version/%s' %  (namespace, self.id)
+            redirect = '/mpinstaller/%s/version/%s' %  (self.package.namespace, self.id)
         if request:
             redirect = request.build_absolute_uri(redirect)
         if redirect:
