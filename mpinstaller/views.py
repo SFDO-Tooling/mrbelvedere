@@ -231,6 +231,8 @@ def oauth_post_login(request):
     """ After successful oauth login, the user is redirected to this view which shows
         the status of fetching needed info from their org to determine install steps """
 
+    request.session['oauth']['access_token'] = '123456789012345678901234567890123456789012'
+
     oauth = request.session.get('oauth', None)
     if not oauth or not oauth.get('access_token'):
         return HttpResponse('Unauthorized', status=401)
@@ -246,12 +248,13 @@ def oauth_post_login(request):
         request.session['mpinstaller_redirect'] = redirect
     message = None
 
-    # Check if the oauth access_token has expired and redirect if so
+    # Determine if the oauth access token has expired by doing a simple query via the api
+    # If it has expired, refresh the token
     try:
         sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
         res = sf.query('Select Id from Organization');
     except SalesforceExpiredSession:
-        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/refresh'))
+        oauth_refresh(request)
 
     # Setup the list of actions to take after page load
     actions = []
@@ -294,7 +297,6 @@ def oauth_refresh(request):
         request.session['oauth'].update(refresh_response)
 
     return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
-
 
 def org_user(request):
     oauth = request.session.get('oauth', None)
