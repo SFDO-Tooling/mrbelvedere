@@ -296,7 +296,11 @@ def oauth_refresh(request):
         # Set the new token in the session
         request.session['oauth'].update(refresh_response)
 
-    return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
+    redirect = request.session.get('mpinstaller_redirect',None)
+    if redirect is None:
+        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
+    else:
+        return HttpResponseRedirect(redirect)
 
 def org_user(request):
     oauth = request.session.get('oauth', None)
