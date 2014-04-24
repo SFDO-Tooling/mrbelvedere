@@ -249,6 +249,7 @@ def oauth_post_login(request):
     # Check if the oauth access_token has expired and redirect if so
     try:
         sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
+        res = sf.query('Select Id from Organization');
     except SalesforceExpiredSession:
         return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/refresh'))
 
