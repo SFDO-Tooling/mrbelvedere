@@ -231,8 +231,6 @@ def oauth_post_login(request):
     """ After successful oauth login, the user is redirected to this view which shows
         the status of fetching needed info from their org to determine install steps """
 
-    request.session['oauth']['access_token'] = '123456789012345678901234567890123456789012'
-
     oauth = request.session.get('oauth', None)
     if not oauth or not oauth.get('access_token'):
         return HttpResponse('Unauthorized', status=401)
