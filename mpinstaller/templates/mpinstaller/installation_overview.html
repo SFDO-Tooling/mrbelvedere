@@ -44,7 +44,7 @@
       
       <div class="panel-body">  
         <div id="installation-progress-bar">
-          <div class="progress" ng-class="{'progress-bar-striped active': (installation.progress < 100)}">
+          <div class="progress" ng-class="{'progress-striped active': (installation.progress < 100)}">
             <div class="progress-bar" ng-class="{'progress-bar-success': (installation.status == 'Succeeded'), 'progress-bar-danger': (installation.status == 'Failed'),'progress-bar-primary': (installation.status == 'InProgress'), 'progress-bar-default': (installation.status == 'Pending')}" role="progressbar" aria-valuenow="{{installation.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{installation.progress}}%">
               {{installation.status}}
             </div>
@@ -100,7 +100,7 @@
                   <span ng-hide="step.status != 'Cancelled'"><span class="glyphicon glyphicon-ban-circle"></span> Cancelled</span>
                 </div>
                 
-                <div class="progress" ng-hide="step.status == 'Cancelled' || step.action == 'skip'" ng-class="{'progress-bar-striped active': (step.progress < 100)}">
+                <div class="progress" ng-hide="step.status == 'Cancelled' || step.action == 'skip'" ng-class="{'progress-striped active': (step.progress < 100)}">
                   <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{step.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{step.progress}}%">
                     {{step.status}}
                   </div>
@@ -111,6 +111,7 @@
               <div class="col-md-6">
                 <h3 class="panel-title">
                   {{step.version.package.name}}
+                  <span ng-hide="step.version.number == '' || step.version.number == null">({{step.version.number}})</span>
                 </h3>
                 <p>{{step.version.package.description}}</p>
               </div>
