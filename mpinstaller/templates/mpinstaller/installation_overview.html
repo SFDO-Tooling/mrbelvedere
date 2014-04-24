@@ -7,191 +7,132 @@
 {% block bootstrap3_page_description %}This page shows the status of installing the {{ version.package }} into your connected Salesforce org.{% endblock %}
 
 {% block extra_head %}
-{% if installation.status != 'Succeeded' and installation.status != 'Failed' %}
- <meta http-equiv="refresh" content="3; URL=">
-{% endif %}
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.js"></script> 
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-sanitize.js"></script> 
+<script type="text/javascript">
+  var status_api_url = '{{ status_api_url }}';
+</script>
+<script src="/static/js/installation_status.js"></script> 
+
+<style type="text/css">
+  #installation-progress-bar .progress {
+    height: 40px;
+  }
+  #installation-progress-bar .progress-bar {
+    font-size: 21px;
+    font-weight; bold;
+    padding-top: 10px;
+  }
+</style>
 {% endblock %}
 
 {% block bootstrap3_content %}
 
 {% bootstrap_messages %}
-    {% if installation.status != 'Succeeded' and installation.status != 'Failed' %}
-    <div class="alert alert-info">
-      Your installation is running.  This page will refresh every 5 seconds until the installation is complete.  Depending on how many packages need to be changed in your org, the installation may take up to 15 minutes to complete in normal conditions.
 
-      You can close this page if needed and the installation will continue.  You will receive emails from Salesforce with the status of each install/uninstall of a managed package.
-    </div>
-    {% endif %}
+{% verbatim %}
+
+  <div class="installation-status" ng-app="InstallationStatusApp" ng-controller="InstallationStatusController">
 
     <div class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">
-          {% if installation.status == 'Succeeded' %}
-            <span class="glyphicon glyphicon-ok"></span>
-          {% elif installation.status == 'Failed' %}
-            <span class="glyphicon glyphicon-warning-sign"></span>
-          {% elif installation.status == 'Pending' %}
-            <span class="glyphicon glyphicon-time"></span>
-          {% elif installation.status == 'InProgress' %}
-            <span class="glyphicon glyphicon-refresh"></span>
-          {% endif %}
+          <span class="glyphicon" ng-class="{'glyphicon-ok': (installation.status == 'Succeeded'),'glyphicon-warning-sign': (installation.status == 'Failed'),}"></span>
           Overall Status
         </h3>
       </div>
       
       <div class="panel-body">  
         <div id="installation-progress-bar">
-          {% if installation.status == 'Succeeded' %}
-          <div class="progress">
-            <div class="progress-bar progress-bar-success"  role="progressbar" aria-valuenow="{{ installation.get_progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ installation.get_progress }}%">
-              {{ installation.status }}
+          <div class="progress" ng-class="{'progress-bar-striped active': (installation.progress < 100)}">
+            <div class="progress-bar" ng-class="{'progress-bar-success': (installation.status == 'Succeeded'), 'progress-bar-danger': (installation.status == 'Failed'),'progress-bar-primary': (installation.status == 'InProgress'), 'progress-bar-default': (installation.status == 'Pending')}" role="progressbar" aria-valuenow="{{installation.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{installation.progress}}%">
+              {{installation.status}}
             </div>
           </div>
-          {% elif installation.status == 'Failed' %}
-          <div class="progress progress-bar-danger">
-            <div class="progress-bar progress-bar-danger"  role="progressbar" aria-valuenow="{{ installation.get_progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ installation.get_progress }}%">
-              {{ installation.status }}
-            </div>
-          </div>
-          {% elif installation.status == 'Pending' %}
-          <div class="progress progress-striped active">
-            <div class="progress-bar progress-bar-info"  role="progressbar" aria-valuenow="{{ installation.get_progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ installation.get_progress }}%">
-              Queued
-            </div>
-          </div>
-          {% elif installation.status == 'InProgress' %}
-          <div class="progress progress-striped active">
-            <div class="progress-bar progress-bar-primary"  role="progressbar" aria-valuenow="{{ installation.get_progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ installation.get_progress }}%">
-              In Progress
-            </div>
-          </div>
-          {% endif %}
         </div>
-     
-        <p>{{ installation.log }}</p>
-      </div>
-    </div>
+    
+        <div class="alert alert-primary" ng-hide="installation.progress == 100">
+          <span ng-hide="installation.status != 'Pending'">Your installation is waiting in the queue and will be started shortly.  This page will automatically update with the status of the installation once it starts.  You can close this page if desired and the installation will still run in the background</span>
+          <span ng-hide="installation.status != 'InProgress'">Your installation is now running in the background.  This page will automatically update with the status until the installation completes.  You can close this page if desired and the installation will still run in the background</span>
+        </div>
 
-    {% if content_success or content_failure %}
-    <div class="panel {% if installation.status == 'Succeeded' %}panel-success{% elif installation.status == 'Failed' %}panel-danger{% endif %}">
-      <div class="panel-heading">
-        <h3 class="panel-title"><span class="glyphicon glyphicon-question-sign"></span> Next Steps</h3>
-      </div>
-      <div class="panel-body">
-      {% if installation.status == 'Succeeded' %}
-        {% for content in content_success %}
-          <h5>{{ content.heading }}</h5>
-          {% autoescape off %}
-          <div class="well">{{ content.body }}</div>
-          {% endautoescape %}
-        {% endfor %}
-      {% elif installation.status == 'Failed' %}
-        {% for content in content_failure %}
-          <h5>{{ content.heading }}</h5>
-          {% autoescape off %}
-          <div class="well">{{ content.body }}</div>
-          {% endautoescape %}
-        {% endfor %}
-      {% endif %}
-      </div>
-      {% if installation.status == 'Failed' %}
-      <div class="panel-footer">
-        <a href="{{ version.get_installer_url }}"><span class="glyphicon glyphicon-arrow-left"></span> Return to package overview to retry the installation</a>
-      </div>
-      {% endif %}
-    </div>
-    {% endif %}
+        <div class="bs-callout bs-callout-success content-next-steps content-next-steps-succeeded" ng-if="installation.status == 'Succeeded' && installation.content_success">
+          <h4>Next Steps</h4>
+          <ul class="list-group">
+            <li class="list-group-item contextual-content" ng-repeat="content in installation.content_success">
+              <div class="row">
+                <div class="col-md-2">
+                  <h5>{{content.heading}}</h5>
+                </div>
+                <div class="col-md-10">
+                  <span ng-bind-html="content.body" />
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+          
+        <div class="bs-callout bs-callout-warning content-next-steps content-next-steps-failed" ng-if="installation.status == 'Failed' && installation.content_failure">
+          <h4>Next Steps</h4>
+          <div class="contextual-content" ng-repeat="content in installation.content_failure">
+            <h4>{{content.heading}} Next Steps</h4>
+            <p ng-bind-html="content.body"></p>
+          </div>
+        </div>
+
+        <a href="/mpinstaller/npsp/beta"><span class="glyphicon glyphicon-arrow-left"></span> Return to package overview to retry the installation</a>
    
-    {% if installation.status == 'Succeeded' or installation.status == 'Failed' %} 
-    <div class="panel">
-      <div class="panel-heading">
-        <h3 class="panel-title">Installation Steps</h3>
-      </div>
-      <div class="panel-body">
+     
+        <h3>Installation Log</h3>
         
         <ul class="list-group" id="installation-steps">
-          {% for step in installation.steps.all %}
-          <li class="list-group-item{% if step.action == 'skip' or step.status == 'Cancelled' %}{% elif step.status == 'Succeeded' %} list-group-item-success{% elif step.status == 'Failed' %} list-group-item-danger{% elif step.status == 'InProgress' %} list-group-item-primary{% elif step.status == 'Pending' %} list-group-item-info{% endif %}">
+          
+          <li class="list-group-item" ng-class="{'list-group-item-success': (step.status == 'Succeeded' && step.action != 'skip'), 'text-muted': (step.action == 'skip'), 'list-group-item-danger': (step.status == 'Failed'),'list-group-item-primary': (step.status == 'InProgress'), 'list-group-item-default': (step.status == 'Pending')}" ng-repeat="step in installation.steps">
             <div class="row">
               <div class="col-md-3">
-                {% if step.action == 'uninstall' %}
-                <div class="text-warning"><span class="glyphicon glyphicon-cloud-download"></span> Uninstall</span></div>
-                {% endif %}
-                {% if step.action == 'install' %}
-                <div class="text-primary"><span class="glyphicon glyphicon-cloud-upload"></span> Install</span></div>
-                {% endif %}
-                {% if step.action == 'upgrade' %}
-                <div class="text-info"><span class="glyphicon glyphicon-cloud-upload"></span> Upgrade</span></div>
-                {% endif %}
-                {% if step.action == 'skip' %}
-                <div class="text-muted"><span class="glyphicon glyphicon-ok"></span> No change</span></div>
-                {% endif %}
- 
-                {% if step.status == 'Pending' %}
-                <div class="progress">
-                  <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%">
-                    {{ step.status }}
+                
+                
+                <div ng-class="{'text-success': (step.status == 'Succeeded' && step.action != 'skip'), 'text-muted': (step.action == 'skip'), 'text-warning': (step.status == 'Cancelled'), 'text-danger': (step.status == 'Failed'),'text-primary': (step.status == 'InProgress'), 'text-default': (step.status == 'Pending')}">
+                  <span ng-hide="step.action != 'install' || step.status == 'Cancelled'"><span class="glyphicon glyphicon-cloud-upload"></span> Install</span>
+                  <span ng-hide="step.action != 'upgrade' || step.status == 'Cancelled'"><span class="glyphicon glyphicon-cloud-upload"></span> Upgrade</span>
+                  <span ng-hide="step.action != 'uninstall' || step.status == 'Cancelled'"><span class="glyphicon glyphicon-cloud-upload"></span> Uninstall</span>
+                  <span ng-hide="step.action != 'skip' || step.status == 'Cancelled'"><span class="glyphicon glyphicon-ok"></span> No Change</span>
+                  <span ng-hide="step.status != 'Cancelled'"><span class="glyphicon glyphicon-ban-circle"></span> Cancelled</span>
+                </div>
+                
+                <div class="progress" ng-hide="step.status == 'Cancelled' || step.action == 'skip'" ng-class="{'progress-bar-striped active': (step.progress < 100)}">
+                  <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{step.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{step.progress}}%">
+                    {{step.status}}
                   </div>
                 </div>
-                {% elif step.status == 'InProgress' %}
-                <div class="progress progress-striped active">
-                  <div class="progress-bar progress-bar-primary" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width: 70%">
-                    In Progress
-                    </div>
-                </div>
-                {% elif step.action == 'skip' %}
-                {% elif step.status == 'Succeeded' %}
-                <div class="progress">
-                  <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-                    {{ step.status }}
-                  </div>
-                </div>
-                {% elif step.status == 'Cancelled' %}
-                {% elif step.status == 'Failed' %}
-                <div class="progress">
-                  <div class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-                    {{ step.status }}
-                  </div>
-                </div>
-                {% endif %}
+                
               </div>
   
               <div class="col-md-6">
                 <h3 class="panel-title">
-                  {{ step.version.package.name }}
-                  {% if step.action == 'uninstall' %}
-                    <span class="text-muted">- {{ step.previous_version }}
-                  {% elif step.version.number %}
-                    <span class="text-muted">- {{ step.version.number }}
-                  {% endif %}
+                  {{step.version.package.name}}
                 </h3>
-                <p>{{ step.version.package.description }}</p>
+                <p>{{step.version.package.description}}</p>
               </div>
-  
+
               <div class="col-md-2">
-                {% if step.version.number %}
-                <span class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
-                {% elif step.version.zip_url %}
-                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata Bundle</span>
-                {% endif %}
-                {% if step.version.is_beta %}
-                <span class="badge alert-warning"><span class="glyphicon glyphicon-warning-sign"></span> Beta</span>
-                {% endif %}
+                <span ng-hide="step.version.zip_url == null || step.version.zip_url == ''" class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata Bundle</span>
+                <span ng-hide="step.version.number == null || step.version.number == ''" class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
+                <span ng-hide="step.version.is_beta != true" class="badge alert-warning"><span class="glyphicon glyphicon-warning-sign"></span> Beta Releae</span>
               </div>
             </div>
-            {% if step.status == 'Failed' and step.log %}
-            <div class="well">
-              {{ step.log }}
+    
+            <div class="well" ng-hide="step.log == '' || step.log == null">
+              {{step.log}}
             </div>
-            {% endif %}
+
           </li>
-          {% endfor %} 
-     
+          
         </ul>
         </div>
       </div>
     
     </div>
-   {% endif %} 
-
+  </div>
+{% endverbatim %}
 {% endblock %}

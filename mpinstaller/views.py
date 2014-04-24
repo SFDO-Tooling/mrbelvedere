@@ -164,6 +164,8 @@ def installation_overview(request, installation_id):
         login_url = request.build_absolute_uri('/mpinstaller/oauth/login?redirect=%s' % redirect)
         logout_url = None
 
+    status_api_url = request.build_absolute_uri('/api/installations/%s/' % installation.id)
+
     data = {
         'installation': installation,
         'version': installation.version,
@@ -173,6 +175,7 @@ def installation_overview(request, installation_id):
         'content_success': installation.get_content_success(),
         'content_failure': installation.get_content_failure(),
         'base_url': request.build_absolute_uri('/mpinstaller/'),
+        'status_api_url': status_api_url,
     }
 
     return render_to_response('mpinstaller/installation_overview.html', data)

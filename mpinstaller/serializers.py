@@ -19,9 +19,10 @@ class MetadataConditionSerializer(serializers.ModelSerializer):
 class RequiredPackageVersionSerializer(serializers.ModelSerializer):
     package = PackageSerializer()
     content_intro = serializers.Field(source='get_content_intro')
+    is_beta = serializers.Field(source='is_beta')
     class Meta:
         model = PackageVersion
-        fields = ('id','name','number','zip_url','conditions','package','content_intro')
+        fields = ('id','name','number','zip_url','is_beta','package','conditions','content_intro')
 
 class PackageVersionDependencySerializer(serializers.ModelSerializer):
     requires = RequiredPackageVersionSerializer()
@@ -33,21 +34,24 @@ class PackageVersionSerializer(serializers.ModelSerializer):
     package = PackageSerializer()
     conditions = MetadataConditionSerializer(many=True)
     dependencies = PackageVersionDependencySerializer(many=True)
+    is_beta = serializers.Field(source='is_beta')
     class Meta:
         model = PackageVersion
-        fields = ('id','name','number','zip_url','conditions','package','dependencies')
+        fields = ('id','name','number','zip_url','is_beta', 'package', 'conditions','dependencies')
 
 class InstallationStepSerializer(serializers.ModelSerializer):
     version = RequiredPackageVersionSerializer()
+    progress = serializers.Field(source='get_progress')
     class Meta:
         model = PackageInstallationStep
-        fields = ('id', 'version', 'previous_version', 'action', 'status', 'log', 'created', 'modified','order')
+        fields = ('id', 'version', 'previous_version', 'action', 'status', 'progress', 'log', 'created', 'modified','order')
 
 class InstallationSerializer(serializers.ModelSerializer):
     version = PackageVersionSerializer()
     steps = InstallationStepSerializer(many=True)
     content_success = serializers.Field(source="get_content_success") 
     content_failure = serializers.Field(source="get_content_failure")
+    progress = serializers.Field(source='get_progress')
     class Meta:
         model = PackageInstallation
-        fields = ('id', 'org_type', 'status', 'log', 'created', 'modified', 'version', 'steps', 'content_success', 'content_failure')
+        fields = ('id', 'org_type', 'status', 'log', 'created', 'modified', 'version', 'progress', 'steps', 'content_success', 'content_failure')

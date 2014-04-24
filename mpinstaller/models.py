@@ -287,19 +287,14 @@ class PackageInstallation(models.Model):
             return 100
         if self.status == 'Pending':
             return 0
-        done = 0
-        pending = 0
-        in_progress = 0
-        for step in self.steps.all():
-            if step.status in ['Succeeded','Failed','Cancelled']:
-                done += 1
-            elif step.status == 'Pending':
-                pending += 1
-            elif step.status == 'InProgress':
-                in_progress += 1
 
-        total = done + pending + in_progress
-        progress = int(((done + (in_progress * .5)) * 100) / total)
+        steps = 0
+        steps_progress = 0
+        for step in self.steps.all():
+            steps += 1
+            steps_progress += step.get_progress()
+
+        progress = int(steps_progress / steps)
         return progress
 
     def get_content_success(self):
@@ -370,6 +365,14 @@ class PackageInstallationStep(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     order = models.IntegerField()
+
+    def get_progress(self):
+        if self.status == 'Pending':
+            return 0
+        if self.status == 'InProgress':
+            return 50
+        if self.status in ['Cancelled', 'Failed', 'Succeeded']:
+            return 100
 
     class Meta:
         ordering = ['order',]
