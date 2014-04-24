@@ -56,15 +56,15 @@
           <span ng-hide="installation.status != 'InProgress'">Your installation is now running in the background.  This page will automatically update with the status until the installation completes.  You can close this page if desired and the installation will still run in the background</span>
         </div>
 
-        <div class="bs-callout bs-callout-success content-next-steps content-next-steps-succeeded" ng-if="installation.status == 'Succeeded' && installation.content_success">
-          <h4>Next Steps</h4>
+        <div class="content-next-steps content-next-steps-succeeded" ng-if="installation.status == 'Succeeded' && installation.content_success">
+          <h3>Next Steps</h3>
           <ul class="list-group">
-            <li class="list-group-item contextual-content" ng-repeat="content in installation.content_success">
+            <li class="list-group-item list-group-item-success contextual-content" ng-repeat="content in installation.content_success">
               <div class="row">
-                <div class="col-md-2">
-                  <h5>{{content.heading}}</h5>
+                <div class="col-md-3">
+                  <h4>{{content.heading}}</h4>
                 </div>
-                <div class="col-md-10">
+                <div class="col-md-9">
                   <span ng-bind-html="content.body" />
                 </div>
               </div>
@@ -72,12 +72,20 @@
           </ul>
         </div>
           
-        <div class="bs-callout bs-callout-warning content-next-steps content-next-steps-failed" ng-if="installation.status == 'Failed' && installation.content_failure">
-          <h4>Next Steps</h4>
-          <div class="contextual-content" ng-repeat="content in installation.content_failure">
-            <h4>{{content.heading}} Next Steps</h4>
-            <p ng-bind-html="content.body"></p>
-          </div>
+        <div class="content-next-steps content-next-steps-failed" ng-if="installation.status == 'Failed' && installation.content_failure">
+          <h3>Next Steps</h3>
+          <ul class="list-group">
+            <li class="list-group-item list-group-item-warning contextual-content" ng-repeat="content in installation.content_failure">
+              <div class="row">
+                <div class="col-md-3">
+                  <h4>{{content.heading}}</h4>
+                </div>
+                <div class="col-md-9">
+                  <span ng-bind-html="content.body" />
+                </div>
+              </div>
+            </li>
+          </ul>
         </div>
 
         <a href="/mpinstaller/npsp/beta"><span class="glyphicon glyphicon-arrow-left"></span> Return to package overview to retry the installation</a>
@@ -89,24 +97,6 @@
           
           <li class="list-group-item" ng-class="{'list-group-item-success': (step.status == 'Succeeded' && step.action != 'skip'), 'text-muted': (step.action == 'skip'), 'list-group-item-danger': (step.status == 'Failed'),'list-group-item-primary': (step.status == 'InProgress'), 'list-group-item-default': (step.status == 'Pending')}" ng-repeat="step in installation.steps">
             <div class="row">
-              <div class="col-md-3">
-                
-                
-                <div ng-class="{'text-success': (step.status == 'Succeeded' && step.action != 'skip'), 'text-muted': (step.action == 'skip'), 'text-warning': (step.status == 'Cancelled'), 'text-danger': (step.status == 'Failed'),'text-primary': (step.status == 'InProgress'), 'text-default': (step.status == 'Pending')}">
-                  <span ng-hide="step.action != 'install' || step.status == 'Cancelled'"><span class="glyphicon glyphicon-cloud-upload"></span> Install</span>
-                  <span ng-hide="step.action != 'upgrade' || step.status == 'Cancelled'"><span class="glyphicon glyphicon-cloud-upload"></span> Upgrade</span>
-                  <span ng-hide="step.action != 'uninstall' || step.status == 'Cancelled'"><span class="glyphicon glyphicon-cloud-upload"></span> Uninstall</span>
-                  <span ng-hide="step.action != 'skip' || step.status == 'Cancelled'"><span class="glyphicon glyphicon-ok"></span> No Change</span>
-                  <span ng-hide="step.status != 'Cancelled'"><span class="glyphicon glyphicon-ban-circle"></span> Cancelled</span>
-                </div>
-                
-                <div class="progress" ng-hide="step.status == 'Cancelled' || step.action == 'skip'" ng-class="{'progress-striped active': (step.progress < 100)}">
-                  <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{step.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{step.progress}}%">
-                    {{step.status}}
-                  </div>
-                </div>
-                
-              </div>
   
               <div class="col-md-6">
                 <h3 class="panel-title">
@@ -116,10 +106,28 @@
                 <p>{{step.version.package.description}}</p>
               </div>
 
-              <div class="col-md-2">
+              <div class="col-md-3">
                 <span ng-hide="step.version.zip_url == null || step.version.zip_url == ''" class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata Bundle</span>
                 <span ng-hide="step.version.number == null || step.version.number == ''" class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
                 <span ng-hide="step.version.is_beta != true" class="badge alert-warning"><span class="glyphicon glyphicon-warning-sign"></span> Beta Releae</span>
+              </div>
+
+              <div class="col-md-3">
+                
+                <div ng-class="{'text-success': (step.status == 'Succeeded' && step.action != 'skip'), 'text-muted': (step.action == 'skip'), 'text-warning': (step.status == 'Cancelled'), 'text-danger': (step.status == 'Failed'),'text-primary': (step.status == 'InProgress'), 'text-default': (step.status == 'Pending')}">
+                  <span class="glyphicon" ng-class="{'glyphicon-ok': (step.status == 'Succeeded'),'glyphicon-exclamation-sign': (step.status == 'Failed'), 'glyphicon-ban-circle': (step.status == 'Cancelled'), 'glyphicon-time': (step.status == 'Pending'), 'glyphicon-refresh': (step.status == 'InProgress')}"></span>
+                  <span ng-hide="step.action != 'install'">Install</span>
+                  <span ng-hide="step.action != 'upgrade'">Upgrade</span>
+                  <span ng-hide="step.action != 'uninstall'">Uninstall</span>
+                  <span ng-hide="step.action != 'skip'">No Change</span>
+                </div>
+                
+                <div class="progress" ng-hide="step.status == 'Cancelled' || step.action == 'skip'" ng-class="{'progress-striped active': (step.progress < 100)}">
+                  <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{step.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{step.progress}}%">
+                    {{step.status}}
+                  </div>
+                </div>
+                
               </div>
             </div>
     

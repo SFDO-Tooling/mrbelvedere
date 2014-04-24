@@ -55,3 +55,28 @@ class InstallationSerializer(serializers.ModelSerializer):
     class Meta:
         model = PackageInstallation
         fields = ('id', 'org_type', 'status', 'log', 'created', 'modified', 'version', 'progress', 'steps', 'content_success', 'content_failure')
+
+## Content Serializers - Used to serialize all content fields related to a given version
+class PackageContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Package
+        fields = ('id', 'name', 'description', 'content_intro', 'content_success', 'content_failure', 'content_success_beta', 'content_failure_beta')
+
+class DependentPackageVersionContentSerializer(serializers.ModelSerializer):
+    package = PackageContentSerializer()
+    class Meta:
+        model = PackageVersion
+        fields = ('id', 'name', 'content_intro', 'content_success', 'content_failure', 'package')
+
+class PackageVersionDependencyContentSerializer(serializers.ModelSerializer):
+    requires = DependentPackageVersionContentSerializer()
+    class Meta:
+        model = PackageVersion
+        fields = ('requires',)
+
+class PackageVersionContentSerializer(serializers.ModelSerializer):
+    package = PackageContentSerializer()
+    dependencies = PackageVersionDependencyContentSerializer(many=True)
+    class Meta:
+        model = PackageVersion
+        fields = ('id', 'name', 'content_intro', 'content_success', 'content_failure', 'package', 'dependencies')

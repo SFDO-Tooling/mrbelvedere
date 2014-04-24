@@ -8,6 +8,7 @@ router = DefaultRouter()
 #router.register(r'package_versions', views.PackageVersionsViewSet)
 #router.register(r'package_version_dependencies', views.PackageVersionDependenciesViewSet)
 router.register(r'installations', views.InstallationViewSet)
+router.register(r'version-content', views.PackageVersionContentViewSet)
 
 # The API URLs are now determined automatically by the router.
 # Additionally, we include the login URLs for the browseable API.

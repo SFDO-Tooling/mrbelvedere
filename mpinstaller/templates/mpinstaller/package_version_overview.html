@@ -3,7 +3,7 @@
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}{% block title %}{{ version.package }} Installer - {{ version.number }}{% endblock %}{% endblock %}
-{% block bootstrap3_page_title %}{{ version.package }} Installer - {{ version.number }}{% endblock %}
+{% block bootstrap3_page_title %}{{ version.package }} {{ version.number }} Installer{% endblock %}
 {% block bootstrap3_page_description %}{{ version.package.description }}{% endblock %}
 
 {% block bootstrap3_content %}
@@ -81,7 +81,29 @@
           {% for step in package_list %}
           <li class="list-group-item{% if step.uninstall %} list-group-item-danger{% elif step.install %} list-group-item-success{% elif step.upgrade %} list-group-item-info{% endif %}">
             <div class="row">
+              <div class="col-md-7">
+                <h4 class="list-group-item-heading">
+                  {{ step.version.package.name }}
+                  {% if step.version.number %}
+                    <span class="text-muted">({{ step.version.number }})
+                  {% endif %}
+                </h4>
+                <p>{{ step.version.package.description }}</p>
+              </div>
+    
               <div class="col-md-3">
+                {% if step.version.number %}
+                <span class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
+                {% elif step.version.zip_url %}
+                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata Bundle</span>
+                {% endif %}
+    
+                {% if step.version.is_beta %}
+                <span class="badge alert-warning"><span class="glyphicon glyphicon-warning-sign"></span> Beta</span>
+                {% endif %}
+              </div>
+
+              <div class="col-md-2">
                 {% if step.uninstall %}
                 <div class="text-warning"><span class="glyphicon glyphicon-cloud-download"></span> Uninstall</span></div>
                 {% endif %}
@@ -93,28 +115,6 @@
                 {% endif %}
                 {% if step.skip %}
                 <div class="text-muted"><span class="glyphicon glyphicon-ok"></span> No change</span></div>
-                {% endif %}
-              </div>
-    
-              <div class="col-md-6">
-                <h4 class="list-group-item-heading">
-                  {{ step.version.package.name }}
-                  {% if step.version.number %}
-                    <span class="text-muted">({{ step.version.number }})
-                  {% endif %}
-                </h4>
-                <p>{{ step.version.package.description }}</p>
-              </div>
-    
-              <div class="col-md-2">
-                {% if step.version.number %}
-                <span class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
-                {% elif step.version.zip_url %}
-                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata Bundle</span>
-                {% endif %}
-    
-                {% if step.version.is_beta %}
-                <span class="badge alert-warning"><span class="glyphicon glyphicon-warning-sign"></span> Beta</span>
                 {% endif %}
               </div>
             </div>

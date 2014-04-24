@@ -294,6 +294,9 @@ class PackageInstallation(models.Model):
             steps += 1
             steps_progress += step.get_progress()
 
+        if steps == 0:
+            return 100
+
         progress = int(steps_progress / steps)
         return progress
 
@@ -304,9 +307,10 @@ class PackageInstallation(models.Model):
             return content
 
         # Add content from the package and version
-        version_content = self.version.get_content_success()
-        if version_content:
-            content.append(version_content)
+        if self.version:
+            version_content = self.version.get_content_success()
+            if version_content:
+                content.append(version_content)
    
         # Add content from dependent packages and versions
         packages = []
@@ -328,9 +332,10 @@ class PackageInstallation(models.Model):
             return content
 
         # Add content from the package and version
-        version_content = self.version.get_content_failure()
-        if version_content:
-            content.append(version_content)
+        if self.version:
+            version_content = self.version.get_content_failure()
+            if version_content:
+                content.append(version_content)
    
         # Add content from dependent packages and versions
         packages = []
@@ -373,6 +378,8 @@ class PackageInstallationStep(models.Model):
             return 50
         if self.status in ['Cancelled', 'Failed', 'Succeeded']:
             return 100
+
+        return 100
 
     class Meta:
         ordering = ['order',]
