@@ -22,6 +22,7 @@ from mpinstaller.models import PackageInstallationStep
 from mpinstaller.models import PackageVersion
 from mpinstaller.package import PackageZipBuilder
 from simple_salesforce import Salesforce
+from simple_salesforce.api import SalesforceExpiredSession
 
 logger = logging.getLogger(__name__)
 
@@ -242,7 +243,14 @@ def oauth_post_login(request):
     redirect = request.session.get('mpinstaller_redirect', None)
     if not redirect and version:
         redirect = version.get_installer_url(request)
+        request.session['mpinstaller_redirect'] = redirect
     message = None
+
+    # Check if the oauth access_token has expired and redirect if so
+    try:
+        sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
+    except SalesforceExpiredSession:
+        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/refresh'))
 
     # Setup the list of actions to take after page load
     actions = []
@@ -270,6 +278,22 @@ def oauth_post_login(request):
         'oauth': oauth,
         'version': version,
     })
+
+def oauth_refresh(request):
+    # Attempt to refresh token and recall request
+    oauth = request.session.get('oauth',None)
+    if oauth is None:
+        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/login'))
+
+    sandbox = oauth.get('sandbox', False)
+    sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL, sandbox=sandbox)
+    refresh_response = sf.refresh_token(oauth['refresh_token'])
+    if refresh_response.get('access_token', None):
+        # Set the new token in the session
+        request.session['oauth'].update(refresh_response)
+
+    return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
+
 
 def org_user(request):
     oauth = request.session.get('oauth', None)
@@ -343,6 +367,7 @@ def get_oauth_org(oauth):
     """ Fetches the org info from the org """
     if not oauth or not oauth.get('access_token', None):
         return 'Not connected'
+
     sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
 
     # Parse org id from id which ends in /ORGID/USERID
