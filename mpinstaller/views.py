@@ -250,7 +250,7 @@ def oauth_post_login(request):
     # If it has expired, refresh the token
     try:
         sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
-        res = sf.query('Select Id from Organization');
+        res = sf.query('Select Id from Organization')
     except SalesforceExpiredSession:
         oauth_refresh(request)
 
