@@ -4,7 +4,6 @@
 
 {% block bootstrap3_title %}{{ version.package }} Installation Status{% endblock %}
 {% block bootstrap3_page_title %}<a href="{{ version.get_installer_url }}">{{ version.package }} Installation Status</a>{% endblock %}
-{% block bootstrap3_page_description %}This page shows the status of installing the {{ version.package }} into your connected Salesforce org.{% endblock %}
 
 {% block extra_head %}
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.js"></script> 
@@ -42,6 +41,11 @@
         </h3>
       </div>
       
+      <div class="alert alert-primary" ng-hide="installation.progress == 100">
+          <span ng-hide="installation.status != 'Pending'">Your installation will start in a moment. This page will provide updates until the installation completes.</span>
+          <span ng-hide="installation.status != 'InProgress'">Your installation is in progress and running in the background. This page will provide updates until the installation completes.</span>
+      </div>
+      
       <div class="panel-body">  
         <div id="installation-progress-bar">
           <div class="progress" ng-class="{'progress-striped active': (installation.progress < 100)}">
@@ -49,11 +53,6 @@
               {{installation.status}}
             </div>
           </div>
-        </div>
-    
-        <div class="alert alert-primary" ng-hide="installation.progress == 100">
-          <span ng-hide="installation.status != 'Pending'">Your installation is waiting in the queue and will be started shortly.  This page will automatically update with the status of the installation once it starts.  You can close this page if desired and the installation will still run in the background</span>
-          <span ng-hide="installation.status != 'InProgress'">Your installation is now running in the background.  This page will automatically update with the status until the installation completes.  You can close this page if desired and the installation will still run in the background</span>
         </div>
 
         <div class="content-next-steps content-next-steps-succeeded" ng-if="installation.status == 'Succeeded' && installation.content_success">
