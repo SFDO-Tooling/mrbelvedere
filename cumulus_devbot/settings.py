@@ -1,6 +1,10 @@
 # Django settings for cumulus_devbot project.
+import os
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', True)
+if DEBUG in ('false','False'):
+    DEBUG = False
+
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -184,7 +188,6 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ALLOWED_HOSTS = ['*']
 
 # Static asset configuration
-import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_ROOT = 'staticfiles'
 STATIC_URL = '/static/'
