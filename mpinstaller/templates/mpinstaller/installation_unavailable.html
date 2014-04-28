@@ -1,0 +1,35 @@
+{% extends 'mpinstaller/base.html' %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}{{ package }} Installer{% endblock %}
+{% block bootstrap3_page_title %}{{ package }} Installer{% endblock %}
+{% block bootstrap3_page_description %}{{ package.description }}{% endblock %}
+
+{% block bootstrap3_content %}
+
+{% bootstrap_messages %}
+
+<div class="panel panel-warning">
+  <div class="panel-heading">
+    <h3 class="panel-title">Installation Unavailable</h3>
+  </div>
+     
+  <div class="panel-body"> 
+    {% if reason == 'modify-all-data' %}
+    <p>In order to use this installer, you must have the Modify All Data permission enabled on your profile.  Your connected profile does not currently have this permission.  Please either add the Modify All Data permission to your profile or log in again as a user with the permission already assigned.</p>
+
+    <p>You have been automatically logged out of your org and will need to login again with a user with Modify All Data after returning to the installer.  You may have to open your Salesforce instance in the browser and select log out if you need to try as a different user.</p>
+    {% endif %}
+
+    {% if reason == 'beta-in-prod-org' %}
+    <p>You are trying to install a beta package into a production Salesforce org.  Beta packages can only be installed into Developer Editor or Sandbox orgs.</p>
+ 
+    <p>You have been automatically logged out of your org.  Please revisit the installer and login to a Developer Edition or Sandbox org.</p>
+    {% endif %}
+
+    <span class="gylphicon glyphicon-arrow-up"></span> <a href="{{ install_url }}">Return to installer</a>.
+  </div>
+</div>
+
+{% endblock %}

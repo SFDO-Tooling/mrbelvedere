@@ -23,6 +23,7 @@ from mpinstaller.models import PackageVersion
 from mpinstaller.package import PackageZipBuilder
 from simple_salesforce import Salesforce
 from simple_salesforce.api import SalesforceExpiredSession
+from simple_salesforce.api import SalesforceResourceNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,12 @@ def package_version_overview(request, namespace, version_id):
         if org_packages is None or metadata is None:
             request.session['mpinstaller_redirect'] = request.build_absolute_uri(request.path)
             return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
+
+        # Ensure installation is available in connected org, logout and redirect if not
+        reason = check_installation_available(request, version)
+        if reason:
+            return HttpResponseRedirect('/mpinstaller/%s/version/%s/installation-unavailable/%s' % (version.package.namespace, version.id, reason))
+
         # Get the install map and package list
         install_map = version_install_map(version, org_packages, metadata)
         package_list = install_map_to_package_list(install_map)
@@ -84,6 +91,40 @@ def package_version_overview(request, namespace, version_id):
 
     return render_to_response('mpinstaller/package_version_overview.html', data)
 
+def check_installation_available(request, version):
+    """ Checks if the installation is available and returns a reason code string if install is unavailable """
+    oauth = request.session.get('oauth', None)
+
+    # If not connected, redirect to the install url
+    if oauth == 'None' or 'access_token' not in oauth:
+        return HttpResponseRedirect(version.get_installer_url(request))
+
+    # If the user does not have Modify All Data permissions, don't allow install
+    if not oauth['perm_modifyalldata']:
+        return 'modify-all-data'
+
+    # If the install requires beta versions, verify org type
+    if version.requires_beta():
+        if not oauth.get('sandbox',False) and oauth['org_type'].find('Developer Edition') == -1:
+            return 'beta-in-prod-org'
+
+def installation_unavailable(request, namespace, version_id, reason):
+    version = get_object_or_404(PackageVersion, package__namespace = namespace, id=version_id)
+
+    if 'oauth' in request.session:
+        redirect = quote(request.build_absolute_uri('/mpinstaller/%s/version/%s/installation-unavailable/%s' % (version.package.namespace, version.id, reason)))
+        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/logout?redirect=%s' % redirect))
+
+    install_url = version.get_installer_url(request)
+
+    data = {
+        'version': version,
+        'install_url': install_url,
+        'reason': reason,
+    }
+
+    return render_to_response('mpinstaller/installation_unavailable.html', data)
+
 def start_package_installation(request, namespace, version_id):
     """ Kicks off a package installation and redirects to the installation's page """
     version = get_object_or_404(PackageVersion, package__namespace=namespace, id=version_id)
@@ -94,6 +135,11 @@ def start_package_installation(request, namespace, version_id):
         redirect = version.get_installer_url(request)
         return HttpResponseRedirect(redirect)
    
+    # Ensure installation is available in connected org, logout and redirect if not
+    reason = check_installation_available(request, version)
+    if reason:
+        return HttpResponseRedirect('/mpinstaller/%s/version/%s/installation-unavailable/%s' % (version.package.namespace, version.id, reason))
+
     # This view should only be used for executing a map already reviewed by the user.
     # If there is no installed list or metadata list in session, that didn't happen for some reason 
     installed = request.session.get('org_packages', None)
@@ -250,7 +296,9 @@ def oauth_post_login(request):
     # If it has expired, refresh the token
     try:
         sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
-        res = sf.query('Select Id from Organization')
+        user_id = oauth['id'].split('/')[-1]
+        user = sf.User.get(user_id)
+
     except SalesforceExpiredSession:
         return oauth_refresh(request)
 
@@ -310,6 +358,7 @@ def org_user(request):
     user = get_oauth_user(oauth)
     oauth['username'] = user['Username']
     oauth['perm_modifyalldata'] = user['Profile']['PermissionsModifyAllData']
+    
     request.session['oauth'] = oauth
     return HttpResponse('OK')
 
@@ -320,13 +369,14 @@ def org_org(request):
 
     # Fetch org info from org
     org = get_oauth_org(oauth)
-    oauth['org_id'] = org['Id']
-    oauth['org_name'] = org['Name']
-    oauth['org_type'] = org['OrganizationType']
+    if org:
+        oauth['org_id'] = org['Id']
+        oauth['org_name'] = org['Name']
+        oauth['org_type'] = org['OrganizationType']
     
-    # Append (Sandbox) to org type if sandbox
-    if oauth.get('sandbox',False):
-        oauth['org_type'] = '%s (Sandbox)' % oauth['org_type']
+        # Append (Sandbox) to org type if sandbox
+        if oauth.get('sandbox',False):
+            oauth['org_type'] = '%s (Sandbox)' % oauth['org_type']
 
     request.session['oauth'] = oauth
     return HttpResponse('OK')
@@ -336,7 +386,12 @@ def org_packages(request):
     if not oauth or not oauth.get('access_token'):
         return HttpResponse('Unauthorized', status=401)
 
-    packages = get_org_packages(oauth)
+    # We need to be able to see the org to fetch metadata from it
+    if oauth.get('perm_modifyalldata'):
+        packages = get_org_packages(oauth)
+    else:
+        packages = {}
+
     request.session['org_packages'] = packages
     return HttpResponse('OK')
 
@@ -346,7 +401,12 @@ def org_condition_metadata(request, version_id):
         return HttpResponse('Unauthorized', status=401)
 
     version = get_object_or_404(PackageVersion, id=version_id)
-    metadata = get_org_metadata_for_conditions(version, oauth, request.session.get('metadata', {}))
+
+    # We need to be able to see the org to fetch metadata from it
+    if oauth.get('perm_modifyalldata'):
+        metadata = get_org_metadata_for_conditions(version, oauth, request.session.get('metadata', {}))
+    else:
+        metadata = request.session.get('metadata', {})
     request.session['metadata'] = metadata
     return HttpResponse('OK')
 
@@ -379,8 +439,12 @@ def get_oauth_org(oauth):
     # Parse org id from id which ends in /ORGID/USERID
     org_id = oauth['id'].split('/')[-2]
 
-    org = sf.Organization.get(org_id)
-    return org
+    try:
+        org = sf.Organization.get(org_id)
+        return org
+
+    except SalesforceResourceNotFound:
+        pass
 
 def get_oauth_user(oauth):
     """ Fetches the user info from the org """

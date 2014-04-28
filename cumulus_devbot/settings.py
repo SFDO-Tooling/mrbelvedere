@@ -242,3 +242,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+GOOGLE_ANALYTICS_CODE = os.environ.get('GOOGLE_ANALYTICS_CODE', None)
+GOOGLE_ANALYTICS_ORG = os.environ.get('GOOGLE_ANALYTICS_ORG', None)

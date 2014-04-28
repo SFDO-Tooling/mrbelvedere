@@ -148,6 +148,14 @@ class PackageVersion(models.Model):
             return True
         return False
 
+    def requires_beta(self):
+        if self.is_beta():
+            return True
+        for dependency in self.dependencies.all():
+            if dependency.requires.is_beta():
+                return True
+        return False
+
     def get_installer_url(self, request=None):
         redirect = None
         if self.package.current_prod and self.package.current_prod.id == self.id:

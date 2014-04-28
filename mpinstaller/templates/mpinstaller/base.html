@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 {% load bootstrap3 %}
 {% load staticfiles %}
+{% load googleanalyticsjs %}
 <html lang="en">
   <head>
     <!-- Meta, title, CSS, favicons, etc. -->
@@ -87,5 +88,8 @@
           
 
     {% block page_js %}{% endblock %}
+
+    {% googleanalyticsjs %}
+
   </body>
 </html>

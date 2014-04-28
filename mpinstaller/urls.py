@@ -16,4 +16,5 @@ urlpatterns = patterns('',
     url(r'^(?P<namespace>\w+)/dependencies$', 'mpinstaller.views.package_dependencies'),
     url(r'^(?P<namespace>\w+)/dependencies/beta$', 'mpinstaller.views.package_dependencies', {'beta': True}),
     url(r'^(?P<namespace>\w+)/version/(?P<version_id>\w+)/install$', 'mpinstaller.views.start_package_installation'),
+    url(r'^(?P<namespace>\w+)/version/(?P<version_id>\w+)/installation-unavailable/(?P<reason>.*)$', 'mpinstaller.views.installation_unavailable'),
 )
