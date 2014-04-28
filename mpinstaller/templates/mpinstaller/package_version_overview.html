@@ -40,15 +40,16 @@
       </div>
       <div class="panel-body">
       {% if login_url %}
-        <p>Use the Login button below to connect to the Salesforce organization where you want to install the package.  After connecting, you can review a list of the steps the installer will take after an examination of your organization.  This connection information is only cached to complete the installation and then deleted.</p>
+        <p>You must be connected to a Salesforce organization to run the installer.</p>
+        <p><b>NOTE:</b> <i>This information only remains cached during the installation</i>.</p>
         <div class="btn-group clearfix">
           <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
             <span class="glyphicon glyphicon-log-in"></span>
             Login <span class="caret"></span>
           </button>
           <ul class="dropdown-menu" role="menu">
-            <li><a href="{{ login_url }}">Production or Developer Edition</a></li>
-            <li><a href="{{ login_url }}?sandbox=true">Sandbox</a></li>
+            <li><a href="{{ login_url }}">Production or Developer Edition org</a></li>
+            <li><a href="{{ login_url }}?sandbox=true">Sandbox org</a></li>
           </ul>
         </div>
       {% else %}
@@ -70,13 +71,11 @@
 
     <div class="panel{% if oauth.access_token %} panel-primary{% else %} panel-default{% endif %}">
       <div class="panel-heading">
-        <h3 class="panel-title">Installation Steps</h3>
+        <h3 class="panel-title">Installation Bundles and Packages</h3>
       </div>
      
       <div class="panel-body"> 
-        Use the Connected Org box to connect to a Salesforce Org.  After connecting, you will see the installation steps here.
-        <p>The following packages are required to install {{ version.package }}.  The list below shows the actions the installer will take against your org.</p>
-    
+        {{ version.package }} 3.0 requires the following bundles and packages:
         <ul class="list-group">
           {% for step in package_list %}
           <li class="list-group-item{% if step.uninstall %} list-group-item-danger{% elif step.install %} list-group-item-success{% elif step.upgrade %} list-group-item-info{% endif %}">
@@ -155,8 +154,8 @@
       {% endfor %}
 
       <div class="alert alert-primary">
-        <h5>Verify Your Connected Org</h5>
-        <p>To ensure you are installing into the correct org, please retype the Salesforce.com username you used to connect to your org.  This username must match the username from the connection for the install to proceed</p>
+        <h5>Verify your organization</h5>
+        <p>Please re-type the Salesforce username you used for the initial connection. We want to make sure that you're installing {{ version.package }} in the right org!</p>
 
         <input type="text" id="verify-org-username" placeholder="{{ oauth.username }}" />
       </div>
