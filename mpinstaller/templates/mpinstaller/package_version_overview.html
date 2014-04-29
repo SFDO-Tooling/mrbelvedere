@@ -4,7 +4,6 @@
 
 {% block bootstrap3_title %}{% block title %}{{ version.package }} Installer - {{ version.number }}{% endblock %}{% endblock %}
 {% block bootstrap3_page_title %}{{ version.package }} {{ version.number }} Installer{% endblock %}
-{% block bootstrap3_page_description %}{{ version.package.description }}{% endblock %}
 
 {% block bootstrap3_content %}
 
@@ -35,7 +34,7 @@
       <div class="panel-heading">
         <h3 class="panel-title">
           {% if oauth.access_token %}<span class="glyphicon glyphicon-ok"></span>{% endif %}
-          Salesforce Login
+          Connect to Salesforce
         </h3>
       </div>
       <div class="panel-body">
@@ -45,7 +44,7 @@
         <div class="btn-group clearfix">
           <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
             <span class="glyphicon glyphicon-log-in"></span>
-            Login <span class="caret"></span>
+            Log In <span class="caret"></span>
           </button>
           <ul class="dropdown-menu" role="menu">
             <li><a href="{{ login_url }}">Production or Developer Edition org</a></li>
@@ -58,7 +57,7 @@
         <div><strong>Type:</strong> {{ oauth.org_type }}</div>
         <br />
         <div class="button-grp">
-          <a class="btn btn-info" href="{{ logout_url }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a>
+          <a class="btn btn-info" href="{{ logout_url }}"><span class="glyphicon glyphicon-log-out"></span> Log Out</a>
         </div>
       {% endif %}
       </div>
