@@ -122,7 +122,7 @@ class Package(models.Model):
                     zip_url = zip_url,
                 )
                 new_parent.save()
-                
+
         # If a new parent was created, copy over all the depedencies from the previous parent and set the new version as current
         if new_parent:
             for dependency in parent.dependencies.all():
@@ -132,6 +132,12 @@ class Package(models.Model):
                     order = dependency.order,
                 )
                 new_dependency.save()
+
+            # Map any metadata conditions from the old parent
+            for condition in parent.conditions.all():
+                new_parent.conditions.add(condition)
+
+            # Set the new parent as the current beta or prod version
             if beta:
                 self.current_beta = new_parent
             else:
@@ -144,6 +150,7 @@ class Package(models.Model):
             versions[dependency.requires.package.namespace] = dependency
 
 
+        # Loop through all the dependencies.  Create and link new versions as needed
         for dependency in dependencies:
             current_dependency = versions.get(dependency['namespace'])
             if not current_dependency:
@@ -176,6 +183,10 @@ class Package(models.Model):
                     new_version.save()
 
             if new_version:
+                # Map any metadata conditions from the old version
+                for condition in version.conditions.all():
+                    new_version.conditions.add(condition)
+
                 dependency.requires = new_version
                 dependency.save()
                     
