@@ -241,12 +241,14 @@ def oauth_login(request):
     if sandbox == 'true':
         sandbox = True
 
-    if not request.session.get('oauth', None):
+    if 'oauth' not in request.session:
         request.session['oauth'] = {}
   
     request.session['oauth']['sandbox'] = sandbox
+    request.session.save()
 
     scope = request.GET.get('scope', quote('full refresh_token'))
+
 
     oauth = request.session.get('oauth', None)
     if not oauth or not oauth.get('access_token', None):
@@ -259,7 +261,8 @@ def oauth_login(request):
 def oauth_callback(request):
     """ Handles the callback from Salesforce after a successful OAuth2 login """
     oauth = request.session.get('oauth', {})
-    sandbox = oauth.get('sandbox', False)
+    sandbox = oauth.get('sandbox', None)
+   
     sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL, sandbox=sandbox)
 
     code = request.GET.get('code',None)
@@ -269,7 +272,8 @@ def oauth_callback(request):
     resp = sf.get_token(code)
 
     # Set the response in the session
-    request.session['oauth'] = resp
+    oauth.update(resp)
+    request.session['oauth'] = oauth
 
     return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
 
@@ -412,13 +416,14 @@ def org_condition_metadata(request, version_id):
 
 def oauth_logout(request):
     """ Revoke the login token """
-    redirect = request.GET['redirect']
+    redirect = request.GET.get('redirect',None)
 
     oauth = request.session.get('oauth', None)
         
-    if oauth and oauth.get('access_token', None):
-        sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL)
-        sf.revoke_token(oauth['access_token'])
+    if oauth:
+        if oauth.get('access_token', None):
+            sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL)
+            sf.revoke_token(oauth['access_token'])
         del request.session['oauth']
 
     if request.session.get('org_packages', None) != None:
@@ -427,7 +432,9 @@ def oauth_logout(request):
     if request.session.get('metadata', None) != None:
         del request.session['metadata']
 
-    return HttpResponseRedirect(redirect)
+    if redirect:
+        return HttpResponseRedirect(redirect)
+    return HttpResponse('You are now logged out')
 
 def get_oauth_org(oauth):
     """ Fetches the org info from the org """
