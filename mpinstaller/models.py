@@ -99,30 +99,86 @@ class Package(models.Model):
         else:
             parent = self.current_prod
 
+        # Handle changing parent first
+        new_parent = None
+        for dependency in dependencies:
+            if dependency['namespace'] != self.namespace:
+                continue
+            number = dependency.get('number',None)
+            zip_url = dependency.get('zip_url',None)
+
+            if number and parent.number != number:
+                new_parent = PackageVersion(
+                    package = self,
+                    name = number,
+                    number = number,
+                )
+                new_parent.save()
+
+            elif zip_url and parent.zip_url != number:
+                new_parent = PackageVersion(
+                    package = self,
+                    name = parent.name,
+                    zip_url = zip_url,
+                )
+                new_parent.save()
+                
+        # If a new parent was created, copy over all the depedencies from the previous parent and set the new version as current
+        if new_parent:
+            for dependency in parent.dependencies.all():
+                new_dependency = PackageVersionDependency(
+                    version = new_parent,
+                    requires = dependency.requires,
+                    order = dependency.order,
+                )
+                new_dependency.save()
+            if beta:
+                self.current_beta = new_parent
+            else:
+                self.current_prod = new_parent
+            self.save()
+            parent = new_parent
+
         versions = {}
         for dependency in parent.dependencies.all():
-            versions[dependency.requires.package.namespace] = dependency.requires
-        versions[self.namespace] = parent
+            versions[dependency.requires.package.namespace] = dependency
 
-        # Start the order at 10 leaving room for manual dependencies
-        order = 10
 
         for dependency in dependencies:
-            version = versions.get(dependency['namespace'])
-            if not version:
+            current_dependency = versions.get(dependency['namespace'])
+            if not current_dependency:
                 # We don't create new dependencies through this process, only update existing ones
                 continue
 
-            number = dependency.get('number',None)
-            if number:
-                version.name = number
-            version.number = number
-            version.zip_url = dependency.get('zip_url',None)
-            version.order = order
-            version.save()
+            version = current_dependency.requires
 
-            order = order + 10
-    
+            new_version = None
+
+            number = dependency.get('number',None)
+            if not number:
+                zip_url = dependency.get('zip_url',None)
+                if version.zip_url != zip_url:
+                    # If the zip_url has changed, create a new PackageVersion
+                    new_version = PackageVersion(
+                        package = version.package,
+                        name = version.name,
+                        zip_url = zip_url,
+                    )
+                    new_version.save()
+            else:
+                if version.number != number:
+                    # If the version number has changed, create a new PackageVersion
+                    new_version = PackageVersion(
+                        package = version.package,
+                        name = version.name,
+                        number = number,
+                    )
+                    new_version.save()
+
+            if new_version:
+                dependency.requires = new_version
+                dependency.save()
+                    
         return self.get_dependencies(beta)
 
     class Meta:
