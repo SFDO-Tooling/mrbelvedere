@@ -274,16 +274,13 @@ def oauth_callback(request):
     # Set the response in the session
     oauth.update(resp)
     request.session['oauth'] = oauth
+    request.session.save()
 
     return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
 
 def oauth_post_login(request):
     """ After successful oauth login, the user is redirected to this view which shows
         the status of fetching needed info from their org to determine install steps """
-
-    oauth = request.session.get('oauth', None)
-    if not oauth or not oauth.get('access_token'):
-        return HttpResponse('Unauthorized', status=401)
 
     version = None
     version_id = request.session.get('mpinstaller_current_version', None)
@@ -295,6 +292,10 @@ def oauth_post_login(request):
         redirect = version.get_installer_url(request)
         request.session['mpinstaller_redirect'] = redirect
     message = None
+
+    oauth = request.session.get('oauth', None)
+    if not oauth or 'access_token' not in oauth:
+        return HttpResponseRedirect('/mpinstaller/oauth/login?redirect=%s' % quote(redirect))
 
     # Determine if the oauth access token has expired by doing a simple query via the api
     # If it has expired, refresh the token
