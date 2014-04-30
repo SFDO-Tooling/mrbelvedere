@@ -16,7 +16,8 @@ class PackageAdmin(admin.ModelAdmin):
 admin.site.register(Package, PackageAdmin)
 
 class PackageInstallationAdmin(admin.ModelAdmin):
-    list_display = ('package','version','username','org_type','status')
+    list_display = ('package','version','username','org_type','status','log', 'created', 'modified')
+    list_filter = ('package','status','username','org_type')
 admin.site.register(PackageInstallation, PackageInstallationAdmin)
 
 class PackageInstallationSessionAdmin(admin.ModelAdmin):
