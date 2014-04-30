@@ -2,8 +2,8 @@
 
 {% load bootstrap3 %}
 
-{% block bootstrap3_title %}{% if version %}{{ version.package }}{% endif %} Installer{% endblock %}
-{% block bootstrap3_page_title %}{% if version %}<a href="{{ version.get_installer_url }}">{{ version.package }} Installer</a>{% else %}Installer{% endif %}{% endblock %}
+{% block bootstrap3_title %}{% if version %}{{ version.package }} {{ version.number }}{% endif %} Installer{% endblock %}
+{% block bootstrap3_page_title %}{% if version %}<a href="{{ version.get_installer_url }}">{{ version.package }} {{ version.number }} Installer</a>{% else %}Installer{% endif %}{% endblock %}
 {% block bootstrap3_page_description %}{% if version %}{{ version.package.description }}{% endif %}{% endblock %}
 
 {% block page_js %}

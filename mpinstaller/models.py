@@ -103,35 +103,35 @@ class Package(models.Model):
         new_parent = None
         for dependency in dependencies:
             if dependency['namespace'] != self.namespace:
+                # Skip everything but the parent namespace
                 continue
+
             number = dependency.get('number',None)
             zip_url = dependency.get('zip_url',None)
 
             if number and parent.number != number:
-                new_parent = PackageVersion(
+                new_parent, created = PackageVersion.objects.get_or_create(
                     package = self,
-                    name = number,
                     number = number,
+                    defaults = {'name': number},
                 )
-                new_parent.save()
 
             elif zip_url and parent.zip_url != number:
-                new_parent = PackageVersion(
+                new_parent, created = PackageVersion.objects.get_or_create(
                     package = self,
-                    name = parent.name,
                     zip_url = zip_url,
+                    defaults = {'name': parent.name},
                 )
-                new_parent.save()
 
         # If a new parent was created, copy over all the depedencies from the previous parent and set the new version as current
         if new_parent:
             for dependency in parent.dependencies.all():
-                new_dependency = PackageVersionDependency(
+            
+                new_dependency, created = PackageVersionDependency.get_or_create(
                     version = new_parent,
                     requires = dependency.requires,
-                    order = dependency.order,
+                    defaults = {'order': dependency.order},
                 )
-                new_dependency.save()
 
             # Map any metadata conditions from the old parent
             for condition in parent.conditions.all():
@@ -165,22 +165,20 @@ class Package(models.Model):
             if not number:
                 zip_url = dependency.get('zip_url',None)
                 if version.zip_url != zip_url:
-                    # If the zip_url has changed, create a new PackageVersion
-                    new_version = PackageVersion(
+                    # If the zip_url has changed, create a new PackageVersion if none exists with the zip url
+                    new_version, created = PackageVersion(
                         package = version.package,
-                        name = version.name,
                         zip_url = zip_url,
+                        defaults = {'name': version.name},
                     )
-                    new_version.save()
             else:
                 if version.number != number:
-                    # If the version number has changed, create a new PackageVersion
-                    new_version = PackageVersion(
+                    # If the version number has changed, create a new PackageVersion if none exists with the number
+                    new_version, created = PackageVersion(
                         package = version.package,
-                        name = version.name,
                         number = number,
+                        defaults = {'name': version.name},
                     )
-                    new_version.save()
 
             if new_version:
                 # Map any metadata conditions from the old version
