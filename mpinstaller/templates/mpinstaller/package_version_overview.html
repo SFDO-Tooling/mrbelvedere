@@ -14,7 +14,7 @@
   <div class="col-md-12">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title">Package Information</h3>
+        <h3 class="panel-title">Welcome to the Nonprofit Starter Pack 3.0 (Beta) installer.</h3>
       </div>
       <div class="panel-body">
         {% autoescape off %}{{ content_intro.body }}{% endautoescape %}
@@ -40,7 +40,7 @@
       <div class="panel-body">
       {% if login_url %}
         <p>You must be connected to a Salesforce organization to run the installer.</p>
-        <p><b>NOTE:</b> <i>This information only remains cached during the installation</i>.</p>
+        <p><b>NOTE:</b> <i>Your login information only remains cached during the installation</i>.</p>
         <div class="btn-group clearfix">
           <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
             <span class="glyphicon glyphicon-log-in"></span>
@@ -137,17 +137,17 @@
       {% if step.version.is_beta and step.action == 'install' %}
       <div class="alert alert-warning">
         <h5>Warning: Beta Package Installation</h5>
-        <p>The package {{ step.version.package }} is a managed beta release.  Managed beta releases cannot be upgraded.  Once installed, upgrading to a new beta release in the same org will require uninstalling the first beta which will destroy any test data created while using the beta.</p>
+        <p>This version of the {{ step.version.package }} is a managed beta release.  Managed beta releases are intended for testing purposes only.  Once you install this package, you will need to uninstall it before upgrading again. In the process, you will lose any data you might have entered while working with this beta version.</p>
         <input type="checkbox" class="install-confirm-checkbox" id="beta-warning-version-{{ step.version.id }}">
-        <label for="beta-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with installing this beta package in my org</label>
+        <label for="beta-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with the installation.</label>
       </div>
       {% endif %}
       {% if step.action == 'uninstall' %}
       <div class="alert alert-danger">
         <h5>Warning: Package Uninstall</h5>
-        <p>The package {{ step.version.package }} will be uninstalled.  Any data created which references metadata from this package will be destroyed.</p>
+        <p>You are about to uninstall this beta version of the {{ step.version.package }}.  Any data that references metadata from this package will be destroyed.</p>
         <input type="checkbox" class="install-confirm-checkbox" id="uninstall-warning-version-{{ step.version.id }}">
-        <label for="uninstall-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with uninstalling this package from my org</label>
+        <label for="uninstall-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with uninstalling the package.</label>
       </div>
       {% endif %}
       {% endfor %}
