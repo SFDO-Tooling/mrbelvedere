@@ -300,7 +300,7 @@ def oauth_post_login(request):
     # Determine if the oauth access token has expired by doing a simple query via the api
     # If it has expired, refresh the token
     try:
-        sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
+        sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'], sandbox = oauth.get('sandbox',False))
         user_id = oauth['id'].split('/')[-1]
         user = sf.User.get(user_id)
 
@@ -442,7 +442,7 @@ def get_oauth_org(oauth):
     if not oauth or not oauth.get('access_token', None):
         return 'Not connected'
 
-    sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
+    sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'], sandbox = oauth.get('sandbox',False))
 
     # Parse org id from id which ends in /ORGID/USERID
     org_id = oauth['id'].split('/')[-2]
@@ -458,7 +458,7 @@ def get_oauth_user(oauth):
     """ Fetches the user info from the org """
     if not oauth or not oauth.get('access_token', None):
         return 'Not connected'
-    sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'])
+    sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'], sandbox = oauth.get('sandbox',False))
     # Parse user id from id which ends in /ORGID/USERID
     user_id = oauth['id'].split('/')[-1]
 
