@@ -282,6 +282,12 @@ def oauth_post_login(request):
     """ After successful oauth login, the user is redirected to this view which shows
         the status of fetching needed info from their org to determine install steps """
 
+    force_refresh = request.GET.get('force_refresh', None)
+    if force_refresh is not None:
+        if 'oauth' in request.session:
+            request.session['oauth']['access_token'] = '123456789123456789012345678901234567890123456789012345678901234'
+            request.session.save()
+
     version = None
     version_id = request.session.get('mpinstaller_current_version', None)
     if version_id:
@@ -303,9 +309,9 @@ def oauth_post_login(request):
         sf = Salesforce(instance_url = oauth['instance_url'], session_id = oauth['access_token'], sandbox = oauth.get('sandbox',False))
         user_id = oauth['id'].split('/')[-1]
         user = sf.User.get(user_id)
-
     except SalesforceExpiredSession:
-        return oauth_refresh(request)
+        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/refresh'))
+        #return oauth_refresh(request)
 
     # Setup the list of actions to take after page load
     actions = []
@@ -433,8 +439,12 @@ def oauth_logout(request):
     if request.session.get('metadata', None) != None:
         del request.session['metadata']
 
+    if 'mpinstaller_redirect' in request.session:
+        del request.session['mpinstaller_redirect']
+
     if redirect:
         return HttpResponseRedirect(redirect)
+
     return HttpResponse('You are now logged out')
 
 def get_oauth_org(oauth):
