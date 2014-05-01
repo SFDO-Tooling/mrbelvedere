@@ -14,7 +14,7 @@
   <div class="col-md-12">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title">Welcome to the {{ version.package }} {{ version.number }} installer.</h3>
+        <h3 class="panel-title">Welcome to the {{ version.package }} {{ version.number }} installer!</h3>
       </div>
       <div class="panel-body">
         {% autoescape off %}{{ content_intro.body }}{% endautoescape %}
@@ -33,7 +33,6 @@
     <div class="panel{% if not oauth.access_token %} panel-primary{% else %} panel-default{% endif %}">
       <div class="panel-heading">
         <h3 class="panel-title">
-          {% if oauth.access_token %}<span class="glyphicon glyphicon-ok"></span>{% endif %}
           Connect to Salesforce
         </h3>
       </div>
@@ -52,6 +51,10 @@
           </ul>
         </div>
       {% else %}
+      <h3 class="panel-title">
+          <span class="glyphicon glyphicon-ok"></span>
+          Connected to Salesforce
+        </h3>
         <div><strong>User:</strong> <span id="oauth-username">{{ oauth.username }}</span></div>
         <div><strong>Org:</strong> {{ oauth.org_name }}</div>
         <div><strong>Type:</strong> {{ oauth.org_type }}</div>
@@ -75,6 +78,7 @@
      
       <div class="panel-body"> 
         {{ version.package }} {{ version.number }} requires the following bundles and packages:
+        <p>&nbsp</p>
         <ul class="list-group">
           {% for step in package_list %}
           <li class="list-group-item{% if step.uninstall %} list-group-item-danger{% elif step.install %} list-group-item-success{% elif step.upgrade %} list-group-item-info{% endif %}">
@@ -136,7 +140,7 @@
       {% for step in install_map %}
       {% if step.version.is_beta and step.action == 'install' %}
       <div class="alert alert-warning">
-        <h5>Warning: Beta Package Installation</h5>
+        <p><b>WARNING: Beta Package Installation</b></p>
         <p>This version of the {{ step.version.package }} is a managed beta release.  Managed beta releases are intended for testing purposes only.  Once you install this package, you will need to uninstall it before upgrading again. In the process, you will lose any data you might have entered while working with this beta version.</p>
         <input type="checkbox" class="install-confirm-checkbox" id="beta-warning-version-{{ step.version.id }}">
         <label for="beta-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with the installation.</label>
@@ -144,7 +148,7 @@
       {% endif %}
       {% if step.action == 'uninstall' %}
       <div class="alert alert-danger">
-        <h5>Warning: Package Uninstall</h5>
+        <p><b>WARNING: Package Uninstall</b></p>
         <p>You are about to uninstall this beta version of the {{ step.version.package }}.  Any data that references metadata from this package will be destroyed.</p>
         <input type="checkbox" class="install-confirm-checkbox" id="uninstall-warning-version-{{ step.version.id }}">
         <label for="uninstall-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with uninstalling the package.</label>
@@ -153,9 +157,9 @@
       {% endfor %}
 
       <div class="alert alert-primary">
-        <h5>Verify your organization</h5>
+        <h4>Verify your organization</h4>
         <p>Please re-type the Salesforce username you used for the initial connection. We want to make sure that you're installing {{ version.package }} in the right org!</p>
-
+        <p>&nbsp</p>
         <input type="text" id="verify-org-username" placeholder="{{ oauth.username }}" />
       </div>
 
