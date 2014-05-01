@@ -295,7 +295,7 @@ def oauth_post_login(request):
 
     oauth = request.session.get('oauth', None)
     if not oauth or 'access_token' not in oauth:
-        return HttpResponseRedirect('/mpinstaller/oauth/login?redirect=%s' % quote(redirect))
+        return HttpResponse('Unauthorized', status=401)
 
     # Determine if the oauth access token has expired by doing a simple query via the api
     # If it has expired, refresh the token
