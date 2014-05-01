@@ -198,7 +198,7 @@ class CreatePackageBuilderForm(forms.ModelForm):
         return org
 
 def create_package_builder(request):
-    oauth = request.session.get('oauth_response', None)
+    oauth = request.session.get('oauth', None)
     if not oauth:
         redirect = quote(request.build_absolute_uri('/mrbelvedere/package-builder/create'))
         return HttpResponseRedirect('/mpinstaller/oauth/login?scope=full%%20refresh_token%%20web&redirect=%s' % redirect)
