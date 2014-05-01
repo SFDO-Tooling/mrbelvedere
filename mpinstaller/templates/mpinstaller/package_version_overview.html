@@ -74,7 +74,7 @@
       </div>
      
       <div class="panel-body"> 
-        {{ version.package }} 3.0 requires the following bundles and packages:
+        {{ version.package }} {{ version.number }} requires the following bundles and packages:
         <ul class="list-group">
           {% for step in package_list %}
           <li class="list-group-item{% if step.uninstall %} list-group-item-danger{% elif step.install %} list-group-item-success{% elif step.upgrade %} list-group-item-info{% endif %}">

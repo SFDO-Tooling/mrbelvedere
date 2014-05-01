@@ -127,7 +127,7 @@ class Package(models.Model):
         if new_parent:
             for dependency in parent.dependencies.all():
             
-                new_dependency, created = PackageVersionDependency.get_or_create(
+                new_dependency, created = PackageVersionDependency.objects.get_or_create(
                     version = new_parent,
                     requires = dependency.requires,
                     defaults = {'order': dependency.order},
@@ -149,7 +149,6 @@ class Package(models.Model):
         for dependency in parent.dependencies.all():
             versions[dependency.requires.package.namespace] = dependency
 
-
         # Loop through all the dependencies.  Create and link new versions as needed
         for dependency in dependencies:
             current_dependency = versions.get(dependency['namespace'])
@@ -166,7 +165,7 @@ class Package(models.Model):
                 zip_url = dependency.get('zip_url',None)
                 if version.zip_url != zip_url:
                     # If the zip_url has changed, create a new PackageVersion if none exists with the zip url
-                    new_version, created = PackageVersion(
+                    new_version, created = PackageVersion.objects.get_or_create(
                         package = version.package,
                         zip_url = zip_url,
                         defaults = {'name': version.name},
@@ -174,10 +173,10 @@ class Package(models.Model):
             else:
                 if version.number != number:
                     # If the version number has changed, create a new PackageVersion if none exists with the number
-                    new_version, created = PackageVersion(
+                    new_version, created = PackageVersion.objects.get_or_create(
                         package = version.package,
                         number = number,
-                        defaults = {'name': version.name},
+                        defaults = {'name': version.number},
                     )
 
             if new_version:
@@ -185,8 +184,8 @@ class Package(models.Model):
                 for condition in version.conditions.all():
                     new_version.conditions.add(condition)
 
-                dependency.requires = new_version
-                dependency.save()
+                current_dependency.requires = new_version
+                current_dependency.save()
                     
         return self.get_dependencies(beta)
 

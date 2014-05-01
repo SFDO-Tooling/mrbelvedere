@@ -36,5 +36,5 @@ admin.site.register(PackageVersion, PackageVersionAdmin)
 
 class PackageVersionDependencyAdmin(admin.ModelAdmin):
     list_display = ('version', 'requires', 'order')
-    list_filter = ('version__package__name','requires__package__name')
+    list_filter = ('version__name','requires__name')
 admin.site.register(PackageVersionDependency, PackageVersionDependencyAdmin)
