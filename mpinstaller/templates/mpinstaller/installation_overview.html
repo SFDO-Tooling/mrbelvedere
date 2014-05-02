@@ -45,7 +45,6 @@
           <span ng-hide="installation.status != 'Pending'">Your installation will start in a moment. This page will provide updates until the installation completes.</span>
           <span ng-hide="installation.status != 'InProgress'">Your installation is in progress and running in the background. This page will provide updates until the installation completes.</span>
       </div>
-      
       <div class="panel-body">  
         <div id="installation-progress-bar">
           <div class="progress" ng-class="{'progress-striped active': (installation.progress < 100)}">
