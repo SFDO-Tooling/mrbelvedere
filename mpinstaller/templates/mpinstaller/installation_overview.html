@@ -99,7 +99,8 @@
               <div class="col-md-6">
                 <h3 class="panel-title">
                   {{step.version.package.name}}
-                  <span ng-hide="step.version.number == '' || step.version.number == null">({{step.version.number}})</span>
+                  <span ng-hide="step.version.number == '' || step.version.number == null || step.action == 'uninstall'">({{step.version.number}})</span>
+                  <span ng-hide="step.action != 'uninstall && step.previous_version != '' && step.previous_version != null'">({{step.previous_version}})</span>
                 </h3>
                 <p>{{step.version.package.description}}</p>
               </div>
