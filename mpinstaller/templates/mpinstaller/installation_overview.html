@@ -86,7 +86,7 @@
             </li>
           </ul>
 
-          <a href="/mpinstaller/npsp/beta"><span class="glyphicon glyphicon-arrow-left"></span> Return to package overview to retry the installation</a>
+          <a href="{% endverbatim %}{{ version.get_installer_url }}{% verbatim %}"><span class="glyphicon glyphicon-arrow-left"></span> Return to package overview to retry the installation</a>
         </div>
      
         <h3>Installation Log</h3>
@@ -115,13 +115,13 @@
                 <div ng-class="{'text-success': (step.status == 'Succeeded' && step.action != 'skip'), 'text-muted': (step.action == 'skip'), 'text-warning': (step.status == 'Cancelled'), 'text-danger': (step.status == 'Failed'),'text-primary': (step.status == 'InProgress'), 'text-default': (step.status == 'Pending')}">
                   <span class="glyphicon" ng-class="{'glyphicon-ok': (step.status == 'Succeeded'),'glyphicon-exclamation-sign': (step.status == 'Failed'), 'glyphicon-ban-circle': (step.status == 'Cancelled'), 'glyphicon-time': (step.status == 'Pending'), 'glyphicon-refresh': (step.status == 'InProgress')}"></span>
                   <span ng-hide="step.action != 'install'">Install</span>
-                  <span ng-hide="step.action != 'upgrade'">Upgrade</span>
+                  <span ng-hide="step.action != 'upgrade'">Upgrade from {{ step.previous_version }}</span>
                   <span ng-hide="step.action != 'uninstall'">Uninstall</span>
                   <span ng-hide="step.action != 'skip'">No Change</span>
                 </div>
                 
                 <div class="progress" ng-hide="step.status == 'Cancelled' || step.action == 'skip'" ng-class="{'progress-striped active': (step.progress < 100)}">
-                  <div class="progress-bar progress-bar-success" ng-class="{'progress-bar-success': (step.status == 'Succeeded'), 'progress-bar-danger': (step.status == 'Failed'),'progress-bar-primary': (step.status == 'InProgress'), 'progress-bar-default': (step.status == 'Pending')}" role="progressbar" aria-valuenow="{{step.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{step.progress}}%">
+                  <div class="progress-bar" ng-class="{'progress-bar-success': (step.status == 'Succeeded'), 'progress-bar-danger': (step.status == 'Failed'),'progress-bar-primary': (step.status == 'InProgress'), 'progress-bar-default': (step.status == 'Pending')}" role="progressbar" aria-valuenow="{{step.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{step.progress}}%">
                     {{step.status}}
                   </div>
                 </div>

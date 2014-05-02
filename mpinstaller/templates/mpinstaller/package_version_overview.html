@@ -109,7 +109,7 @@
                 <div class="text-primary"><span class="glyphicon glyphicon-cloud-upload"></span> Install</span></div>
                 {% endif %}
                 {% if step.upgrade %}
-                <div class="text-info"><span class="glyphicon glyphicon-cloud-upload"></span> Upgrade</span></div>
+                <div class="text-info"><span class="glyphicon glyphicon-cloud-upload"></span> Upgrade from {{ step.installed }}</span></div>
                 {% endif %}
                 {% if step.skip %}
                 <div class="text-muted"><span class="glyphicon glyphicon-ok"></span> No change</span></div>

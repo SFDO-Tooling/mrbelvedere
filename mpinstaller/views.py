@@ -213,9 +213,12 @@ def installation_overview(request, installation_id):
 
     status_api_url = request.build_absolute_uri('/api/installations/%s/' % installation.id)
 
+    installer_url = installation.version.get_installer_url()
+
     data = {
         'installation': installation,
         'version': installation.version,
+        'installer_url': installer_url,
         'oauth': request.session.get('oauth',None),
         'login_url': login_url,
         'logout_url': logout_url,

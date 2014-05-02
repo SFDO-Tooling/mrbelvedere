@@ -99,14 +99,14 @@ def install_package_version(installation_id):
                 
                 if step.action in ['install','upgrade']:
                     api = ApiInstallVersion(oauth, step.version, step)
-                    status = api()
-                    if status == 'Failed':
+                    api()
+                    if api.status == 'Failed':
                         # Marking the installation as failed is done by another handler
                         return 'Failed: Step for %s failed' % step.version
                 elif step.action == 'uninstall':
                     api = ApiUninstallVersion(oauth, step.version, step)
-                    status = api()
-                    if status == 'Failed':
+                    api()
+                    if api.status == 'Failed':
                         # Marking the installation as failed is done by another handler
                         return 'Failed: Step for %s failed' % step.version
             except Exception, e_step :

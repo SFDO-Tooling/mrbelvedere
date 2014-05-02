@@ -42,7 +42,7 @@ SOAP_DEPLOY = """<?xml version="1.0" encoding="utf-8"?>
         <checkOnly>false</checkOnly>
         <ignoreWarnings>false</ignoreWarnings>
         <performRetrieve>false</performRetrieve>
-        <purgeOnDelete>true</purgeOnDelete>
+        <purgeOnDelete>%(purge_on_delete)s</purgeOnDelete>
         <rollbackOnError>true</rollbackOnError>
         <runAllTests>false</runAllTests>
         <singlePackage>true</singlePackage>
@@ -155,7 +155,8 @@ class BaseMetadataApiCall(object):
     def __call__(self):
         self.set_status('InProgress')
         response = self.get_response()
-        return self.process_response(response)
+        if self.status != 'Failed':
+            return self.process_response(response)
 
     def set_status(self, status, log=None):
         self.status = status
@@ -191,7 +192,8 @@ class BaseMetadataApiCall(object):
 
         # Check the status if configured
         if self.soap_envelope_status:
-            while self.status != 'Done':
+            while self.status not in ['Done','Failed']:
+                time.sleep(self.check_interval)
                 # Check status in a loop until done
                 envelope = self.build_envelope_status()
                 if not envelope:
@@ -220,13 +222,15 @@ class BaseMetadataApiCall(object):
                 headers = self.build_headers(self.soap_action_result, envelope)
                 response = self.call_mdapi(headers, envelope)
                 response = process_response_result(response)
-        
+
         return response
             
     def process_response(self, response):
         return response
     
     def process_response_start(self, response):
+        if response.status_code == 500:
+            return response
         ids = parseString(response.content).getElementsByTagName('id')
         if ids:
             self.process_id = ids[0].firstChild.nodeValue
@@ -362,13 +366,25 @@ class ApiDeploy(BaseMetadataApiCall):
     soap_action_start = 'deploy'
     soap_action_status = 'checkDeployStatus'
 
-    def __init__(self, oauth, package_zip, installation_step):
+    def __init__(self, oauth, package_zip, installation_step, purge_on_delete=True):
         super(ApiDeploy, self).__init__(oauth, installation_step)
+        self.set_purge_on_delete(purge_on_delete)
         self.package_zip = package_zip
+
+    def set_purge_on_delete(self, purge_on_delete):
+        if purge_on_delete == False or purge_on_delete == 'false':
+            self.purge_on_delete = 'false'
+        else:
+            self.purge_on_delete = 'true'
+
+        # Disable purge on delete entirely for non sandbox or DE orgs as it is not allowed
+        org_type = self.oauth.get('org_type')
+        if org_type.find('Sandbox') == -1 and org_type != 'Developer Edition':
+            self.purge_on_delete = 'false'
 
     def build_envelope_start(self):
         if self.package_zip:
-            return self.soap_envelope_start % {'package_zip': self.package_zip}
+            return self.soap_envelope_start % {'package_zip': self.package_zip, 'purge_on_delete': self.purge_on_delete}
 
     def process_response(self, response):
         status = parseString(response.content).getElementsByTagName('status')[0].firstChild.nodeValue
@@ -387,7 +403,7 @@ class ApiDeploy(BaseMetadataApiCall):
             
             
 class ApiInstallVersion(ApiDeploy):
-    def __init__(self, oauth, version, installation_step):
+    def __init__(self, oauth, version, installation_step, purge_on_delete=False):
         self.version = version
 
         # Construct and set the package_zip file
@@ -405,17 +421,17 @@ class ApiInstallVersion(ApiDeploy):
                 self.package_zip = base64.b64encode(zipfp.read())
             except:
                 raise ValueError('Failed to fetch zip from %s' % self.version.zip_url)
-        super(ApiInstallVersion, self).__init__(oauth, self.package_zip, installation_step)
+        super(ApiInstallVersion, self).__init__(oauth, self.package_zip, installation_step, purge_on_delete)
 
 class ApiUninstallVersion(ApiDeploy):
-    def __init__(self, oauth, version, installation_step):
+    def __init__(self, oauth, version, installation_step, purge_on_delete=True):
         self.version = version
 
         if not version.number:
             self.package_zip = None
         else:
             self.package_zip = PackageZipBuilder(self.version.package.namespace).uninstall_package()
-        super(ApiUninstallVersion, self).__init__(oauth, self.package_zip, installation_step)
+        super(ApiUninstallVersion, self).__init__(oauth, self.package_zip, installation_step, purge_on_delete)
 
 class ApiListMetadata(BaseMetadataApiCall):
     soap_envelope_start = SOAP_LIST_METADATA
