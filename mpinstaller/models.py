@@ -60,6 +60,7 @@ class Package(models.Model):
     content_intro = HTMLField(null=True, blank=True, help_text="Shown on the page to start an installation in the Package Information panel if provided.")
     content_success = HTMLField(null=True, blank=True, help_text="Shown on the installation status page after a successful installation in the Next Steps panel if provided.")
     content_failure = HTMLField(null=True, blank=True, help_text="Shown on the installation status page after a failed installation in the Next Steps panel if provided.")
+    content_intro_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content intro if the package is a beta.")
     content_success_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content success if the package is a beta.")
     content_failure_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content failure if the package is a beta.")
 
@@ -269,7 +270,11 @@ class PackageVersion(models.Model):
     def get_content_intro(self):
         # Look for content from the package
         content = []
-        if self.package.content_intro:
+
+        if self.is_beta():
+            if self.package.content_intro_beta:
+                content.append(self.package.content_intro_beta)
+        if not content and self.package.content_intro:
             content.append(self.package.content_intro)
 
         # Append version specific information if available
