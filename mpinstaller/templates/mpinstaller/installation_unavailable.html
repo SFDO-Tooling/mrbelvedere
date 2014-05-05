@@ -17,15 +17,15 @@
      
   <div class="panel-body"> 
     {% if reason == 'modify-all-data' %}
-    <p>In order to use this installer, you must have the Modify All Data permission enabled on your profile.  Your connected profile does not currently have this permission.  Please either add the Modify All Data permission to your profile or log in again as a user with the permission already assigned.</p>
+    <p>You must have the Modify All Data permission enabled before you can run this installer.  The profile associated with the username you connected with does not have this permission.  You must either add the Modify All Data permission to your profile, or log in as a user who has the correct permission assigned.</p>
 
-    <p>You have been automatically logged out of your org and will need to login again with a user with Modify All Data after returning to the installer.  You may have to open your Salesforce instance in the browser and select log out if you need to try as a different user.</p>
+    <p>You have been logged out and will need to log in to your organization again as a user who has the Modify All Data permission.  You may need to open your Salesforce org in a browser and log out so that you can log in again as a different user.</p>
     {% endif %}
 
     {% if reason == 'beta-in-prod-org' %}
-    <p>You are trying to install a beta package into a production Salesforce org.  Beta packages can only be installed into Developer Editor or Sandbox orgs.</p>
+    <p>You are trying to install a beta package into a production organization.  You can only install beta packages in Developer Edition or sandbox organizations.</p>
  
-    <p>You have been automatically logged out of your org.  Please revisit the installer and login to a Developer Edition or Sandbox org.</p>
+    <p>You have been logged out.  Please return to the installer and log in to a Developer Edition or sandbox organization.</p>
     {% endif %}
 
     <span class="gylphicon glyphicon-arrow-up"></span> <a href="{{ install_url }}">Return to installer</a>.
