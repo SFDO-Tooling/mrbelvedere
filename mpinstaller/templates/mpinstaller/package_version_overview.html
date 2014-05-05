@@ -32,9 +32,16 @@
   {% endif %}
     <div class="panel{% if not oauth.access_token %} panel-primary{% else %} panel-default{% endif %}">
       <div class="panel-heading">
+      {% if login_url %}
         <h3 class="panel-title">
           Connect to Salesforce
         </h3>
+      {% else %}
+        <h3 class="panel-title">
+          <span class="glyphicon glyphicon-ok"></span>
+          Connected to Salesforce
+        </h3>
+      {% endif %}
       </div>
       <div class="panel-body">
       {% if login_url %}
@@ -51,10 +58,6 @@
           </ul>
         </div>
       {% else %}
-      <h3 class="panel-title">
-          <span class="glyphicon glyphicon-ok"></span>
-          Connected to Salesforce
-        </h3>
         <div><strong>User:</strong> <span id="oauth-username">{{ oauth.username }}</span></div>
         <div><strong>Org:</strong> {{ oauth.org_name }}</div>
         <div><strong>Type:</strong> {{ oauth.org_type }}</div>
