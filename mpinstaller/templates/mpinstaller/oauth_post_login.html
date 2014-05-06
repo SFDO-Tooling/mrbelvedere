@@ -12,7 +12,7 @@
     var actions = {{ actions }};
     var current_action_index = 0;
    
-    function run_actions(actions) {
+    function run_actions() {
         if (actions.length == current_action_index) {
             $('#console-log .panel-body').append('<div>Redirecting to <a href="{{ redirect }}">{{ redirect }}</a></div>');
             $("html, body").animate({ scrollTop: $(document).height() }, "slow");
@@ -31,13 +31,13 @@
                 $('#console-log .panel-body').append('<div>OK</div>');
                 $("html, body").animate({ scrollTop: $(document).height() }, "slow");
                 // Trigger the next action
-                run_actions(actions);
+                setTimeout(function () {run_actions()}, 1000);
             },
             error: function () {
                 $('#console-log .panel-body').append('<div>OK</div>');
                 $("html, body").animate({ scrollTop: $(document).height() }, "slow");
                 // Trigger the next action
-                run_actions(actions);
+                setTimeout(function () {run_actions()}, 1000);
             }
         });
 

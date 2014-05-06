@@ -53,15 +53,16 @@
             Log In <span class="caret"></span>
           </button>
           <ul class="dropdown-menu" role="menu">
-            <li><a href="{{ login_url }}">Production or Developer Edition org</a></li>
+            <li><a href="{{ login_url }}">{% if not version.is_beta %}Production or {% endif %}Developer Edition org</a></li>
             <li><a href="{{ login_url }}&sandbox=true">Sandbox org</a></li>
           </ul>
         </div>
       {% else %}
-        <div><strong>User:</strong> <span id="oauth-username">{{ oauth.username }}</span></div>
-        <div><strong>Org:</strong> {{ oauth.org_name }}</div>
-        <div><strong>Type:</strong> {{ oauth.org_type }}</div>
-        <br />
+        <p>
+          <div><strong>User:</strong> <span id="oauth-username">{{ oauth.username }}</span></div>
+          <div><strong>Org:</strong> {{ oauth.org_name }}</div>
+          <div><strong>Type:</strong> {{ oauth.org_type }}</div>
+        </p>
         <div class="button-grp">
           <a class="btn btn-info" href="{{ logout_url }}"><span class="glyphicon glyphicon-log-out"></span> Log Out</a>
         </div>
@@ -80,8 +81,7 @@
       </div>
      
       <div class="panel-body"> 
-        {{ version.package }} {{ version.number }} requires the following bundles and packages:
-        <p>&nbsp</p>
+        <p>{{ version.package }} {{ version.number }} requires the following bundles and packages:</p>
         <ul class="list-group">
           {% for step in package_list %}
           <li class="list-group-item{% if step.uninstall %} list-group-item-danger{% elif step.install %} list-group-item-success{% elif step.upgrade %} list-group-item-info{% endif %}">
@@ -143,7 +143,7 @@
       {% for step in install_map %}
       {% if step.version.is_beta and step.action == 'install' %}
       <div class="alert alert-warning">
-        <p><b>WARNING: Beta Package Installation</b></p>
+        <h4>WARNING: Beta Package Installation</h4>
         <p>This version of the {{ step.version.package }} is a managed beta release.  Managed beta releases are intended for testing purposes only.  Once you install this package, you will need to uninstall it before upgrading again. In the process, you will lose any data you might have entered while working with this beta version.</p>
         <input type="checkbox" class="install-confirm-checkbox" id="beta-warning-version-{{ step.version.id }}">
         <label for="beta-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with the installation.</label>
@@ -151,7 +151,7 @@
       {% endif %}
       {% if step.action == 'uninstall' %}
       <div class="alert alert-danger">
-        <p><b>WARNING: Package Uninstall</b></p>
+        <h4>WARNING: Package Uninstall</h4>
         <p>You are about to uninstall this beta version of the {{ step.version.package }}.  Any data that references metadata from this package will be destroyed.</p>
         <input type="checkbox" class="install-confirm-checkbox" id="uninstall-warning-version-{{ step.version.id }}">
         <label for="uninstall-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with uninstalling the package.</label>
@@ -159,11 +159,10 @@
       {% endif %}
       {% endfor %}
 
-      <div class="alert alert-primary">
+      <div class="alert alert-info">
         <h4>Verify your organization</h4>
         <p>Please re-type the Salesforce username you used for the initial connection. We want to make sure that you're installing {{ version.package }} in the right org!</p>
-        <p>&nbsp</p>
-        <input type="text" id="verify-org-username" placeholder="{{ oauth.username }}" />
+        <p><input type="text" id="verify-org-username" placeholder="{{ oauth.username }}" /></p>
       </div>
 
       <button type="button" class="btn btn-primary" id="confirm-install-button">Install</button>

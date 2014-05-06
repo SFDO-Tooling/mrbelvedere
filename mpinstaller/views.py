@@ -285,12 +285,6 @@ def oauth_post_login(request):
     """ After successful oauth login, the user is redirected to this view which shows
         the status of fetching needed info from their org to determine install steps """
 
-    force_refresh = request.GET.get('force_refresh', None)
-    if force_refresh is not None:
-        if 'oauth' in request.session:
-            request.session['oauth']['access_token'] = '123456789123456789012345678901234567890123456789012345678901234'
-            request.session.save()
-
     version = None
     version_id = request.session.get('mpinstaller_current_version', None)
     if version_id:
@@ -344,10 +338,20 @@ def oauth_post_login(request):
     })
 
 def oauth_refresh(request):
+    version = None
+    version_id = request.session.get('mpinstaller_current_version', None)
+    if version_id:
+        version = PackageVersion.objects.get(id=version_id)
+
+    installer_url = None
+    if version:
+        installer_url = version.get_installer_url(request)
+
     # Attempt to refresh token and recall request
     oauth = request.session.get('oauth',None)
     if oauth is None:
-        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/login'))
+        redirect = quote(installer_url)
+        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/login?redirect=%s' % redirect))
 
     sandbox = oauth.get('sandbox', False)
     sf = SalesforceOAuth2(settings.MPINSTALLER_CLIENT_ID, settings.MPINSTALLER_CLIENT_SECRET, settings.MPINSTALLER_CALLBACK_URL, sandbox=sandbox)
@@ -356,6 +360,9 @@ def oauth_refresh(request):
         # Set the new token in the session
         request.session['oauth'].update(refresh_response)
         request.session.save()
+    else:
+        redirect = quote(installer_url)
+        return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/logout?redirect=%s' % redirect))
 
     #redirect = request.session.get('mpinstaller_redirect',None)
     #if redirect is None:
@@ -402,11 +409,16 @@ def org_packages(request):
 
     # We need to be able to see the org to fetch metadata from it
     if oauth.get('perm_modifyalldata'):
-        packages = get_org_packages(oauth)
+        api = ApiRetrieveInstalledPackages(oauth)
+        packages = api()
+        if api.oauth != oauth:
+            request.session['oauth'] = api.oauth
+            request.session.save()
     else:
         packages = {}
 
     request.session['org_packages'] = packages
+    request.session.save()
     return HttpResponse('OK')
 
 def org_condition_metadata(request, version_id):
@@ -418,7 +430,32 @@ def org_condition_metadata(request, version_id):
 
     # We need to be able to see the org to fetch metadata from it
     if oauth.get('perm_modifyalldata'):
-        metadata = get_org_metadata_for_conditions(version, oauth, request.session.get('metadata', {}))
+        metadata = request.session.get('metadata', {})
+        # Handle conditions on the main version
+        for condition in version.conditions.all():
+            if not metadata.has_key(condition.metadata_type):
+                # Fetch the metadata for this type
+                api = ApiListMetadata(oauth, condition.metadata_type, metadata)
+                metadata[condition.metadata_type] = api()
+                
+                if api.oauth != oauth:
+                    request.session['oauth'] = api.oauth
+                    request.session.save()
+                    oauth = request.session['oauth']
+
+        # Handle conditions on any dependent versions
+        for dependency in version.dependencies.all():
+            for condition in dependency.requires.conditions.all():
+                if not metadata.has_key(condition.metadata_type):
+                    # Fetch the metadata for this type
+                    api = ApiListMetadata(oauth, condition.metadata_type, metadata)
+                    metadata[condition.metadata_type] = api()
+        
+                
+                    if api.oauth != oauth:
+                        request.session['oauth'] = api.oauth
+                        request.session.save()
+                        oauth = request.session['oauth']
     else:
         metadata = request.session.get('metadata', {})
     request.session['metadata'] = metadata
@@ -480,32 +517,6 @@ def get_oauth_user(oauth):
     user = res['records'][0];
     return user
 
-def get_org_packages(oauth):
-    """ Fetches all InstalledPackage objects (i.e. managed packages) in the org """
-    api = ApiRetrieveInstalledPackages(oauth)
-    packages = api()
-    return packages
-
-def get_org_metadata_for_conditions(version, oauth, metadata=None):
-    """ Fetches metadata lists for all conditions used to install the current version """
-    if not metadata:
-        metadata = {}
-    # Handle conditions on the main version
-    for condition in version.conditions.all():
-        if not metadata.has_key(condition.metadata_type):
-            # Fetch the metadata for this type
-            api = ApiListMetadata(oauth, condition.metadata_type, metadata)
-            metadata[condition.metadata_type] = api()
-
-    # Handle conditions on any dependent versions
-    for dependency in version.dependencies.all():
-        for condition in dependency.requires.conditions.all():
-            if not metadata.has_key(condition.metadata_type):
-                # Fetch the metadata for this type
-                api = ApiListMetadata(oauth, condition.metadata_type, metadata)
-                metadata[condition.metadata_type] = api()
-        
-    return metadata
     
 def package_dependencies(request, namespace, beta=None):
     """ Returns package dependencies as json via GET and updates them via POST """

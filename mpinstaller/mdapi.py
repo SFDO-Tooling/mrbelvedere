@@ -328,6 +328,7 @@ class BaseMetadataApiCall(object):
         return response
 
 class ApiRetrieveInstalledPackages(BaseMetadataApiCall):
+    check_interval = 1
     soap_envelope_start = SOAP_RETRIEVE_INSTALLEDPACKAGE
     soap_envelope_status = SOAP_CHECK_STATUS
     soap_envelope_result = SOAP_CHECK_RETRIEVE_STATUS
