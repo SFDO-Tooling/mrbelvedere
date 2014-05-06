@@ -54,8 +54,17 @@ def package_version_overview(request, namespace, version_id):
         org_packages = request.session.get('org_packages', None)
         metadata = request.session.get('metadata', None)
         if org_packages is None or metadata is None:
-            request.session['mpinstaller_redirect'] = request.build_absolute_uri(request.path)
-            return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
+            if 'post_login_redirected' not in request.session:
+                request.session['mpinstaller_redirect'] = request.build_absolute_uri(request.path)
+                request.session['post_login_redirected'] = False
+                return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/post_login'))
+            else:
+                del request.session['post_login_redirected']
+                redirect = quote(request.build_absolute_uri(request.path))
+                return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/logout?redirect=%s' % redirect))
+                
+        elif 'post_login_redirected' in request.session:
+            del request.session['post_login_redirected']
 
         # Ensure installation is available in connected org, logout and redirect if not
         reason = check_installation_available(request, version)
@@ -308,7 +317,6 @@ def oauth_post_login(request):
         user = sf.User.get(user_id)
     except SalesforceExpiredSession:
         return HttpResponseRedirect(request.build_absolute_uri('/mpinstaller/oauth/refresh'))
-        #return oauth_refresh(request)
 
     # Setup the list of actions to take after page load
     actions = []
@@ -427,10 +435,10 @@ def org_condition_metadata(request, version_id):
         return HttpResponse('Unauthorized', status=401)
 
     version = get_object_or_404(PackageVersion, id=version_id)
+    metadata = request.session.get('metadata', {})
 
     # We need to be able to see the org to fetch metadata from it
     if oauth.get('perm_modifyalldata'):
-        metadata = request.session.get('metadata', {})
         # Handle conditions on the main version
         for condition in version.conditions.all():
             if not metadata.has_key(condition.metadata_type):
@@ -456,9 +464,9 @@ def org_condition_metadata(request, version_id):
                         request.session['oauth'] = api.oauth
                         request.session.save()
                         oauth = request.session['oauth']
-    else:
-        metadata = request.session.get('metadata', {})
+
     request.session['metadata'] = metadata
+    request.session.save()
     return HttpResponse('OK')
 
 def oauth_logout(request):
