@@ -539,3 +539,39 @@ def package_dependencies(request, namespace, beta=None):
     else:
         # For GET requests, return the current dependencies
         return HttpResponse(json.dumps(package.get_dependencies(beta)), content_type='application/json')
+
+def package_stats(request, namespace):
+    """ Returns package installation stats """
+    package = get_object_or_404(Package, namespace=namespace)
+   
+    stats = []
+
+    total_count = 0
+    by_org = {} 
+    by_org_type = {} 
+    by_version = {}
+
+    for installation in package.installations.filter(status = 'Succeeded'):
+        if installation.org_id not in by_org:
+            by_org[installation.org_id] = 0
+        if installation.org_type not in by_org_type:
+            by_org_type[installation.org_type] = 0
+        if installation.version and installation.version.number not in by_version:
+            by_version[installation.version.number] = 0
+
+        total_count += 1
+        by_org[installation.org_id] += 1
+        by_org_type[installation.org_type] += 1
+        if installation.version:
+            by_version[installation.version.number] += 1
+
+    stats.append('Total Successful: %s' % total_count)
+    stats.append('Unique Orgs: %s' % len(by_org.keys()))
+
+    for org_type, count in by_org_type.items():
+        stats.append('%s Orgs: %s' % (org_type, count))
+
+    for version, count in by_version.items():
+        stats.append('%s: %s' % (version, count))
+    
+    return HttpResponse('\n'.join(stats))    
