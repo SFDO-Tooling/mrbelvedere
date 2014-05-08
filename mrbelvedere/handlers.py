@@ -220,6 +220,10 @@ def build_package(build):
             # These come up, possibly if you catch the page in the middle of updating the text via javascript
             sleep(1)
             continue
+        except selenium.common.exceptions.NoSuchElementException:
+            # These come up, possibly if you catch the page in the middle of updating the text via javascript
+            sleep(1)
+            continue
         if status_message.startswith('Upload Complete'):
             # Update Status
             build.status = 'Complete'

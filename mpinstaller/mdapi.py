@@ -237,9 +237,10 @@ class BaseMetadataApiCall(object):
         return response
 
     def process_response_status(self, response):
-        done = parseString(response.content).getElementsByTagName('done')[0].firstChild.nodeValue == 'true'
+        done = parseString(response.content).getElementsByTagName('done')
         if done:
-            self.set_status('Done')
+            if done[0].firstChild.nodeValue == 'true':
+                self.set_status('Done')
         return response
 
     def process_response_result(self, response):
@@ -301,12 +302,15 @@ class BaseMetadataApiCall(object):
     def handle_soap_error(self, headers, envelope, refresh, response): 
         # Error in SOAP request, handle the error
         faultcode = parseString(response.content).getElementsByTagName('faultcode')
-        faultcode = faultcode[0].firstChild.nodeValue
+        if faultcode:
+            faultcode = faultcode[0].firstChild.nodeValue
+        else:
+            faultcode = ''
         faultstring = parseString(response.content).getElementsByTagName('faultstring')
         if faultstring:
             faultstring = faultstring[0].firstChild.nodeValue
         else:
-            faultstring = ''
+            faultstring = response.content
     
         if faultcode == 'sf:INVALID_SESSION_ID' and self.oauth and self.oauth['refresh_token']:
             # Attempt to refresh token and recall request
@@ -341,7 +345,11 @@ class ApiRetrieveInstalledPackages(BaseMetadataApiCall):
 
     def process_response(self, response):
         # Parse the metadata zip file from the response
-        zipstr = parseString(response.content).getElementsByTagName('zipFile')[0].firstChild.nodeValue
+        zipstr = parseString(response.content).getElementsByTagName('zipFile')
+        if zipstr:
+            zipstr = zipstr[0].firstChild.nodeValue
+        else:
+            return self.packages
         zipfp = TemporaryFile()
         zipfp.write(base64.b64decode(zipstr))
         zipfile = ZipFile(zipfp, 'r')
@@ -353,7 +361,9 @@ class ApiRetrieveInstalledPackages(BaseMetadataApiCall):
             if not path.endswith('.installedPackage'):
                 continue
             namespace = path.split('/')[-1].split('.')[0]
-            version = parseString(zipfile.open(path).read()).getElementsByTagName('versionNumber')[0].firstChild.nodeValue
+            version = parseString(zipfile.open(path).read()).getElementsByTagName('versionNumber')
+            if version:
+                version = version[0].firstChild.nodeValue
     
             packages[namespace] = version
 
@@ -387,7 +397,9 @@ class ApiDeploy(BaseMetadataApiCall):
             return self.soap_envelope_start % {'package_zip': self.package_zip, 'purge_on_delete': self.purge_on_delete}
 
     def process_response(self, response):
-        status = parseString(response.content).getElementsByTagName('status')[0].firstChild.nodeValue
+        status = parseString(response.content).getElementsByTagName('status')
+        if status:
+            status = status[0].firstChild.nodeValue
         # Only done responses should be passed so we need to handle any status related to done
         if status in ['Succeeded','SucceededPartial']:
             self.set_status('Succeeded')
