@@ -13,7 +13,10 @@ def set_installation_status(sender, **kwargs):
     # Always set installation to failed and all other pending steps to cancelled if the step failed
     if step.status == 'Failed' and step.installation.status != 'Failed':
         step.installation.status = 'Failed'
-        step.installation.log = 'Failed to %s package version %s' % (step.action, step.version.name)
+        if step.action == 'uninstall':
+            step.installation.log = 'Failed to %s package version %s' % (step.action, step.previous_version)
+        else:
+            step.installation.log = 'Failed to %s package version %s' % (step.action, step.version.name)
         step.installation.save()
 
         # Set all other installs to 'Cancelled'
