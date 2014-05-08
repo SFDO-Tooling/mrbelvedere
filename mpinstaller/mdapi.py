@@ -76,13 +76,13 @@ SOAP_RETRIEVE_INSTALLEDPACKAGE = """<?xml version="1.0" encoding="utf-8"?>
   <soap:Body>
     <retrieve xmlns="http://soap.sforce.com/2006/04/metadata">
       <retrieveRequest>
-        <apiVersion>29.0</apiVersion>
+        <apiVersion>30.0</apiVersion>
         <unpackaged>
           <types>
             <members>*</members>
             <name>InstalledPackage</name>
           </types>
-          <version>29.0</version>
+          <version>30.0</version>
         </unpackaged>
       </retrieveRequest>
     </retrieve>
@@ -277,8 +277,7 @@ class BaseMetadataApiCall(object):
             instance_url = re.sub(r'https://.*\.(\w+)\.my\.salesforce\.com', r'https://\1.salesforce.com', instance_url)
 
         # Build the endpoint url from the instance_url
-        endpoint_base = instance_url.replace('.salesforce.com','-api.salesforce.com')
-        endpoint = '%s/services/Soap/m/29.0/%s' % (endpoint_base, org_id)
+        endpoint = '%s/services/Soap/m/30.0/%s' % (instance_url, org_id)
         return endpoint
     
     def call_mdapi(self, headers, envelope, refresh=None):
