@@ -88,7 +88,7 @@ def install_package_version(installation_id):
 
         step = None
         # Loop through the steps and install each package
-        for step in installation.steps.filter(status = 'Pending'):
+        for step in installation.steps.filter(status_in = ['Pending','InProgress']):
             try:
                 if step.action == 'skip':
                     continue
