@@ -381,7 +381,8 @@ class SalesforceOAuth(models.Model):
         self.refresh()
         start_url = '%s/secur/frontdoor.jsp?sid=%s' % (self.instance_url, self.access_token)
         
-        desired_capabilities = webdriver.DesiredCapabilities.CHROME
+        desired_capabilities = webdriver.DesiredCapabilities.FIREFOX
+
         driver = webdriver.Remote(
             desired_capabilities=desired_capabilities,
             command_executor="http://%s:%s@ondemand.saucelabs.com:80/wd/hub" % (settings.SAUCELABS_USER, settings.SAUCELABS_KEY),
