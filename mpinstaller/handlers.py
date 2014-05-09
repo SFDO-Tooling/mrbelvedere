@@ -114,7 +114,7 @@ def install_package_version(installation_id):
                 step.save()
                 raise e_step
     
-        return 'DONE'
+        return 'Installation %s: DONE' % installation.id
 
     except Exception, e:
         installation.status = 'Failed'    

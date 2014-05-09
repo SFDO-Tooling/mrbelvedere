@@ -241,6 +241,9 @@ class BaseMetadataApiCall(object):
         if done:
             if done[0].firstChild.nodeValue == 'true':
                 self.set_status('Done')
+        else:
+            # If no done element was in the xml, fail logging the entire SOAP envelope as the log
+            self.set_status('Failed', response.content)
         return response
 
     def process_response_result(self, response):
@@ -400,6 +403,10 @@ class ApiDeploy(BaseMetadataApiCall):
         status = parseString(response.content).getElementsByTagName('status')
         if status:
             status = status[0].firstChild.nodeValue
+        else:
+            # If no status element is in the result xml, return fail and log the entire SOAP envelope in the log
+            self.set_status('Failed', response.content)
+            return self.status
         # Only done responses should be passed so we need to handle any status related to done
         if status in ['Succeeded','SucceededPartial']:
             self.set_status('Succeeded')
