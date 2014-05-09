@@ -7,9 +7,17 @@ if DEBUG in ('false','False'):
 
 TEMPLATE_DEBUG = DEBUG
 
-ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
-)
+# Get admins from env variable in format jdoe@mailinator.com,John Doe
+admins = os.environ.get('ADMINS', None)
+if admins:
+    try:
+        admin_email, admin_name = admins.split(',')
+        ADMINS = ((admin_name, admin_email),)
+    except:
+        ADMINS = ()
+        
+else:
+    ADMINS = ()
 
 MANAGERS = ADMINS
 
