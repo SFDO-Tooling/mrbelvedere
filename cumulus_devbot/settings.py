@@ -165,20 +165,36 @@ LOGGING = {
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse'
-        }
+        },
+    },
+    "formatters": {
+        "rq_console": {
+            "format": "%(asctime)s %(message)s",
+            "datefmt": "%H:%M:%S",
+        },
     },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
-        }
+        },
+        "rq_console": {
+            "level": "DEBUG",
+            "class": "rq.utils.ColorizingStreamHandler",
+            "formatter": "rq_console",
+            "exclude": ["%(asctime)s"],
+        },
     },
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        "rq.worker": {
+            "handlers": ["rq_console",],
+            "level": "DEBUG",
         },
     }
 }
