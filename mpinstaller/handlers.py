@@ -74,10 +74,6 @@ def install_package_version(installation_id):
         except PackageInstallation.DoesNotExist:
             return 'Error: No installation found with id %s' % installation_id
 
-        # Only execute pending installations
-        if installation.status != 'Pending':
-            return 'Skipping: Installation %s is already %s' % (installation_id, installation.status)
-
         # Look for a session, error if none found
         session = installation.sessions.all()[0]
         if not session:
