@@ -165,6 +165,7 @@ def start_package_installation(request, namespace, version_id):
         version = version,
         org_id = oauth['org_id'],
         org_type = oauth['org_type'],
+        instance_url = oauth['instance_url'],
         status = 'Pending',
         username = oauth['username'],
         install_map = install_map_to_json(install_map),

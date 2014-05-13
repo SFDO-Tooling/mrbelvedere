@@ -349,6 +349,7 @@ class PackageInstallation(models.Model):
     version = models.ForeignKey(PackageVersion, related_name='installations', null=True, blank=True)
     org_id = models.CharField(max_length=32)
     org_type = models.CharField(max_length=255)
+    instance_url = models.CharField(max_length=255)
     status = models.CharField(choices=INSTALLATION_STATUS_CHOICES, max_length=32)
     username = models.CharField(max_length=255)
     install_map = models.TextField(null=True, blank=True)
