@@ -57,6 +57,7 @@ class Package(models.Model):
     current_prod = models.ForeignKey('mpinstaller.PackageVersion', related_name='current_prod', null=True, blank=True)
     current_beta = models.ForeignKey('mpinstaller.PackageVersion', related_name='current_beta', null=True, blank=True)
     key = models.CharField(max_length=255, null=True, blank=True)
+    force_sandbox = models.BooleanField(default=False, help_text="If checked, production installs will be blocked unless a sandbox install of the same org for the same version was successful")
     content_intro = HTMLField(null=True, blank=True, help_text="Shown on the page to start an installation in the Package Information panel if provided.")
     content_success = HTMLField(null=True, blank=True, help_text="Shown on the installation status page after a successful installation in the Next Steps panel if provided.")
     content_failure = HTMLField(null=True, blank=True, help_text="Shown on the installation status page after a failed installation in the Next Steps panel if provided.")
@@ -242,7 +243,10 @@ class PackageVersion(models.Model):
             exclude_namespaces = []
             if condition.exclude_namespaces:
                 exclude_namespaces = condition.exclude_namespaces.split(',')
-            for item in metadata[condition.metadata_type]:
+            type_items = metadata[condition.metadata_type]
+            if type_items is None:
+                type_items = []
+            for item in type_items:
                 if item.get('namespace','') in exclude_namespaces:
                     continue
         

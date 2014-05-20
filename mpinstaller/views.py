@@ -117,6 +117,28 @@ def check_installation_available(request, version):
         if not oauth.get('sandbox',False) and oauth['org_type'].find('Developer Edition') == -1:
             return 'beta-in-prod-org'
 
+    # If the package requires a sandbox installation before a production upgrade,
+    # verify this version has been installed in a sandbox of the org
+    if not version.is_beta() and version.package.force_sandbox:
+        # Is this a production org?
+        if oauth.get('org_type', None) == 'Enterprise Edition':
+            # Is this an upgrade?
+            is_upgrade = False
+            for namespace, installed_version in request.session.get('org_packages', {}).items():
+                if installed_version != None:
+                    is_upgrade = True
+                    break
+            if is_upgrade:
+                # Check if a previous successful installation exists on a sandbox of the org
+                sandbox_installs = PackageInstallation.objects.filter(
+                    version = version,
+                    org_type__contains = '(Sandbox)',
+                    username__startswith = '%s.' % oauth.get('username', ''),
+                    status = 'Succeeded',
+                )
+                if not sandbox_installs.count():
+                    return 'sandbox-required'
+
 def installation_unavailable(request, namespace, version_id, reason):
     version = get_object_or_404(PackageVersion, package__namespace = namespace, id=version_id)
 

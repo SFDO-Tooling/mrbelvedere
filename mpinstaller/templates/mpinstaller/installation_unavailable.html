@@ -28,6 +28,10 @@
     <p>You have been logged out.  Please return to the installer and log in to a Developer Edition or sandbox organization.</p>
     {% endif %}
 
+    {% if reason == 'sandbox-required' %}
+    <p>Before upgrading a production organization, you must first complete a successful upgrade in a sandbox.  This is a best practice and is required for upgrades to reduce the risk of issues in your production organization.  Please go to Setup -> Deploy -> Sandboxes to create a sandbox.  Once you have your sandbox, return to the installer and connect to your sandbox.</p>
+    <p>When you have completed a successful upgrade in your sandbox, you will be able to run the upgrade against your production organization.</p>
+    {% endif %}
     <span class="gylphicon glyphicon-arrow-up"></span> <a href="{{ install_url }}">Return to installer</a>.
   </div>
 </div>
