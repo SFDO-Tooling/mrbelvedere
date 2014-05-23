@@ -1,4 +1,6 @@
 import json
+import signal
+from rq.worker import signal_name
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from time import sleep
@@ -65,7 +67,7 @@ def install_package_version(installation_id):
     """ Installs a PackageVersion and its dependencies into an org using a PackageInstallationSession for authentication """
 
     session = None
-    
+
     # Wrap everything in try so we can use finally to delete the session at the end no matter what happens
     try:
         # Get the installation from the database
@@ -121,8 +123,3 @@ def install_package_version(installation_id):
         installation.log = str(e)
         installation.save()
         return 'Failed: %s' % installation.log
-
-    finally:
-        # Always delete the session which contains oauth info
-        if session:
-            session.delete()

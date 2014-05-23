@@ -1,4 +1,5 @@
 import django_rq
+from rq.worker import Worker
 from hirefire.procs.rq import RQProc
 
 class WorkerProc(RQProc):
@@ -14,4 +15,11 @@ class WorkerProc(RQProc):
         Returns the aggregated number of tasks of the proc queues.
         """
         count = sum([client.count for client in self.clients])
-        return count + 1
+
+        # Add any workers which are currently working jobs
+        all_workers = Worker.all(connection=self.connection)
+        for worker in all_workers:
+            if worker.get_current_job():
+                count += 1
+        
+        return count
