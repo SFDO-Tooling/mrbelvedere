@@ -1,4 +1,6 @@
 from django.contrib import admin
+from mpinstaller.models import InstallationError
+from mpinstaller.models import InstallationErrorContent
 from mpinstaller.models import MetadataCondition
 from mpinstaller.models import Package
 from mpinstaller.models import PackageInstallation
@@ -10,6 +12,14 @@ from mpinstaller.models import PackageVersionDependency
 class MetadataConditionAdmin(admin.ModelAdmin):
     pass
 admin.site.register(MetadataCondition, MetadataConditionAdmin)
+
+class InstallationErrorAdmin(admin.ModelAdmin):
+    list_display = ('message', 'content', 'fallback_content')
+admin.site.register(InstallationError, InstallationErrorAdmin)
+
+class InstallationErrorContentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'resolution')
+admin.site.register(InstallationErrorContent, InstallationErrorContentAdmin)
 
 class PackageAdmin(admin.ModelAdmin):
     list_display = ('name','namespace','description')

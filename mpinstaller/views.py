@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from urllib import quote
 from distutils.version import LooseVersion
 from django.conf import settings
@@ -16,13 +17,14 @@ from mpinstaller.mdapi import ApiInstallVersion
 from mpinstaller.mdapi import ApiUninstallVersion
 from mpinstaller.mdapi import ApiListMetadata
 from mpinstaller.mdapi import ApiRetrieveInstalledPackages
+from mpinstaller.models import InstallationError
 from mpinstaller.models import Package
 from mpinstaller.models import PackageInstallation
 from mpinstaller.models import PackageInstallationSession
 from mpinstaller.models import PackageInstallationStep
 from mpinstaller.models import PackageVersion
 from mpinstaller.package import PackageZipBuilder
-from mpinstaller.utils import obscure_salesforce_ids
+from mpinstaller.utils import obscure_salesforce_log
 from simple_salesforce import Salesforce
 from simple_salesforce.api import SalesforceExpiredSession
 from simple_salesforce.api import SalesforceResourceNotFound
@@ -602,45 +604,99 @@ def package_stats(request, namespace):
     
     return HttpResponse('\n'.join(stats))    
 
+org_types_map = {
+    'ee': 'Enterprise Edition',
+    'ees': 'Enterprise Edition (Sandbox)',
+    'de': 'Developer Edition',
+}
+
 @login_required
-def package_errors(request, namespace):
-    failed_steps = PackageInstallationStep.objects.filter(installation__package__namespace = namespace, status = 'Failed')
-    by_package = {}
-    no_log = 0
-    for step in failed_steps:
-        if step.version.package.namespace not in by_package:
-            by_package[step.version.package.namespace] = {}
+def package_errors(request, namespace=None, version=None):
 
-        # Skip failed steps with no log to parse
-        if not step.log:
-            no_log += 1
+    parent_package = None
+    parent_version = None
+    if namespace:
+        parent_package = get_object_or_404(Package, namespace=namespace)
+    if version:
+        parent_version = get_object_or_404(PackageVersion, version=version)
+
+    keyword = request.GET.get('keyword', None)
+
+    has_content = request.GET.get('has_content', None)
+    if has_content is not None:
+        has_content = has_content in ('1','True','true','t')
+
+    count_min = request.GET.get('count_min', None)
+    if count_min is u'':
+        count_min = None
+    if count_min is not None and count_min != "":
+        count_min = int(count_min)
+
+    packages = request.GET.get('packages', None)
+    if packages is not None:
+        packages = request.GET.getlist('packages')
+
+    versions = request.GET.get('versions', None)
+    if versions is not None:
+        versions = request.GET.getlist('versions')
+
+    org_types = request.GET.get('org_types', None)
+    raw_org_types = org_types
+    if org_types is not None:
+        org_types = [org_types_map.get(org_type, org_type) for org_type in request.GET.getlist('org_types')]
+
+    date_start = request.GET.get('date_start', None)
+    if date_start is not None:
+        date_start = datetime.strptime(date_start, '%m/%d/%Y')
+
+    date_end = request.GET.get('date_end', None)
+    if date_end is not None:
+        date_end = datetime.strptime(date_end, '%m/%d/%Y')
+
+    context = InstallationError.objects.drilldown(
+        keyword = keyword,
+        has_content = has_content,
+        parent_package = parent_package,
+        parent_version = parent_version,
+        count_min = count_min,
+        packages = packages, 
+        versions = versions,
+        org_types = org_types,
+    )
+
+    # Add a value key to the org_types facet with the abbreviation
+    for facet in context['facets']['org_types']:
+        for org_type_abbr, org_type in org_types_map.items():
+            if org_type == facet['org_type']:
+                facet['value'] = org_type_abbr
+                break
+
+    # Mark selected packages
+    for facet in context['facets']['packages']:
+        if not packages:
+            facet['selected'] = False
             continue
+        facet['selected'] = unicode(facet['package']) in packages
 
-        obscurred_log = obscure_salesforce_ids(step.log)
+    # Mark selected versions
+    for facet in context['facets']['versions']:
+        if not versions:
+            facet['selected'] = False
+            continue
+        facet['selected'] = unicode(facet['version']) in versions
 
-        if obscurred_log not in by_package[step.version.package.namespace]:
-            by_package[step.version.package.namespace][obscurred_log] = 1
-        else:
-            by_package[step.version.package.namespace][obscurred_log] += 1
+    # Mark selected org_types
+    for facet in context['facets']['org_types']:
+        if not org_types:
+            facet['selected'] = False
+            continue
+        facet['selected'] = unicode(facet['value']) in raw_org_types
 
-    # Build a sorted list structure for use in the template
-    by_package_list = []
-    packages = by_package.keys()
-    packages.sort() 
-    for package in packages:
-        package_errors = {
-            'package': package,
-            'errors': [],
-        }
-        errors = by_package[package].keys()
-        errors.sort()
-        for error in errors:
-            error_info = {
-                'message': error,
-                'count': by_package[package][error],
-            }
-            package_errors['errors'].append(error_info)
 
-        by_package_list.append(package_errors)
+    context['facet_values'] = {
+        'keyword':  keyword,
+        'has_content':  has_content,
+        'count_min':  count_min,
+    }
 
-    return render_to_response('mpinstaller/package_errors.html', {'by_package_list': by_package_list})
+    return render_to_response('mpinstaller/package_errors.html', context)

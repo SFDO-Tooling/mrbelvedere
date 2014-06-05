@@ -8,6 +8,13 @@ import django_rq
 from mpinstaller.models import PackageInstallation, PackageInstallationStep
 from mpinstaller.mdapi import ApiInstallVersion, ApiUninstallVersion
 
+# Set the error field on a failed step by calling the step's set_error method
+@receiver(post_save, sender=PackageInstallationStep)
+def set_installation_step_error(sender, **kwargs):
+    step = kwargs['instance']
+    if step.status == 'Failed' and not step.error:
+        step.set_error()
+
 @receiver(post_save, sender=PackageInstallationStep)
 def set_installation_status(sender, **kwargs):
     step = kwargs['instance']

@@ -1,5 +1,13 @@
 import re
 
+def obscure_salesforce_log(text):
+    text = obscure_salesforce_ids(text)
+    text = obscure_salesforce_org_name(text)
+    return text
+
+def obscure_salesforce_org_name(text):
+    return re.sub('(Organization Name: )(.*)(\nOrganization ID:)', r'\1<ORG_NAME>\3', text) 
+
 def obscure_salesforce_ids(text):
     # Find all possible ids and split the first 3 characters out
     matches = re.findall(r'([a-zA-Z0-9]{3})([a-zA-Z0-9]{12}|[a-zA-Z0-9]{15})', text)

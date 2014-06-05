@@ -1,4 +1,5 @@
 from django.db import models
+from mpinstaller.utils import obscure_salesforce_log
 from tinymce.models import HTMLField
 
 INSTALLATION_STATUS_CHOICES = (
@@ -361,6 +362,9 @@ class PackageInstallation(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['-created',]
+
     def __unicode__(self):
         return '%s: Install %s' % (self.id, self.version)
 
@@ -435,6 +439,80 @@ class PackageInstallation(models.Model):
     def get_status_from_steps(self):
         pass
 
+class InstallationErrorContent(models.Model):
+    resolution = HTMLField()
+
+class InstallationErrorManager(models.Manager):
+    def drilldown(self, keyword=None, has_content=None, count_min=None, parent_package=None, parent_version=None, packages=None, versions=None, org_types=None, date_start=None, date_end=None):
+        q_errors = self.filter(hide_from_report=False).order_by('message')
+
+        if keyword is not None:
+            q_errors = q_errors.filter(message__icontains = keyword)
+
+        if has_content is not None:
+            q_errors = q_errors.filter(content__isnull = not has_content)
+
+        q_steps = self.drilldown_steps(parent_package=parent_package, parent_version=parent_version, packages=packages, versions=versions, org_types=org_types, date_start=date_start, date_end=date_end)
+        q_steps = q_steps.filter(error__in = q_errors)    
+        step_counts = q_steps.values('error').annotate(count=models.Count('id')).order_by()
+
+        step_counts_dict = {}
+        for step_count in step_counts:
+            step_counts_dict[step_count['error']] = step_count['count']
+
+        errors = []
+ 
+        for error in q_errors:
+            count = step_counts_dict.get(error.id, 0)
+            if count_min is not None and count < count_min:
+                continue
+            errors.append({ 'error': error, 'count': count })
+
+        facets = {
+            'packages': q_steps.values('package', 'package__namespace').annotate(count=models.Count('id')).order_by(),
+            'versions': q_steps.values('version', 'version__name', 'version__package__namespace').annotate(count=models.Count('id')).order_by(),
+            'org_types': [{'org_type': row['installation__org_type'], 'count': row['count']} for row in q_steps.values('installation__org_type').annotate(count=models.Count('id')).order_by()],
+            'date_start': q_steps.aggregate(models.Min('created'))['created__min'],
+            'date_end': q_steps.aggregate(models.Max('created'))['created__max'],
+        }
+
+        return {'errors': errors, 'facets': facets}
+
+    def drilldown_steps(self, parent_package=None, parent_version=None, packages=None, versions=None, org_types=None, date_start=None, date_end=None):
+        q_steps = PackageInstallationStep.objects.all()
+
+        if parent_package is not None:
+            q_steps = q_steps.filter(installation__package = parent_package)
+
+        if parent_version is not None:
+            q_steps = q_steps.filter(installation__version = parent_version)
+
+        if packages is not None:
+            q_steps = q_steps.filter(package__in = packages)
+
+        if versions is not None:
+            q_steps = q_steps.filter(version__in = versions)
+
+        if org_types is not None:
+            q_steps = q_steps.filter(installation__org_type__in = org_types)
+
+        if date_start:
+            q_steps = q_steps.filter(created__gte = date_start)
+
+        if date_end:
+            q_steps = q_steps.filter(created__lte = date_end)
+
+        return q_steps
+
+
+class InstallationError(models.Model):
+    message = models.TextField()
+    content = models.ForeignKey(InstallationErrorContent, null=True, blank=True, related_name='errors')
+    fallback_content = models.ForeignKey(InstallationErrorContent, null=True, blank=True, related_name='errors_fallback')
+    hide_from_report = models.BooleanField(default=False)
+
+    objects = InstallationErrorManager()
+    
 class PackageInstallationSession(models.Model):
     installation = models.ForeignKey(PackageInstallation, related_name='sessions')
     oauth = models.TextField()
@@ -452,6 +530,7 @@ class PackageInstallationStep(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     order = models.IntegerField()
+    error = models.ForeignKey(InstallationError, null=True, blank=True, related_name='steps')
 
     def get_progress(self):
         if self.status == 'Pending':
@@ -463,10 +542,19 @@ class PackageInstallationStep(models.Model):
 
         return 100
 
+    def set_error(self):
+        if not self.log:
+            return
+        obscurred_log = obscure_salesforce_log(self.log)
+        error, created = InstallationError.objects.get_or_create(message = obscurred_log)
+        self.error = error
+        self.save()
+
     class Meta:
-        ordering = ['order',]
+        ordering = ['-installation__id', 'order',]
 
     def __unicode__(self):
         return '%s %s' % (self.action, self.version)
+
 
 from mpinstaller.handlers import *

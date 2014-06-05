@@ -9,24 +9,42 @@
 
 {% bootstrap_messages %}
 
-{% for package_errors in by_package_list %}
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">{{ package_errors.package }}</h3>
-  </div>
-     
-  <div class="panel-body"> 
+    <form>
+      <input type="text" name="keyword" placeholder="Search"{% if facet_values.keyword %} value="{{ facet_values.keyword }}"{% endif %} />
+
+      <input type="text" name="count_min" placeholder="count min"{% if facet_values.count_min %} value="{{ facet_values.count_min }}"{% endif %} />
+
+      <select name="packages" multiple="multiple">
+      {% for package in facets.packages %}
+        <option value="{{ package.package }}"{% if package.selected %} selected="selected"{% endif %}>{{ package.package__namespace }} ({{ package.count }})</option>
+      {% endfor %}
+      </select>
+        
+      <select name="versions" multiple="multiple">
+      {% for version in facets.versions %}
+        <option value="{{ version.version }}"{% if version.selected %} selected="selected"{% endif %}>{{ version.version__package__namespace }}: {{ version.version__name }} ({{ version.count }})</option>
+      {% endfor %}
+      </select>
+        
+      <select name="org_types" multiple="multiple">
+      {% for org_type in facets.org_types %}
+        <option value="{{ org_type.value }}"{% if org_type.selected %} selected="selected"{% endif %}>{{ org_type.org_type }} ({{ org_type.count }})</option>
+      {% endfor %}
+      </select>
+
+      <input type="submit" />
+    </form>
+
     <ul class="list-group">
-    {% for error in package_errors.errors %}
+    {% for error in errors %}
       <li class="list-group-item">
         <span class="badge alert-info">{{ error.count }}</span>
-        <h4>{{ error.message }}</h4>
+        <span class="badge alert-warning"><a href="/admin/mpinstaller/installationerror/{{ error.error.id }}/">edit</a></span>
+        {% if error.error.content %}
+        <span class="badge alert-success"><a href="/admin/mpinstaller/installationerrorcontent/{{ error.error.content.id }}/">resolution</a></span>
+        {% endif %}
+        <h4>{{ error.error.message }}</h4>
       </li>
     {% endfor %}
     </ul>
-
-  </div>
-</div>
-{% endfor %}
-
 {% endblock %}
