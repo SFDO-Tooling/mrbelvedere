@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
+from django.contrib.auth.decorators import login_required
 from mpinstaller.auth import SalesforceOAuth2
 from mpinstaller.installer import version_install_map
 from mpinstaller.installer import install_map_to_package_list
@@ -21,6 +22,7 @@ from mpinstaller.models import PackageInstallationSession
 from mpinstaller.models import PackageInstallationStep
 from mpinstaller.models import PackageVersion
 from mpinstaller.package import PackageZipBuilder
+from mpinstaller.utils import obscure_salesforce_ids
 from simple_salesforce import Salesforce
 from simple_salesforce.api import SalesforceExpiredSession
 from simple_salesforce.api import SalesforceResourceNotFound
@@ -563,6 +565,7 @@ def package_dependencies(request, namespace, beta=None):
         # For GET requests, return the current dependencies
         return HttpResponse(json.dumps(package.get_dependencies(beta)), content_type='application/json')
 
+@login_required
 def package_stats(request, namespace):
     """ Returns package installation stats """
     package = get_object_or_404(Package, namespace=namespace)
@@ -598,3 +601,46 @@ def package_stats(request, namespace):
         stats.append('%s: %s' % (version, count))
     
     return HttpResponse('\n'.join(stats))    
+
+@login_required
+def package_errors(request, namespace):
+    failed_steps = PackageInstallationStep.objects.filter(installation__package__namespace = namespace, status = 'Failed')
+    by_package = {}
+    no_log = 0
+    for step in failed_steps:
+        if step.version.package.namespace not in by_package:
+            by_package[step.version.package.namespace] = {}
+
+        # Skip failed steps with no log to parse
+        if not step.log:
+            no_log += 1
+            continue
+
+        obscurred_log = obscure_salesforce_ids(step.log)
+
+        if obscurred_log not in by_package[step.version.package.namespace]:
+            by_package[step.version.package.namespace][obscurred_log] = 1
+        else:
+            by_package[step.version.package.namespace][obscurred_log] += 1
+
+    # Build a sorted list structure for use in the template
+    by_package_list = []
+    packages = by_package.keys()
+    packages.sort() 
+    for package in packages:
+        package_errors = {
+            'package': package,
+            'errors': [],
+        }
+        errors = by_package[package].keys()
+        errors.sort()
+        for error in errors:
+            error_info = {
+                'message': error,
+                'count': by_package[package][error],
+            }
+            package_errors['errors'].append(error_info)
+
+        by_package_list.append(package_errors)
+
+    return render_to_response('mpinstaller/package_errors.html', {'by_package_list': by_package_list})
