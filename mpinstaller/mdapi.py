@@ -416,7 +416,10 @@ class ApiDeploy(BaseMetadataApiCall):
             messages = []
             for problem in problems:
                 messages.append(problem.firstChild.nodeValue)
-            log = '\n'.join(messages)
+            if messages:
+                log = '\n'.join(messages)
+            else:
+                log = response.content
             self.set_status('Failed', log)
         return self.status
             
