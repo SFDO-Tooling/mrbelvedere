@@ -12,6 +12,7 @@ def version_install_map(version, installed=None, metadata=None):
         metadata = {}
 
     packages = []
+    packages_post = []
     uninstalled = []
 
     # First, check for any dependent packages which need to be uninstalled
@@ -51,11 +52,18 @@ def version_install_map(version, installed=None, metadata=None):
         child_uninstalled = True
         uninstalled.append(namespace)
 
-        packages.append({
-            'version': dependency.requires,
-            'installed': installed_version,
-            'action': 'uninstall',
-        })
+        if dependency.order < 100:
+            packages.append({
+                'version': dependency.requires,
+                'installed': installed_version,
+                'action': 'uninstall',
+            })
+        else:
+            packages_post.append({
+                'version': dependency.requires,
+                'installed': installed_version,
+                'action': 'uninstall',
+            })
 
     # Next, check if the main package needs uninstalled
     installed_version = None
@@ -80,6 +88,11 @@ def version_install_map(version, installed=None, metadata=None):
             'action': 'uninstall',
         })
 
+    # Include any post installation packages which need uninstall
+    if packages_post:
+        packages.extend(packages_post)
+        packages_post = []
+
     # Reverse the uninstall order to uninstall parents first
     if packages:
         packages.reverse()
@@ -100,18 +113,32 @@ def version_install_map(version, installed=None, metadata=None):
     
         if not passes_conditions or (installed_version and namespace not in uninstalled):
             if not passes_conditions or installed_version == requested_version:
-                packages.append({
-                    'version': dependency.requires,
-                    'installed': installed_version,
-                    'action': 'skip',
-                })
+                if dependency.order < 100:
+                    packages.append({
+                        'version': dependency.requires,
+                        'installed': installed_version,
+                        'action': 'skip',
+                    })
+                else:
+                    packages_post.append({
+                        'version': dependency.requires,
+                        'installed': installed_version,
+                        'action': 'skip',
+                    })
                 continue
 
-        packages.append({
-            'version': dependency.requires,
-            'installed': installed_version,
-            'action': 'install',
-        })
+        if dependency.order < 100:
+            packages.append({
+                'version': dependency.requires,
+                'installed': installed_version,
+                'action': 'install',
+            })
+        else:
+            packages_post.append({
+                'version': dependency.requires,
+                'installed': installed_version,
+                'action': 'install',
+            })
 
     # Finally, check if the main package needs to be installed
     installed_version = None
@@ -149,6 +176,11 @@ def version_install_map(version, installed=None, metadata=None):
             'installed': installed_version,
             'action': 'skip',
         })
+
+    # Include any post installation packages which need uninstall
+    if packages_post:
+        packages.extend(packages_post)
+        packages_post = []
 
     return packages
 
