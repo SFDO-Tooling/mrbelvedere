@@ -1,12 +1,26 @@
 import re
 
 def obscure_salesforce_log(text):
+    text = obscure_mpinstaller_deployment_test_failure(text)
     text = obscure_salesforce_ids(text)
+    text = obscure_salesforce_limit_details(text)
+    text = obscure_salesforce_error_id(text)
     text = obscure_salesforce_org_name(text)
     return text
 
+def obscure_mpinstaller_deployment_test_failure(text):
+    """ Replaces actual test class, method name, and stack trace with "..." to allow for content shown when an apex test causes a production deployment failure """
+    return re.sub(r'^(Apex Test Failure: ).*', r'\1...', text)
+
+def obscure_salesforce_limit_details(text):
+    return re.sub(r'(\(Required: )[0-9]{1,4}(, Available: )[0-9]{1,4}(\))', r'\1<X>\2<Y>\3', text)
+
+def obscure_salesforce_error_id(text):
+    # FIXME: verify the length ranges for the error number
+    return re.sub(r'(Please include this ErrorId if you contact support: )([0-9]{6,18}-[0-9]{3,10} \([0-9]{6,14}\))', r'\1<ERROR_ID>', text)
+
 def obscure_salesforce_org_name(text):
-    return re.sub('(Organization Name: )(.*)(\nOrganization ID:)', r'\1<ORG_NAME>\3', text) 
+    return re.sub(r'(Organization Name: )(.*)(\nOrganization ID:)', r'\1<ORG_NAME>\3', text) 
 
 def obscure_salesforce_ids(text):
     # Find all possible ids and split the first 3 characters out

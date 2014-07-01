@@ -416,10 +416,36 @@ class ApiDeploy(BaseMetadataApiCall):
             messages = []
             for problem in problems:
                 messages.append(problem.firstChild.nodeValue)
+
+            # Parse out any failure text (from test failures in production deployments) and add to log
+            failures = parseString(response.content).getElementsByTagName('failures')
+            for failure in failures:
+                # Get needed values from subelements
+                namespace = failure.getElementsByTagName('namespace')
+                if namespace and namespace[0].firstChild:
+                    namespace = namespace[0].firstChild.nodeValue
+                else:
+                    namespace = None
+
+                stacktrace = failure.getElementsByTagName('stackTrace')
+                if stacktrace and stacktrace[0].firstChild:
+                    stacktrace = stacktrace[0].firstChild.nodeValue
+                else:
+                    stacktrace = None
+
+                message = ['Apex Test Failure: ',]
+                if namespace:
+                    message.append('from namespace %s: ' % namespace)
+                if stacktrace:
+                    message.append(stacktrace)
+
+                messages.append(''.join(message))
+
             if messages:
-                log = '\n'.join(messages)
+                log = '\n\n'.join(messages)
             else:
                 log = response.content
+
             self.set_status('Failed', log)
         return self.status
             
