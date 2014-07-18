@@ -77,6 +77,8 @@ def install_package_version(installation_id):
 
     # Wrap everything in try so we can use finally to delete the session at the end no matter what happens
     try:
+        sleep(3)
+
         # Get the installation from the database
         try:
             installation = PackageInstallation.objects.get(id = installation_id)
