@@ -40,7 +40,7 @@ SOAP_DEPLOY = """<?xml version="1.0" encoding="utf-8"?>
         <allowMissingFiles>false</allowMissingFiles>
         <autoUpdatePackage>false</autoUpdatePackage>
         <checkOnly>false</checkOnly>
-        <ignoreWarnings>false</ignoreWarnings>
+        <ignoreWarnings>true</ignoreWarnings>
         <performRetrieve>false</performRetrieve>
         <purgeOnDelete>%(purge_on_delete)s</purgeOnDelete>
         <rollbackOnError>true</rollbackOnError>
