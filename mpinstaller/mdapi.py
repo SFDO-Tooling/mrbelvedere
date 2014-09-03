@@ -44,7 +44,7 @@ SOAP_DEPLOY = """<?xml version="1.0" encoding="utf-8"?>
         <performRetrieve>false</performRetrieve>
         <purgeOnDelete>%(purge_on_delete)s</purgeOnDelete>
         <rollbackOnError>true</rollbackOnError>
-        <runAllTests>false</runAllTests>
+        <runAllTests>true</runAllTests>
         <singlePackage>true</singlePackage>
       </DeployOptions>
     </deploy>
