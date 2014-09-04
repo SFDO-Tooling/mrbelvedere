@@ -9,8 +9,10 @@ def obscure_salesforce_log(text):
     return text
 
 def obscure_mpinstaller_deployment_test_failure(text):
-    """ Replaces actual test class, method name, and stack trace with "..." to allow for content shown when an apex test causes a production deployment failure """
-    return re.sub(r'^(Apex Test Failure: ).*', r'\1...', text)
+    """ Returns 'Apex Test Failure' as the error text if the text contains a test failure message. """
+    if text.find('Apex Test Failure: ') != -1:
+        return 'Apex Test Failure'
+    return text
 
 def obscure_salesforce_limit_details(text):
     return re.sub(r'(\(Required: )[0-9]{1,4}(, Available: )[0-9]{1,4}(\))', r'\1<X>\2<Y>\3', text)
