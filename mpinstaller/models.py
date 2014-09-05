@@ -432,7 +432,7 @@ class PackageInstallation(models.Model):
             packages.append(step.package.id)
             step_content = None
             if step.error.content:
-                step_content = step.error.content.resolution
+                step_content = {'heading': step.package.name, 'body': step.error.content.resolution}
             else:
                 step_content = step.version.get_content_failure()
             if step_content:
