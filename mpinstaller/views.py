@@ -122,7 +122,7 @@ def check_installation_available(request, version):
             return 'beta-in-prod-org'
 
     # Allow passing of ?bypass_sandbox=true to bypass a sandbox installation
-    bypass_sandbox = request.session.get('bypass_sandbox', None):
+    bypass_sandbox = request.session.get('bypass_sandbox', None)
     if bypass_sandbox == None:
         bypass_sandbox = request.GET.get('bypass_sandbox',False) == 'true'
         if bypass_sandbox:
