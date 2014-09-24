@@ -123,7 +123,8 @@ def check_installation_available(request, version):
 
     # If the package requires a sandbox installation before a production upgrade,
     # verify this version has been installed in a sandbox of the org
-    if not version.is_beta() and version.package.force_sandbox:
+    bypass_sandbox = request.GET.get('bypass_sandbox',False)
+    if not version.is_beta() and version.package.force_sandbox and not bypass_sandbox:
         # Is this a production org?
         if oauth.get('org_type', None) == 'Enterprise Edition':
             # Is this an upgrade?
