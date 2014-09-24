@@ -121,10 +121,16 @@ def check_installation_available(request, version):
         if not oauth.get('sandbox',False) and oauth['org_type'].find('Developer Edition') == -1:
             return 'beta-in-prod-org'
 
+    # Allow passing of ?bypass_sandbox=true to bypass a sandbox installation
+    bypass_sandbox = request.session.get('bypass_sandbox', None):
+    if bypass_sandbox == None:
+        bypass_sandbox = request.GET.get('bypass_sandbox',False) == 'true'
+        if bypass_sandbox:
+            request.session['bypass_sandbox'] = bypass_sandbox
+
     # If the package requires a sandbox installation before a production upgrade,
     # verify this version has been installed in a sandbox of the org
-    bypass_sandbox = request.GET.get('bypass_sandbox',False)
-    if not version.is_beta() and version.package.force_sandbox and not bypass_sandbox:
+    if not version.is_beta() and version.package.force_sandbox and bypass_sandbox:
         # Is this a production org?
         if oauth.get('org_type', None) == 'Enterprise Edition':
             # Is this an upgrade?
@@ -517,6 +523,9 @@ def oauth_logout(request):
 
     if 'mpinstaller_redirect' in request.session:
         del request.session['mpinstaller_redirect']
+
+    if 'bypass_sandbox' in request.session:
+        del request.session['bypass_sandbox']
 
     if redirect:
         return HttpResponseRedirect(redirect)
