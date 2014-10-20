@@ -139,14 +139,15 @@ def jenkins_post_build_hook(request, slug):
     )
 
     for pull in pulls:
-        # Set the Commit Status so it shows on the pull rqeuest
-        pull.repository.call_api('/statuses/%s' % pull.last_build_head_sha, data={
-            'state': status['state'],
-            'target_url': build['full_url'],
-            'description': status['message'],
-        })
+        # Set the Commit Status so it shows on the pull request
+        if pull.last_build_head_sha:
+            pull.repository.call_api('/statuses/%s' % pull.last_build_head_sha, data={
+                'state': status['state'],
+                'target_url': build['full_url'],
+                'description': status['message'],
+            })
 
-        if status['state'] != 'Pending':
+        if status['state'] != 'pending':
             # Use a comment on the pull request to report build status and trigger notifications in Github
             pull.repository.call_api('/issues/%s/comments' % pull.number, data={
                 'body': '**%s**: %s, view the build at %s' % (status['state'], status['message'], build['full_url']),
