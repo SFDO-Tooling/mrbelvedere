@@ -127,6 +127,8 @@ def jenkins_post_build_hook(request, slug):
         status = status_map['STARTED']
     else:
         status = status_map.get(build['status'], None)
+
+    print params
     
     # Look for pull requests against the branch and repo
     pulls = PullRequest.objects.filter(
@@ -142,11 +144,13 @@ def jenkins_post_build_hook(request, slug):
             'description': status['message'],
         })
 
-        # Use a comment on the pull request to report build status and trigger notifications in Github
-        pull.repository.call_api('/issues/%s/comments' % pull.number, data={
-            'body': '**%s**: %s, view the build at %s' % (status['state'], status['message'], build['full_url']),
-        })
-        return HttpResponse('OK')        
+        if status['state'] != 'Pending':
+            # Use a comment on the pull request to report build status and trigger notifications in Github
+            pull.repository.call_api('/issues/%s/comments' % pull.number, data={
+                'body': '**%s**: %s, view the build at %s' % (status['state'], status['message'], build['full_url']),
+            })
+
+    return HttpResponse('OK')        
 
 
 @cache_page(60*2)
