@@ -117,6 +117,7 @@ def jenkins_post_build_hook(request, slug):
         },
     }
     logger.info('DEBUG: build = %s' % build)
+    print 'DEBUG: build = %s' % build
 
     status = status_map.get(build['status'], None)
     if not status:
