@@ -103,11 +103,15 @@ def jenkins_post_build_hook(request, slug):
     params = build['parameters']
 
     status_map = {
+        'STARTED': {
+            'state': 'pending',
+            'message': 'The build is running!',
+        },
         'SUCCESS': {
             'state': 'success',
             'message': 'The build succeeded!',
         },
-        'FAILED': {
+        'FAILURE': {
             'state': 'failure',
             'message': 'The build failed!',
         },
@@ -116,13 +120,14 @@ def jenkins_post_build_hook(request, slug):
             'message': 'The build was unsuccessful!',
         },
     }
-    logger.info('DEBUG: build = %s' % build)
-    print 'DEBUG: build = %s' % build
 
-    status = status_map.get(build['status'], None)
-    if not status:
-        return HttpResponse('OK')
-
+    if build.get('phase',None) == 'STARTED':
+        # Jenkins Notifier sends a notification at the start of the build
+        # with no status, but phase = STARTED
+        status = status_map['STARTED']
+    else:
+        status = status_map.get(build['status'], None)
+    
     # Look for pull requests against the branch and repo
     pulls = PullRequest.objects.filter(
         source_branch__repository__url = params['repository'],
