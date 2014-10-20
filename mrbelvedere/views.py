@@ -17,6 +17,12 @@ from mrbelvedere.utils import GithubPushLoader
 from mrbelvedere.utils import GithubPullRequestLoader
 from mrbelvedere.utils import GithubPullRequestCommentLoader
 
+# import the logging library
+import logging
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
 GITHUB_WHITELIST = [
     '204.232.175.',
     '192.30.252.',
@@ -110,6 +116,8 @@ def jenkins_post_build_hook(request, slug):
             'message': 'The build was unsuccessful!',
         },
     }
+    logger.info('DEBUG: build = %s' % build)
+
     status = status_map.get(build['status'], None)
     if not status:
         return HttpResponse('OK')
