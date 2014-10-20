@@ -128,6 +128,8 @@ def jenkins_post_build_hook(request, slug):
     else:
         status = status_map.get(build['status'], None)
 
+    print params
+
     repo_url = params['repository'].replace('git@github.com/','git://github.com:')
     
     # Look for pull requests against the branch and repo
