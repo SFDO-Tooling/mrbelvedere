@@ -138,11 +138,6 @@ def jenkins_post_build_hook(request, slug):
 
     for pull in pulls:
         if status['state'] == 'pending':
-            # Use a comment on the pull request to report build status and trigger notifications in Github
-            pull.repository.call_api('/issues/%s/comments' % pull.number, data={
-                'body': '**%s**: %s, view the build at %s' % (status['state'], status['message'], build['full_url']),
-            })
-
             # If we need to set a pending status, the build might be triggering in the background
             # assume it will be building the head commit on the source branch
             resp = pull.repository.call_api('/pulls/%s' % pull.number)
@@ -150,7 +145,11 @@ def jenkins_post_build_hook(request, slug):
             # Don't save this change because the background job should set it when it completes
             # and we don't want to re-run the triggers
             pull.last_build_head_sha = resp['head']['sha']
-            
+        else:
+            # Use a comment on the pull request to report build status and trigger notifications in Github
+            pull.repository.call_api('/issues/%s/comments' % pull.number, data={
+                'body': '**%s**: %s, view the build at %s' % (status['state'], status['message'], build['full_url']),
+            })
 
         # Set the Commit Status so it shows on the pull request
         resp = pull.repository.call_api('/statuses/%s' % pull.last_build_head_sha, data={
@@ -160,8 +159,6 @@ def jenkins_post_build_hook(request, slug):
         })
 
         print resp
-
-
 
     return HttpResponse('OK')        
 
