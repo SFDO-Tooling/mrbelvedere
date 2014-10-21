@@ -99,6 +99,8 @@ def jenkins_post_build_hook(request, slug):
 
     data = json.loads(request.body)
 
+    print 'DEBUG: data = %s' % data
+
     build = data['build']
     params = build['parameters']
 
