@@ -235,7 +235,7 @@ class BranchJobTrigger(models.Model):
     #def __unicode__(self):
     #    return '%s -> %s' (self.branch.name, self.job.name)
 
-    @django_rq.job
+    #@django_rq.job
     def invoke(self, push):
         api = self.job.get_api()
         api.invoke(build_params={
@@ -300,7 +300,7 @@ class RepositoryPullRequestJob(models.Model):
             return True
         return False
         
-    @django_rq.job
+    #@django_rq.job
     def invoke(self, pull_request):
         source_repo = pull_request.source_branch.repository
         target_repo = pull_request.target_branch.repository
@@ -320,6 +320,7 @@ class RepositoryPullRequestJob(models.Model):
         if pull_request.github_user.email:
             params['email'] = pull_request.github_user.email
             
+        # Call the Jenkins API to invoke the build
         result = api.invoke(build_params=params)
         build_url = result.get_build().baseurl
 
@@ -345,6 +346,7 @@ class RepositoryPullRequestJob(models.Model):
         pull_request.last_build_head_sha = pr['head']['sha']
         pull_request.last_build_base_sha = pr['base']['sha']
         pull_request.save()
+        print 'DEBUG: head = %s, base = %s' % (pull_request.last_build_head_sha, pull_request.last_build_base_sha)
 
         return result
 
