@@ -1,4 +1,45 @@
 import re
+import zipfile
+import StringIO
+
+# Zip Utilities
+
+def zip_subfolder(zip_src, path):
+    zip_dest = zipfile.ZipFile(StringIO.StringIO(), 'w', zipfile.ZIP_DEFLATED)
+    for name in zip_src.namelist():
+        if not name.startswith(path):
+            continue
+        zip_dest.writestr(name.replace(path, '', 1), zip_src.read(name))
+
+    return zip_dest
+
+def zip_subfolders(zip_src, path):
+    zips = {}
+    for name in zip_src.namelist():
+        if not name.startswith(path):
+            continue
+
+        name_parts = name.replace(path, '', 1).split('/')
+   
+        # Skip files at the root of the path, we only want files inside subfolders
+        if len(name_parts) == 1:
+            continue
+
+        # Skip the subdirectory itself
+        if len(name_parts) == 2 and name_parts[-1] == '':
+            name_parts.pop()
+
+        # Get or create the subfolder's zip file in memory
+        subfolder = name_parts[0]
+        if subfolder not in zips:
+            zips[subfolder] = zipfile.ZipFile(StringIO.StringIO(), 'w', zipfile.ZIP_DEFLATED)
+       
+        # Write the file 
+        zips[subfolder].writestr('/'.join(name_parts[1:]), zip_src.read(name))
+
+    return zips
+
+# Salesforce related utilities
 
 def obscure_salesforce_log(text):
     text = obscure_mpinstaller_deployment_test_failure(text)
