@@ -22,6 +22,7 @@ from mpinstaller.models import Package
 from mpinstaller.models import PackageInstallation
 from mpinstaller.models import PackageVersion
 from mpinstaller.package import PackageZipBuilder
+from mpinstaller.utils import zip_subfolder
 from simple_salesforce import Salesforce
 
 logger = logging.getLogger(__name__)
@@ -457,18 +458,40 @@ class ApiInstallVersion(ApiDeploy):
         # Construct and set the package_zip file
         if self.version.number:
             self.package_zip = PackageZipBuilder(self.version.package.namespace, self.version.number).install_package()
-        else:
+        elif self.version.zip_url or self.version.repo_url:
+            if self.version.repo_url:
+                zip_url = '%s/archive/%s.zip' % (self.version.repo_url, self.version.branch)
+            else:
+                zip_url = self.version.zip_url
+
             # Deploy a zipped bundled downloaded from a url
             try:
-                zip_resp = requests.get(self.version.zip_url)
-                zipfp = TemporaryFile()
-                zipfp.write(zip_resp.content)
-                zipfile = ZipFile(zipfp, 'r')
+                zip_resp = requests.get(zip_url)
+            except:
+                raise ValueError('Failed to fetch zip from %s' % self.version.zip_url)
+
+            zipfp = TemporaryFile()
+            zipfp.write(zip_resp.content)
+            zipfile = ZipFile(zipfp, 'r')
+
+            if not self.version.subfolder and not self.version.repo_url:
                 zipfile.close()
                 zipfp.seek(0)
                 self.package_zip = base64.b64encode(zipfp.read())
-            except:
-                raise ValueError('Failed to fetch zip from %s' % self.version.zip_url)
+            else:
+                ignore_prefix = ''
+                if self.version.repo_url:
+                    # Get the top level folder from the zip
+                    ignore_prefix = '%s/' % zipfile.namelist()[0].split('/')[0]
+                
+                # Extract a subdirectory from the zip
+                subdirectory = ignore_prefix + self.version.subfolder
+                subzip = zip_subfolder(zipfile, subdirectory)
+                subzipfp = subzip.fp
+                subzip.close()
+                subzipfp.seek(0)
+                self.package_zip = base64.b64encode(subzipfp.read())
+
         super(ApiInstallVersion, self).__init__(oauth, self.package_zip, installation_step, purge_on_delete)
 
 class ApiUninstallVersion(ApiDeploy):

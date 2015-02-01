@@ -86,12 +86,14 @@ class Package(models.Model):
             dependencies.append({
                 'namespace': version.requires.package.namespace,
                 'number': version.requires.number,
+                'repo_url': version.requires.repo_url,
                 'zip_url': version.requires.zip_url,
             })
 
         dependencies.append({
             'namespace': self.namespace,
             'number': parent.number,
+            'repo_url': parent.repo_url,
             'zip_url': parent.zip_url,
         })
         return dependencies
@@ -110,6 +112,7 @@ class Package(models.Model):
                 continue
 
             number = dependency.get('number',None)
+            repo_url = dependency.get('repo_url',None)
             zip_url = dependency.get('zip_url',None)
 
             if number and parent.number != number:
@@ -200,6 +203,9 @@ class PackageVersion(models.Model):
     name = models.CharField(max_length=255)
     number = models.CharField(max_length=32, null=True, blank=True)
     zip_url = models.URLField(null=True, blank=True)
+    repo_url = models.URLField(null=True, blank=True)
+    branch = models.CharField(max_length=255, null=True, blank=True)
+    subfolder = models.CharField(max_length=255, null=True, blank=True)
     conditions = models.ManyToManyField(MetadataCondition, null=True, blank=True)
     content_intro = HTMLField(null=True, blank=True, help_text="Optional version specific text to show in Package Information panel")
     content_success = HTMLField(null=True, blank=True, help_text="Optional version specific text shown after a successful installation.")

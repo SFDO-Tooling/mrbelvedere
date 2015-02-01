@@ -22,7 +22,7 @@ class RequiredPackageVersionSerializer(serializers.ModelSerializer):
     is_beta = serializers.Field(source='is_beta')
     class Meta:
         model = PackageVersion
-        fields = ('id','name','number','zip_url','is_beta','package','conditions','content_intro')
+        fields = ('id','name','number','repo_url','zip_url','subfolder','is_beta','package','conditions','content_intro')
 
 class PackageVersionDependencySerializer(serializers.ModelSerializer):
     requires = RequiredPackageVersionSerializer()
@@ -37,7 +37,7 @@ class PackageVersionSerializer(serializers.ModelSerializer):
     is_beta = serializers.Field(source='is_beta')
     class Meta:
         model = PackageVersion
-        fields = ('id','name','number','zip_url','is_beta', 'package', 'conditions','dependencies')
+        fields = ('id','name','number','repo_url','zip_url','subfolder', 'package', 'conditions','dependencies')
 
 class InstallationStepSerializer(serializers.ModelSerializer):
     version = RequiredPackageVersionSerializer()

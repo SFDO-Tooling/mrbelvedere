@@ -5,6 +5,9 @@ import StringIO
 # Zip Utilities
 
 def zip_subfolder(zip_src, path):
+    if not path.endswith('/'):
+        path = path + '/'
+
     zip_dest = zipfile.ZipFile(StringIO.StringIO(), 'w', zipfile.ZIP_DEFLATED)
     for name in zip_src.namelist():
         if not name.startswith(path):
@@ -14,6 +17,9 @@ def zip_subfolder(zip_src, path):
     return zip_dest
 
 def zip_subfolders(zip_src, path):
+    if not path.endswith('/'):
+        path = path + '/'
+
     zips = {}
     for name in zip_src.namelist():
         if not name.startswith(path):
