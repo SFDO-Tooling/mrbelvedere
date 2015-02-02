@@ -206,6 +206,8 @@ class PackageVersion(models.Model):
     repo_url = models.URLField(null=True, blank=True)
     branch = models.CharField(max_length=255, null=True, blank=True)
     subfolder = models.CharField(max_length=255, null=True, blank=True)
+    namespace_token = models.CharField(max_length=255, null=True, blank=True, help_text="If provided, all files in the archive will be scanned and the token will be replaced with the namespace provided.  For CumulusCI, the default token is %%%NAMESPACE%%%")
+    namespace = models.CharField(max_length=255, null=True, blank=True, help_text="If provided, the namespace_token will be replaced with this namespace.  If not provided, the token will be cleared.  Example: npsp")
     conditions = models.ManyToManyField(MetadataCondition, null=True, blank=True)
     content_intro = HTMLField(null=True, blank=True, help_text="Optional version specific text to show in Package Information panel")
     content_success = HTMLField(null=True, blank=True, help_text="Optional version specific text shown after a successful installation.")

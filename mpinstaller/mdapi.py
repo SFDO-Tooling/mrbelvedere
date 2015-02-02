@@ -486,7 +486,7 @@ class ApiInstallVersion(ApiDeploy):
                 
                 # Extract a subdirectory from the zip
                 subdirectory = ignore_prefix + self.version.subfolder
-                subzip = zip_subfolder(zipfile, subdirectory)
+                subzip = zip_subfolder(zipfile, subdirectory, self.version.namespace_token, self.version.namespace)
                 subzipfp = subzip.fp
                 subzip.close()
                 subzipfp.seek(0)

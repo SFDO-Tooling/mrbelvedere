@@ -4,7 +4,7 @@ import StringIO
 
 # Zip Utilities
 
-def zip_subfolder(zip_src, path):
+def zip_subfolder(zip_src, path, namespace_token=None, namespace=None):
     if not path.endswith('/'):
         path = path + '/'
 
@@ -12,11 +12,20 @@ def zip_subfolder(zip_src, path):
     for name in zip_src.namelist():
         if not name.startswith(path):
             continue
-        zip_dest.writestr(name.replace(path, '', 1), zip_src.read(name))
+
+        content = zip_src.read(name)
+        if namespace_token:
+            # If a namespace_token was specified, replace the token with the namespace or nothing
+            if namespace:
+                content = content.replace(namespace_token, '%s__' % namespace)
+            else:
+                content = content.replace(namespace_token, '')
+
+        zip_dest.writestr(name.replace(path, '', 1), content)
 
     return zip_dest
 
-def zip_subfolders(zip_src, path):
+def zip_subfolders(zip_src, path, namespace_token=None, namespace=None):
     if not path.endswith('/'):
         path = path + '/'
 
@@ -41,7 +50,16 @@ def zip_subfolders(zip_src, path):
             zips[subfolder] = zipfile.ZipFile(StringIO.StringIO(), 'w', zipfile.ZIP_DEFLATED)
        
         # Write the file 
-        zips[subfolder].writestr('/'.join(name_parts[1:]), zip_src.read(name))
+        content = zip_src.read(name)
+
+        if namespace_token:
+            # If a namespace_token was specified, replace the token with the namespace or nothing
+            if namespace:
+                content = content.replace(namespace_token, '%s__' % namespace)
+            else:
+                content = content.replace(namespace_token, '')
+    
+        zips[subfolder].writestr('/'.join(name_parts[1:]), content)
 
     return zips
 
