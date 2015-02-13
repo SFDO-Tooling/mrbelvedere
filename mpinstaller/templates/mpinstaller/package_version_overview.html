@@ -115,7 +115,7 @@
                     <span class="text-muted">- {{ step.version.number }}
                   {% endif %}
                 </h4>
-                <p>{{ step.version.package.description }}</p>
+                {% if step.version.package.description %}<p>{{ step.version.package.description }}</p>{% endif %}
               </div>
     
               <div class="col-md-3">
