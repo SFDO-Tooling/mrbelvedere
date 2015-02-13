@@ -49,6 +49,7 @@ def package_overview(request, namespace, beta=None, github=None):
 def package_version_overview(request, namespace, version_id):
     version = get_object_or_404(PackageVersion, package__namespace = namespace, id=version_id)
 
+    fork = request.GET.get('fork',None)
     git_ref = request.GET.get('git_ref',None)
 
     oauth = request.session.get('oauth')
@@ -79,7 +80,7 @@ def package_version_overview(request, namespace, version_id):
             return HttpResponseRedirect('/mpinstaller/%s/version/%s/installation-unavailable/%s' % (version.package.namespace, version.id, reason))
 
         # Get the install map and package list
-        install_map = version_install_map(version, org_packages, metadata, git_ref)
+        install_map = version_install_map(version, org_packages, metadata, git_ref, fork)
         package_list = install_map_to_package_list(install_map)
     
     logged_in = False
@@ -94,11 +95,23 @@ def package_version_overview(request, namespace, version_id):
     install_url = request.build_absolute_uri('/mpinstaller/%s/version/%s/install' % (namespace, version_id))
     if git_ref:
         install_url += '?git_ref=%s' % urllib.quote(git_ref)
+        if fork:
+            install_url += '&fork=%s' % urllib.quote(fork)
+    elif fork:
+        install_url += '?fork=%s' % urllib.quote(fork)
+
+    repo_url = version.repo_url
+    if repo_url and fork:
+        repo_url_parts = repo_url.split('/')
+        repo_url_parts[3] = fork
+        repo_url = '/'.join(repo_url_parts)
 
     data = {
         'version': version,
         'oauth': request.session.get('oauth',None),
         'git_ref': git_ref,
+        'fork': fork,
+        'repo_url': repo_url,
         'login_url': login_url,
         'logout_url': logout_url,
         'install_url': install_url,
@@ -179,6 +192,7 @@ def start_package_installation(request, namespace, version_id):
     oauth = request.session.get('oauth', None)
 
     git_ref = request.GET.get('git_ref',None)
+    fork = request.GET.get('fork',None)
 
     # Redirect back to the package overview page if not connected to an org
     if not oauth or not oauth.get('access_token'):
@@ -199,11 +213,13 @@ def start_package_installation(request, namespace, version_id):
     if metadata is None:
         return HttpResponseRedirect(version.get_installer_url(request))
 
-    install_map = version_install_map(version, installed, metadata)
+    install_map = version_install_map(version, installed, metadata, git_ref, fork)
 
     installation_obj = PackageInstallation(
         package = version.package,
         version = version,
+        git_ref = git_ref,
+        fork = fork,
         org_id = oauth['org_id'],
         org_type = oauth['org_type'],
         instance_url = oauth['instance_url'],

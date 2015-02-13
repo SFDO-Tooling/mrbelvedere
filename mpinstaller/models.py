@@ -52,7 +52,7 @@ class MetadataCondition(models.Model):
         )
 
 class Package(models.Model):
-    namespace = models.SlugField()
+    namespace = models.SlugField(max_length=128)
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     current_prod = models.ForeignKey('mpinstaller.PackageVersion', related_name='current_prod', null=True, blank=True)
@@ -363,7 +363,8 @@ class PackageVersionDependency(models.Model):
 class PackageInstallation(models.Model):
     package = models.ForeignKey(Package, related_name='installations')
     version = models.ForeignKey(PackageVersion, related_name='installations', null=True, blank=True)
-    git_ref = models.TextField(null=True, blank=True)
+    git_ref = models.CharField(max_length=255, null=True, blank=True)
+    fork = models.CharField(max_length=255, null=True, blank=True)
     org_id = models.CharField(max_length=32)
     org_type = models.CharField(max_length=255)
     instance_url = models.CharField(max_length=255)

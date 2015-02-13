@@ -51,21 +51,27 @@ class MockVersionDependency(object):
         self.requires = dependency['package_version']
         self.order = dependency['order']
     
-def create_repo_package_versions(version, git_ref=None):
+def create_repo_package_versions(version, git_ref=None, fork=None):
     """ Creates all dependent PackageVersion objects from a PackageVersion with a repo_url """
 
     # If there is no repo_url on the PackageVersion, do nothing
     if not version.repo_url:
         return
 
+    repo_url = version.repo_url
+    if fork:
+        repo_url_parts = repo_url.split('/')
+        repo_url_parts[3] = fork
+        repo_url = '/'.join(repo_url_parts)
+
     # Set up the urls to fetch the dependency files from the repo
     if not git_ref:
         git_ref = version.branch
-    raw_url_base = version.repo_url.replace('https://github.com','https://raw.githubusercontent.com')
+    raw_url_base = repo_url.replace('https://github.com','https://raw.githubusercontent.com')
     file_url = '%s/%s/' % (raw_url_base, git_ref)
 
     # Parse the owner and repo from the url
-    owner, repo = version.repo_url.split('/')[3:5]
+    owner, repo = repo_url.split('/')[3:5]
   
     # Get the contents of version.properties if it exists 
     try:
@@ -241,7 +247,7 @@ def create_repo_package_versions(version, git_ref=None):
     return MockVersionAllDependencies(dependencies)
 
 
-def version_install_map(version, installed=None, metadata=None, git_ref=None):
+def version_install_map(version, installed=None, metadata=None, git_ref=None, fork=None):
 
     if not installed:
         installed = {}
@@ -253,7 +259,7 @@ def version_install_map(version, installed=None, metadata=None, git_ref=None):
     uninstalled = []
 
     if version.repo_url:
-        dependencies = create_repo_package_versions(version, git_ref)()
+        dependencies = create_repo_package_versions(version, git_ref, fork)()
     else:
         dependencies = version.dependencies.all()
 
