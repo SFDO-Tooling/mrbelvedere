@@ -460,7 +460,10 @@ class ApiInstallVersion(ApiDeploy):
             self.package_zip = PackageZipBuilder(self.version.package.namespace, self.version.number).install_package()
         elif self.version.zip_url or self.version.repo_url:
             if self.version.repo_url:
-                zip_url = '%s/archive/%s.zip' % (self.version.repo_url, self.version.branch)
+                git_ref = self.version.branch
+                if installation_step.installation.git_ref:
+                    git_ref = installation_step.installation.git_ref
+                zip_url = '%s/archive/%s.zip' % (self.version.repo_url, git_ref)
             else:
                 zip_url = self.version.zip_url
 

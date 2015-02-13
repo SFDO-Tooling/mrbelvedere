@@ -1,10 +1,247 @@
 import logging
 import json
+import requests
+import urllib
 from distutils.version import LooseVersion
+from mpinstaller.models import Package
+from mpinstaller.models import PackageVersion
+from mpinstaller.utils import github_api
 
 logger = logging.getLogger(__name__)
 
-def version_install_map(version, installed=None, metadata=None):
+def list_github_directories(owner, repo, path, ref=None, username=None, password=None):
+    subdirs = []
+
+    if ref:
+        path += '?ref=%s' % urllib.quote(ref)
+    dirlist = github_api(owner, repo, '/contents%s' % path, username=username, password=password)
+
+
+    if 'message' in dirlist:
+        # If the path was not found, return an empty list
+        if dirlist['message'] == 'Not Found':
+            return subdirs
+
+        # Otherwise, we hit a real error and need to raise it
+        raise ValueError(dirlist['message'])
+   
+    for item in dirlist:
+        # Skip files, we only want directories
+        if item['type'] != 'dir':
+            continue
+        subdirs.append(item['name'])
+    
+    return subdirs
+
+class MockVersionAllDependencies(object):
+    """ Mocks a PackageVersion and its dependencies to avoid the need to create dependencies in the db """
+    
+    def __init__(self, dependencies):
+        self.dependencies = []
+        for dependency in dependencies:
+            self.dependencies.append(MockVersionDependency(dependency))
+
+    def __call__(self):
+        return self.dependencies
+
+class MockVersionDependency(object):
+    """ Represents a single mock PackageVersionDependency """
+
+    def __init__(self, dependency):
+        self.requires = dependency['package_version']
+        self.order = dependency['order']
+    
+def create_repo_package_versions(version, git_ref=None):
+    """ Creates all dependent PackageVersion objects from a PackageVersion with a repo_url """
+
+    # If there is no repo_url on the PackageVersion, do nothing
+    if not version.repo_url:
+        return
+
+    # Set up the urls to fetch the dependency files from the repo
+    if not git_ref:
+        git_ref = version.branch
+    raw_url_base = version.repo_url.replace('https://github.com','https://raw.githubusercontent.com')
+    file_url = '%s/%s/' % (raw_url_base, git_ref)
+
+    # Parse the owner and repo from the url
+    owner, repo = version.repo_url.split('/')[3:5]
+  
+    # Get the contents of version.properties if it exists 
+    try:
+        version_properties = requests.get(file_url + 'version.properties').content
+    except:
+        version_properties = None
+
+    required_packages = {}
+    package_order = []
+
+    if version_properties:
+        for line in version_properties.split('\n'):
+            if line.find('=') == -1:
+                continue
+
+            key, value = line.split('=')
+            key = key.strip()
+            value = value.strip()
+
+            if key == 'required.packages':
+                package_order = value.split(',')
+                package_order = [package.strip() for package in package_order if package != 'managed']
+                continue
+
+            if key == 'version.managed':
+                continue
+
+            key = key.replace('version.','')
+
+            required_packages[key] = value
+
+    # Find all the unpackaged subdirectories that need to be deployed
+    unpackaged = list_github_directories(owner, repo, '/unpackaged', git_ref, version.github_username, version.github_password) 
+    unpackaged_subdirs = {}
+    for item in unpackaged:
+        if item in ('pre','post'):
+            unpackaged_subdirs[item] = []
+        else:
+            unpackaged_subdirs[item] = {}
+
+    for subdir in unpackaged_subdirs.keys():
+        subdir_contents = list_github_directories(owner, repo, '/unpackaged/%s' % subdir, git_ref, version.github_username, version.github_password)
+        for item in subdir_contents:
+            # For unpackaged/pre and unpackaged/post, simply include subdirectories
+            if subdir in ('pre','post'):
+                unpackaged_subdirs[subdir].append(item)
+                continue
+
+            # For all other directories, assume they are namespace pre/post directories
+            if subdir not in required_packages:
+                # Skip any namespaces not in required_packages
+                continue
+
+            # If this is a namespace pre/post for a required namespace, get the contents of its subfolders
+            if item not in unpackaged_subdirs[subdir]:
+                unpackaged_subdirs[subdir][item] = []
+ 
+            subsubdir_contents = list_github_directories(owner, repo, '/unpackaged/%s/%s' % (subdir, item), git_ref, version.github_username, version.github_password)
+            for subitem in subsubdir_contents:
+                unpackaged_subdirs[subdir][item].append(subitem)
+
+    # Sort the subdirs
+    for subdir in unpackaged_subdirs.keys():
+        if subdir in ('pre','post'):
+            unpackaged_subdirs[subdir].sort()
+            continue
+        for subsubdir in subdir.keys():
+            unpackaged_subdirs[subdir][subsubdir].sort()
+
+    # Assemble a linear order of dependencies
+    dependencies = []
+    counter_pre = 1
+    counter_post = 100
+    
+    # Add all package dependencies and their pre/post bundles   
+    for package in package_order:
+        pre = unpackaged_subdirs.get(package, {}).get('pre',None)
+        post = unpackaged_subdirs.get(package, {}).get('post',None)
+
+        # Handle pre bundles for the namespace
+        if pre:
+            subfolder = 'unpackaged/%s/pre' % package
+            for bundle in pre:
+                dependencies.append({
+                    'namespace': '%s_%s_%s_pre_%s' % (owner, repo, package, bundle),
+                    'name': '%s/%s' % (subfolder, bundle),
+                    'repo_url': version.repo_url,
+                    'subfolder': '%s/%s' % (subfolder, bundle),
+                    'branch': version.branch,
+                    'order': counter_pre,
+                })
+
+        # Handle the namespace package
+        version_number = required_packages.get(package, 'Not Installed')
+        dependencies.append({
+            'namespace': package,
+            'name': version_number,
+            'number': version_number,
+            'order': counter_pre,
+        })
+
+        # Handle post bundles for the namespace
+        if post:
+            subfolder = 'unpackaged/%s/post' % package
+            for bundle in post:
+                dependencies.append({
+                    'namespace': '%s_%s_%s_post_%s' % (owner, repo, package, bundle),
+                    'name': '%s/%s' % (subfolder, bundle),
+                    'namespace_token': '%%%NAMESPACE%%%',
+                    'namespace_replace': package,
+                    'repo_url': version.repo_url,
+                    'subfolder': '%s/%s' % (subfolder, bundle),
+                    'branch': version.branch,
+                    'order': counter_pre,
+                })
+
+        counter_pre += 1
+
+    if 'pre' in unpackaged_subdirs:
+        for bundle in unpackaged_subdirs['pre']:
+            subfolder = 'unpackaged/pre/%s' % bundle
+            dependencies.append({
+                'namespace': '%s_%s_pre_%s' % (owner, repo, bundle),
+                'name': subfolder,
+                'repo_url': version.repo_url,
+                'subfolder': subfolder,
+                'branch': version.branch,
+                'order': counter_pre,
+            })
+            counter_pre += 1
+
+    if 'post' in unpackaged_subdirs:
+        for bundle in unpackaged_subdirs['post']:
+            subfolder = 'unpackaged/post/%s' % bundle
+            dependencies.append({
+                'namespace': '%s_%s_post_%s' % (owner, repo, bundle),
+                'name': subfolder,
+                'namespace_token': '%%%NAMESPACE%%%',
+                'repo_url': version.repo_url,
+                'subfolder': subfolder,
+                'branch': version.branch,
+                'order': counter_post,
+            })
+            counter_post += 1
+    
+
+    # Now, get or create the Package and PackageVersions for the dependencies
+    for dependency in dependencies:
+        package, created = Package.objects.get_or_create(
+            namespace = dependency['namespace'],
+            defaults = {'name': dependency['name']},
+        )
+        if 'number' in dependency:
+            package_version, created = PackageVersion.objects.get_or_create(
+                package = package,
+                number = dependency['number'],
+                defaults = {'name': dependency['name']},
+            )
+        else:
+            package_version, created = PackageVersion.objects.get_or_create(
+                package = package,
+                repo_url = dependency['repo_url'],
+                subfolder = dependency['subfolder'],
+                branch = dependency['branch'],
+                namespace_token = dependency.get('namespace_token', None),
+                namespace = dependency.get('namespace_replace', None),
+                defaults = {'name': dependency['name']},
+            )
+        dependency['package'] = package
+        dependency['package_version'] = package_version
+
+    # Finally, build a MockVersionAllDependencies object to override the all method on dependencies
+    return MockVersionAllDependencies(dependencies)
+
+
+def version_install_map(version, installed=None, metadata=None, git_ref=None):
 
     if not installed:
         installed = {}
@@ -15,9 +252,14 @@ def version_install_map(version, installed=None, metadata=None):
     packages_post = []
     uninstalled = []
 
+    if version.repo_url:
+        dependencies = create_repo_package_versions(version, git_ref)()
+    else:
+        dependencies = version.dependencies.all()
+
     # First, check for any dependent packages which need to be uninstalled
     child_uninstalled = False
-    for dependency in version.dependencies.all():
+    for dependency in dependencies:
         installed_version = None
 
         namespace = dependency.requires.package.namespace
@@ -99,7 +341,7 @@ def version_install_map(version, installed=None, metadata=None):
 
    
     # Next, check for dependent packages which need to be installed 
-    for dependency in version.dependencies.all():
+    for dependency in dependencies:
         installed_version = None
 
         namespace = dependency.requires.package.namespace

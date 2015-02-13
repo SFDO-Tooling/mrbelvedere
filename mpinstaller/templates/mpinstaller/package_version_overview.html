@@ -24,6 +24,25 @@
 </div>
 {% endif %}
 
+{% if version.repo_url %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class="panel-title">For use in development environments only!!!</h3>
+      </div>
+      <div class="panel-body">
+        <p>This installer will install unmanaged metadata directly from the project's repository on Github (<a href="{{ version.repo_url }}">{{ version.repo_url }}</a>).  Only run this installer to set up a development environment to do development on the package itself.  It is recommended that you create a new Developer Edition org to use for this so you don't risk messing up any existing data or metadata.</p>
+
+        <h3>Branch, Tag, or Commit: {% if git_ref %}<a href="{{ version.repo_url }}/tree/{{ git_ref }}">{{ git_ref }}</a>{% else %}<a href="{{ version.repo_url }}/tree/{{ version.branch }}">{{ version.branch }}</a>{% endif %}</h3>
+
+        <p>Note that you can install a specific branch, tag, or commit from the repository by passing the <strong>git_ref</strong> argument in the url</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div class="row">
   {% if oauth.access_token %}
   <div class="col-md-3 col-xs-12 col-sm-12">

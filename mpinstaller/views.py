@@ -1,5 +1,6 @@
 import json
 import logging
+import urllib
 from datetime import datetime
 from urllib import quote
 from distutils.version import LooseVersion
@@ -13,8 +14,6 @@ from mpinstaller.auth import SalesforceOAuth2
 from mpinstaller.installer import version_install_map
 from mpinstaller.installer import install_map_to_package_list
 from mpinstaller.installer import install_map_to_json
-from mpinstaller.mdapi import ApiInstallVersion
-from mpinstaller.mdapi import ApiUninstallVersion
 from mpinstaller.mdapi import ApiListMetadata
 from mpinstaller.mdapi import ApiRetrieveInstalledPackages
 from mpinstaller.models import InstallationError
@@ -31,11 +30,13 @@ from simple_salesforce.api import SalesforceResourceNotFound
 
 logger = logging.getLogger(__name__)
 
-def package_overview(request, namespace, beta=None):
+def package_overview(request, namespace, beta=None, github=None):
     package = get_object_or_404(Package, namespace = namespace)
 
     if beta:
         suffix = 'beta'
+    elif github:
+        suffix = 'github'
     else:
         suffix = 'prod'
 
@@ -43,10 +44,12 @@ def package_overview(request, namespace, beta=None):
     if current_version:
         return package_version_overview(request, namespace, current_version.id)
 
-    return render_to_response('mpinstaller/package_overview_no_version.html', {'package': package, 'beta': beta})
+    return render_to_response('mpinstaller/package_overview_no_version.html', {'package': package, 'beta': beta, 'github': github})
 
 def package_version_overview(request, namespace, version_id):
     version = get_object_or_404(PackageVersion, package__namespace = namespace, id=version_id)
+
+    git_ref = request.GET.get('git_ref',None)
 
     oauth = request.session.get('oauth')
 
@@ -76,7 +79,7 @@ def package_version_overview(request, namespace, version_id):
             return HttpResponseRedirect('/mpinstaller/%s/version/%s/installation-unavailable/%s' % (version.package.namespace, version.id, reason))
 
         # Get the install map and package list
-        install_map = version_install_map(version, org_packages, metadata)
+        install_map = version_install_map(version, org_packages, metadata, git_ref)
         package_list = install_map_to_package_list(install_map)
     
     logged_in = False
@@ -89,10 +92,13 @@ def package_version_overview(request, namespace, version_id):
         logout_url = None
 
     install_url = request.build_absolute_uri('/mpinstaller/%s/version/%s/install' % (namespace, version_id))
+    if git_ref:
+        install_url += '?git_ref=%s' % urllib.quote(git_ref)
 
     data = {
         'version': version,
         'oauth': request.session.get('oauth',None),
+        'git_ref': git_ref,
         'login_url': login_url,
         'logout_url': logout_url,
         'install_url': install_url,
@@ -171,6 +177,8 @@ def start_package_installation(request, namespace, version_id):
     """ Kicks off a package installation and redirects to the installation's page """
     version = get_object_or_404(PackageVersion, package__namespace=namespace, id=version_id)
     oauth = request.session.get('oauth', None)
+
+    git_ref = request.GET.get('git_ref',None)
 
     # Redirect back to the package overview page if not connected to an org
     if not oauth or not oauth.get('access_token'):
