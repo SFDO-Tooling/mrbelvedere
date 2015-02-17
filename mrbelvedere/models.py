@@ -251,7 +251,7 @@ class BranchJobTrigger(models.Model):
 
         data = {
             "state": "pending",
-            "context": "continuous-integration/jenkins",
+            "context": "default",
             "description": "The build is queued",
         }
 
