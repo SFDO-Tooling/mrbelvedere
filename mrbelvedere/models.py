@@ -242,6 +242,22 @@ class BranchJobTrigger(models.Model):
             'branch': push.branch.name,
             'email': push.github_user.email,
         })
+        self.set_pending_status(push)
+        
+    def set_pending_status(self, push):
+        repo = push.branch.repository
+        if not repo.username or not repo.password:
+            return
+
+        data = {
+            "state": "pending",
+            "context": "continuous-integration/jenkins",
+            "description": "The build is queued",
+        }
+
+        status = repo.call_api('/statuses/%s' % BUILD_COMMIT, data=data)
+        return status
+
 
 class GithubUser(models.Model):
     slug = models.SlugField()
