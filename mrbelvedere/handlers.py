@@ -8,12 +8,16 @@ from django.db import transaction
 from mrbelvedere.models import Branch, Push, BranchJobTrigger, PullRequest, PullRequestComment, PackageBuilderBuild
 
 @receiver(post_save, sender=Branch)
-def create_new_branch_job_triggers(sender, **kwargs):
+def queue_create_new_branch_job_triggers(sender, **kwargs):
     if not kwargs['created']:
         # Only run on create
         return
 
     branch = kwargs['instance']
+    create_new_branch_job_triggers.delay(branch.id)
+
+def create_new_branch_job_triggers(branch_id):
+    branch = Branch.objects.get(id = branch_id)
     for branchjob in branch.repository.repositorynewbranchjob_set.all():
         if branchjob.prefix and branch.github_name.startswith(branchjob.prefix):
             trigger = BranchJobTrigger(
@@ -23,18 +27,28 @@ def create_new_branch_job_triggers(sender, **kwargs):
             trigger.save()
 
 @receiver(post_save, sender=Push)
-def trigger_jenkins_jobs_on_push(sender, **kwargs):
+def queue_trigger_jenkins_jobs_on_push(sender, **kwargs):
     if not kwargs['created']:
         # Only run on create
         return
        
     push = kwargs['instance']
+    trigger_jenkins_jobs_on_push.delay(push.id)
+
+@django_rq.job('default', timeout=120)
+def trigger_jenkins_jobs_on_push(push_id):
+    push = Push.objects.get(id=push_id)
     for trigger in push.branch.branchjobtrigger_set.all():
         trigger.invoke(push)
 
 @receiver(post_save, sender=PullRequest)
-def moderate_pull_request_build(sender, **kwargs):
+def queue_moderate_pull_request_build(sender, **kwargs):
     pull_request = kwargs['instance']
+    moderate_pull_request_build.delay(pull_request.id)
+
+@django_rq.job('default', timeout=120)
+def moderate_pull_request_build(pullrequest_id):
+    pull_request = PullRequest.objects.get(pullrequest_id)
 
     # Build a query to look for RepositoryPullRequestJob objects which require modification for the pull request 
     forked = pull_request.source_branch.repository != pull_request.target_branch.repository
@@ -122,8 +136,12 @@ def moderate_pull_request_build(sender, **kwargs):
         trigger.invoke(pull_request)
 
 @receiver(post_save, sender=PullRequestComment)
-def check_for_build_approval(sender, **kwargs):
+def queue_check_for_build_approval(sender, **kwargs):
     comment = kwargs['instance']
+    check_for_build_approval.delay(comment.id)
+
+def check_for_build_approval(comment_id):
+    comment = Comment.objects.get(id = comment_id)
 
     if comment.message.find('**mrbelvedere: approved**') != -1:
         is_admin = False
