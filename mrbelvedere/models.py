@@ -255,7 +255,7 @@ class BranchJobTrigger(models.Model):
             "description": "The build is queued",
         }
 
-        status = repo.call_api('/statuses/%s' % BUILD_COMMIT, data=data)
+        status = repo.call_api('/statuses/%s' % push.slug, data=data)
         return status
 
 

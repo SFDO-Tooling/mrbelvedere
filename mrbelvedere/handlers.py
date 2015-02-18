@@ -16,6 +16,7 @@ def queue_create_new_branch_job_triggers(sender, **kwargs):
     branch = kwargs['instance']
     create_new_branch_job_triggers.delay(branch.id)
 
+@django_rq.job('default', timeout=120)
 def create_new_branch_job_triggers(branch_id):
     branch = Branch.objects.get(id = branch_id)
     for branchjob in branch.repository.repositorynewbranchjob_set.all():
@@ -140,6 +141,7 @@ def queue_check_for_build_approval(sender, **kwargs):
     comment = kwargs['instance']
     check_for_build_approval.delay(comment.id)
 
+@django_rq.job('default', timeout=120)
 def check_for_build_approval(comment_id):
     comment = Comment.objects.get(id = comment_id)
 
