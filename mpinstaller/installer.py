@@ -5,7 +5,7 @@ import urllib
 from distutils.version import LooseVersion
 from mpinstaller.models import Package
 from mpinstaller.models import PackageVersion
-from mpinstaller.utils import github_api
+from mpinstaller.github import github_api
 
 logger = logging.getLogger(__name__)
 

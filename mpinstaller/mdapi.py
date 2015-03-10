@@ -90,6 +90,23 @@ SOAP_RETRIEVE_INSTALLEDPACKAGE = """<?xml version="1.0" encoding="utf-8"?>
   </soap:Body>
 </soap:Envelope>"""
 
+SOAP_RETRIEVE_PACKAGED = """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Header>
+    <SessionHeader xmlns="http://soap.sforce.com/2006/04/metadata">
+      <sessionId>###SESSION_ID###</sessionId>
+    </SessionHeader>
+  </soap:Header>
+  <soap:Body>
+    <retrieve xmlns="http://soap.sforce.com/2006/04/metadata">
+      <retrieveRequest>
+        <apiVersion>30.0</apiVersion>
+        <packageNames>%s</packageNames>
+      </retrieveRequest>
+    </retrieve>
+  </soap:Body>
+</soap:Envelope>"""
+
 SOAP_LIST_METADATA = """<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <soap:Header>
@@ -373,6 +390,36 @@ class ApiRetrieveInstalledPackages(BaseMetadataApiCall):
 
         self.packages = packages
         return self.packages
+
+class ApiRetrievePackaged(BaseMetadataApiCall):
+    check_interval = 1
+    soap_envelope_start = SOAP_RETRIEVE_PACKAGED
+    soap_envelope_status = SOAP_CHECK_STATUS
+    soap_envelope_result = SOAP_CHECK_RETRIEVE_STATUS
+    soap_action_start = 'retrieve'
+    soap_action_status = 'checkStatus'
+    soap_action_result = 'checkRetrieveStatus'
+
+    def __init__(self, oauth, package_name, installation_step=None):
+        super(ApiRetrievePackaged, self).__init__(oauth, installation_step=installation_step)
+        self.package_name = package_name
+
+    def build_envelope_start(self):
+        return self.soap_envelope_start % self.package_name
+
+    def process_response(self, response):
+        # Parse the metadata zip file from the response
+        zipstr = parseString(response.content).getElementsByTagName('zipFile')
+        if zipstr:
+            zipstr = zipstr[0].firstChild.nodeValue
+        else:
+            return self.packages
+        zipfp = TemporaryFile()
+        zipfp.write(base64.b64decode(zipstr))
+
+        zipfile = ZipFile(zipfp, 'r')
+
+        return zipfile
 
 class ApiDeploy(BaseMetadataApiCall):
     soap_envelope_start = SOAP_DEPLOY

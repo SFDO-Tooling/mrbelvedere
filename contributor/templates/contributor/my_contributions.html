@@ -1,0 +1,30 @@
+{% extends 'mpinstaller/base.html' %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}{% block title %}My Contributions{% endblock %}{% endblock %}
+{% block bootstrap3_page_title %}My Contributions</a>{% endblock %}
+
+
+{% block bootstrap3_content %}
+
+{% bootstrap_messages %}
+
+<div class="button-grp">
+  <a class="btn btn-warning link-create" href="create">Start a Contribution</a>
+</div>
+
+{% if contributions %}
+<div id="active-contributions" class="panel panel-default">
+  <div class="panel-heading">Active Contributions</div>
+  <div class="panel-body">
+  {% for contribution in contributions %}
+    <ul>
+      <li><a href="/contributor/contributions/{{ contribution.id }}">{{ contribution.package_version.package }} - {{ contribution.fork_branch }}</a></li>
+    </ul>
+  {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

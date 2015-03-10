@@ -35,7 +35,7 @@ DATABASES = {
 
 # Parse database configuration from $DATABASE_URL
 import dj_database_url
-DATABASES['default'] =  dj_database_url.config()
+DATABASES['default'] =  dj_database_url.config(default='sqlite:///devbot.db')
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
@@ -144,12 +144,28 @@ INSTALLED_APPS = (
     'bootstrap3',
     'mrbelvedere',
     'mpinstaller',
+    'contributor',
     'djangular',
     'cumulus_devbot',
     'tinymce',
     'rest_framework',
     'api',
+    'social_auth',
+    'crispy_forms',
 )
+
+AUTHENTICATION_BACKENDS = (
+    'social_auth.backends.contrib.github.GithubBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+GITHUB_APP_ID = os.environ.get('GITHUB_APP_ID')
+GITHUB_API_SECRET = os.environ.get('GITHUB_API_SECRET')
+GITHUB_EXTENDED_PERMISSIONS = os.environ.get('GITHUB_EXTENDED_PERMISSIONS', ['public_repo',])
+
+LOGIN_URL = '/social_auth/github/login'
+LOGIN_REDIRECT_URL = '/contributor'
+#LOGIN_ERROR_URL = '/login-error/'
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
@@ -278,3 +294,6 @@ REST_FRAMEWORK = {
 
 GOOGLE_ANALYTICS_CODE = os.environ.get('GOOGLE_ANALYTICS_CODE', None)
 GOOGLE_ANALYTICS_ORG = os.environ.get('GOOGLE_ANALYTICS_ORG', None)
+
+# django-cripsy-forms config
+CRISPY_TEMPLATE_PACK='bootstrap3'

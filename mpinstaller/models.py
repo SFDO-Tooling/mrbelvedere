@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from mpinstaller.utils import obscure_salesforce_log
 from tinymce.models import HTMLField
 
@@ -211,6 +212,7 @@ class PackageVersion(models.Model):
     subfolder = models.CharField(max_length=255, null=True, blank=True)
     namespace_token = models.CharField(max_length=255, null=True, blank=True, help_text="If provided, all files in the archive will be scanned and the token will be replaced with the namespace provided.  For CumulusCI, the default token is %%%NAMESPACE%%%")
     namespace = models.CharField(max_length=255, null=True, blank=True, help_text="If provided, the namespace_token will be replaced with this namespace.  If not provided, the token will be cleared.  Example: npsp")
+    package_name = models.CharField(max_length=255, null=True, blank=True, help_text="If configuring a Github repository for contributions, enter the package name for unmanaged deployments here.  This is used to retrieve a contribution's packaged metadata from a Salesforce org.")
     conditions = models.ManyToManyField(MetadataCondition, null=True, blank=True)
     content_intro = HTMLField(null=True, blank=True, help_text="Optional version specific text to show in Package Information panel")
     content_success = HTMLField(null=True, blank=True, help_text="Optional version specific text shown after a successful installation.")
@@ -573,5 +575,3 @@ class PackageInstallationStep(models.Model):
     def __unicode__(self):
         return '%s %s' % (self.action, self.version)
 
-
-from mpinstaller.handlers import *

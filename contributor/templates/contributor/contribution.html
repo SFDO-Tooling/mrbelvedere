@@ -1,0 +1,111 @@
+{% extends 'contributor/base.html' %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}{% block title %}{{ contribution.title }}{% endblock %}{% endblock %}
+{% block bootstrap3_page_title %}<a href="/contributor/contributions/{{ contribution.id }}">{{ contribution }}</a>{% endblock %}
+
+{% block extra_head %}
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-sanitize.js"></script>
+<script type="text/javascript">
+  var status_api_url = '/contributor/contributions/{{ contribution.id }}/status';
+</script>
+<script src="/static/js/contribution_status.js"></script>
+{% endblock %}
+
+{% block bootstrap3_content %}
+
+{% bootstrap_messages %}
+
+<div class="contribution-status" ng-app="ContributionStatusApp" ng-controller="ContributionStatusController">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-heading">
+          <h3 class="panel-title">Contribution Info</h3>
+        </div>
+        <div class="panel-body">
+          <div class="list-group">
+            <a href="https://github.com/{{ contribution.contributor.user.username }}" class="list-group-item" target="_blank">
+              <h3 class="list-group-item-heading">Contributor</h3>
+              <p class="list-group-item-text">{{ contribution.contributor.user.username }}</p>
+            </a>
+            <a href="https://github.com/{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}" class="list-group-item" target="_blank">
+              <h3 class="list-group-item-heading">Main Repository</h3>
+              <p class="list-group-item-text">{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}</p>
+            </a>
+            <a href="https://github.com/{{ contribution.contributor.user.username }}/{{ contribution.get_main_repo_name }}/tree/{{ contribution.fork_branch }}" class="list-group-item" target="_blank">
+              <h3 class="list-group-item-heading">Fork Branch</h3>
+              <p class="list-group-item-text">{{ contribution.fork_branch }}</p>
+            </a>
+            <a href="https://github.com/{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}/issues/{{ contribution.github_issue }}" class="list-group-item" target="_blank">
+              <h3 class="list-group-item-heading">Github Issue #{{ contribution.github_issue }}</h3>
+              <p class="list-group-item-text">{{ contribution.body|linebreaks }}</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6">
+      <div class="panel">
+        <div class="panel-heading">
+          <h3 class="panel-title">Manage</h3>
+        </div>
+        <div class="panel-body">
+      
+          <div class="btn-group btn-group-lg" role="group" aria-label="Actions">
+            <a role="button" class="btn btn-default" href="/contributor/contributions/{{ contribution.id }}/check-state">Check for Changes</a></button>
+            {% if contribution.state_behind_main %}
+            <a role="button" class="btn btn-default" href="/contributor/contributions/{{ contribution.id }}/pull">Pull from Main Repo</a></button>
+            {% endif %}
+            <a role="button" class="btn" {% verbatim %}ng-class="{'btn-success': (contribution.state_uncommitted_changes == true), 'btn-default': (contribution.state_uncommitted_changed != true)}"{% endverbatim %} href="/contributor/contributions/{{ contribution.id }}/commit">Save Changes</a></button>
+            <a role="button" class="btn btn-primary" href="/contributor/contributions/{{ contribution.id }}/submit">Submit for Review</a></button>
+          </div>
+          
+          {% verbatim %} 
+          <div class="alert alert-info" ng-hide="contribution.state_behind_main != true">
+            <strong>Behind Main Repository</strong>
+            Your feature branch is behind the project's main repository.  When ready, you can <a href="/contributor/contributions/{{contribution.contribution}}/pull">Update</a> to pull the changes into your repository.
+          </div>
+    
+          <div class="alert alert-warning" ng-hide="contribution.state_undeployed_commit != true">
+            <strong>Undeployed Commit</strong>
+            There are changes in your Github repository which have not yet been deployed to your Salesforce org.  The sync process should take care of this automatically for you.  If you notice a sync failure below, please contact your reviewer for assistance.
+          </div>
+    
+          <div class="alert alert-danger" ng-hide="contribution.state_uncommitted_changes != true">
+            <strong>Unsaved Changes</strong>
+            There appear to be changes in your Salesforce org which are not yet saved to Github.  Use the Save Changes when you are ready to save your changes.
+          </div>
+          {% endverbatim %} 
+
+        </div>
+      </div>
+      {% verbatim %} 
+      <div class="row" ng-hide="contribution.last_sync == null">
+        <div class="col-md-12">    
+          <div class="panel" ng-class="{'panel-info': (contribution.last_sync.status == 'pending'),'panel-primary': (contribution.last_sync.status == 'in_progress'), 'panel-danger': (contribution.last_sync.status == 'failed'), 'panel-success': (contribution.last_sync.status == 'success')}">
+            <div class="panel-heading">
+              <h3 class="panel-title">
+                Last sync status: {{contribution.last_sync.status}}
+              </h3>
+            </div>
+      
+            <div class="panel-body">
+              <div class="last-sync" ng-hide="contribution.last_sync == null">
+                <div class="well" ng-bind-html="contribution.last_sync.log">
+                </div>
+              </div>
+          
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endverbatim %}
+    </div>
+  </div>
+ 
+</div>
+{% endblock %}

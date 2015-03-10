@@ -1,0 +1,15 @@
+{% extends 'mpinstaller/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+
+{% block bootstrap3_title %}{% block title %}Start a Contribution{% endblock %}{% endblock %}
+{% block bootstrap3_page_title %}Start a Contribution{% endblock %}
+
+{% block bootstrap3_content %}
+
+{% bootstrap_messages %}
+
+{% crispy form form.helper %}
+
+{% endblock %}

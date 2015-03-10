@@ -1,0 +1,27 @@
+{% extends 'mpinstaller/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+
+{% block bootstrap3_title %}{% block title %}{{ contribution.title }} - Connect Salesforce Org{% endblock %}{% endblock %}
+{% block bootstrap3_page_title %}<a href="/contributor/contributions/{{ contribution.id }}">{{ contribution }}</a> - Connect Salesforce Org{% endblock %}
+
+{% block bootstrap3_content %}
+
+{% bootstrap_messages %}
+
+<div class="panel">
+  <div class="panel-heading">
+    <h3>Connect to a Salesforce Developer Edition Org</h3>
+  </div>
+  <div class="panel-body">
+    <p>You will manage the development of your contribution in a Salesforce Devleoper Edition org.  It is recommended that you create a new Developer Edition org for your contribution to avoid any issues with existing metadata.</p>
+    <p>Before clicking the button below, log into your new DE org in a separate browser window to ensure you are connecting to the correct org.</p>
+  </div>
+</div>
+
+<div class="btn-group btn-group-lg" role="group">
+  <a role="button" class="btn btn-primary" href="/mpinstaller/oauth/login?redirect={{ redirect }}">Connect to Org</a>
+</div>
+
+{% endblock %}

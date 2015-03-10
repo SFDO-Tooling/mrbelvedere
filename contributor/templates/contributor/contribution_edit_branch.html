@@ -1,0 +1,15 @@
+{% extends 'mpinstaller/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+
+{% block bootstrap3_title %}{% block title %}{{ contribution.title }} - Edit Branch{% endblock %}{% endblock %}
+{% block bootstrap3_page_title %}<a href="/contributor/contributions/{{ contribution.id }}">{{ contribution }}</a> - Edit Branch{% endblock %}
+
+{% block bootstrap3_content %}
+
+{% bootstrap_messages %}
+
+{% crispy form form.helper %}
+
+{% endblock %}
