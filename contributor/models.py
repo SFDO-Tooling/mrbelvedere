@@ -25,13 +25,6 @@ SYNC_STATUS_CHOICES = (
 
 class ContributionSyncError(Exception):
     pass
-#    def __init__(self, message, exception, sync):
-#
-#        # Call the base class constructor with the parameters it needs
-#        super(ContributionSyncError, self).__init__(*message)
-#
-#        self.exception = exception
-#        self.sync = sync
 
 class Contributor(models.Model):
     user = models.ForeignKey(User, related_name='contributors')
@@ -371,10 +364,7 @@ class Contribution(models.Model):
 
         except Exception, e:
             # For all exceptions, raise a ContributionSyncError with the original exception and the sync object
-            if e and e.args:
-                raise ContributionSyncError(e.args[0], e, sync)
-            else:
-                raise ContributionSyncError('Sync failed', e, sync)
+            raise ContributionSyncError('Sync failed', e, sync)
 
     def deploy_commit_to_org(self, commit=None):
         if not self.sf_oauth:
