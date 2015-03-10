@@ -371,7 +371,10 @@ class Contribution(models.Model):
 
         except Exception, e:
             # For all exceptions, raise a ContributionSyncError with the original exception and the sync object
-            raise ContributionSyncError(e.args[0], e, sync)
+            if e and e.args:
+                raise ContributionSyncError(e.args[0], e, sync)
+            else:
+                raise ContributionSyncError('Sync failed', e, sync)
 
     def deploy_commit_to_org(self, commit=None):
         if not self.sf_oauth:
