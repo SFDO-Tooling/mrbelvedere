@@ -1,5 +1,6 @@
 import json
 import signal
+import traceback
 from rq.worker import signal_name
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -31,7 +32,11 @@ def sync_contribution(contribution_id):
             # Sync the contribution
             changed = contribution.sync()
         except ContributionSyncError, e:
-            e.args[2].log += 'FAILED: %s' % e.args[1]
+            e.args[2].log += '----------------------------\n'
+            e.args[2].log += 'FAILED: %s\n' % e.args[1]
+            e.args[2].log += '----------------------------\n'
+            e.args[2].log += traceback.format_exc()
+            
             e.args[2].status = 'failed'
             e.args[2].save()
 
