@@ -174,7 +174,8 @@ class Contribution(models.Model):
 
     def get_issue(self):
         if not self.github_issue:
-            return
+            if not self.title or not self.body:
+                return
 
         issue = self.github_api('/issues/%s' % self.github_issue)
         if 'message' in issue and issue['message'] == 'Not Found':
