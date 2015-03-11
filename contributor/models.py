@@ -243,17 +243,24 @@ class Contribution(models.Model):
 
     def sync(self):
         try:
-            # Update current sync state
-            state_before = (self.state_behind_main, self.state_undeployed_commit, self.state_uncommitted_changes)
-            self.check_sync_state()
-    
             sync = ContributionSync(
                 contribution = self,
                 pre_state_behind_main = self.state_behind_main,
                 pre_state_undeployed_commit = self.state_undeployed_commit,
                 pre_state_uncommitted_changes = self.state_uncommitted_changes,
+                log = '---- Checking current sync state\n',
                 status = 'in_progress',   
             )
+            sync.save()
+
+            # Update current sync state
+            state_before = (self.state_behind_main, self.state_undeployed_commit, self.state_uncommitted_changes)
+            self.check_sync_state()
+  
+            sync.log += 'DONE\n' 
+            sync.pre_state_behind_main = self.state_behind_main
+            sync.pre_state_undeployed_commit = self.state_undeployed_commit
+            sync.pre_state_uncommitted_changes = self.state_uncommitted_changes
             sync.save()
     
             changed = False
