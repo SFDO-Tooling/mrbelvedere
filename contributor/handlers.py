@@ -8,7 +8,6 @@ from time import sleep
 import django_rq
 from contributor.models import Contribution
 from contributor.models import ContributionSync
-from contributor.models import ContributionSyncError
 from mpinstaller.models import PackageInstallation
 
 @receiver(post_save, sender=Contribution)
