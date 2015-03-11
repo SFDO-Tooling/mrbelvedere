@@ -28,17 +28,8 @@ def sync_contribution(contribution_id):
 
         changed = False
 
-        try:
-            # Sync the contribution
-            changed = contribution.sync()
-        except ContributionSyncError, e:
-            e.args[2].log += '----------------------------\n'
-            e.args[2].log += 'FAILED: %s\n' % e.args[1]
-            e.args[2].log += '----------------------------\n'
-            e.args[2].log += traceback.format_exc()
-            
-            e.args[2].status = 'failed'
-            e.args[2].save()
+        # Sync the contribution
+        changed = contribution.sync()
 
         # Save the result if it was changed
         if changed:

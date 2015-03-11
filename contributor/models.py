@@ -1,5 +1,6 @@
 import hashlib
 import time
+import traceback
 from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import User
@@ -22,9 +23,6 @@ SYNC_STATUS_CHOICES = (
     ('success', 'Successful'),
     ('fail', 'Failed'),
 )
-
-class ContributionSyncError(Exception):
-    pass
 
 class Contributor(models.Model):
     user = models.ForeignKey(User, related_name='contributors')
@@ -370,8 +368,15 @@ class Contribution(models.Model):
             return changed
 
         except Exception, e:
-            # For all exceptions, raise a ContributionSyncError with the original exception and the sync object
-            raise ContributionSyncError('Sync failed', e, sync)
+            sync.log += '----------------------------\n'
+            sync.log += 'FAILED: %s\n' % e
+            sync.log += '----------------------------\n'
+            sync.log += traceback.format_exc()
+            sync.status = 'failed'
+            sync.save()
+
+            # Return a normal result since the job did complete
+            return changed
 
     def deploy_commit_to_org(self, commit=None):
         if not self.sf_oauth:
