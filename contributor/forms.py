@@ -85,6 +85,7 @@ class CreateContributionForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super(CreateContributionForm, self).save(commit=False)
         issue = instance.get_issue()
+        print 'DEBUG: %s' % issue
         instance.title = issue['title']
         instance.body = issue['body']
         instance.github_issue = issue['number']
@@ -147,3 +148,33 @@ class ContributionCommitForm(forms.Form):
                 Submit('submit', 'Submit')
             ),
         )
+
+class ContributionSubmitForm(forms.Form):
+    reviewer_notes = forms.CharField(widget=forms.Textarea, help_text="Add notes to the reviewer about your contribution")
+    critical_changes = forms.CharField(required=False, widget=forms.Textarea, help_text="Briefly describe any changes end users must be aware of with your contribution or their system may not function as expected.")
+    changes = forms.CharField(required=False, widget=forms.Textarea, help_text="Briefly describe any changes end users might need to make to enable new functionality from your contribution.")
+    
+    def __init__(self, *args, **kwargs):
+        super(ContributionSubmitForm, self).__init__(*args, **kwargs)
+
+        # django-crispy-forms FormHelper configuration
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-lg-2'
+        self.helper.field_class = 'col-lg-8'
+        self.helper.layout = Layout(
+            Fieldset(
+                'Notes to reviewer',
+                'reviewer_notes',
+            ),
+            Fieldset(
+                'Release notes content',
+                'critical_changes',
+                'changes',
+            ),
+            FormActions(
+                Submit('submit', 'Submit')
+            ),
+        )
+    
