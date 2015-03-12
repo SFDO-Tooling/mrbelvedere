@@ -1,0 +1,27 @@
+{% extends 'mpinstaller/base.html' %}
+
+{% load bootstrap3 %}
+{% load crispy_forms_tags %}
+
+{% block bootstrap3_title %}{% block title %}Submit Contribution for Review{% endblock %}{% endblock %}
+{% block bootstrap3_page_title %}Submit Contribution for Review{% endblock %}
+
+{% block bootstrap3_content %}
+
+{% bootstrap_messages %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      Submitting your contribution
+    </h3>
+  </div>
+  <div class="panel-body">
+    <p>When you are done developing your Contribution and have used Save Changes to retrieve and commit your changes, you can use the form below to submit the contribution for review.  This will create a Pull Request in Github requesting to merge your feature branch into the main repository.  The project developers will then review your changes and comment on the Pull Request.  Github will send you notification emails of any comments.</p>
+
+    {% crispy form form.helper %}
+  </div>
+</div>
+
+
+{% endblock %}
