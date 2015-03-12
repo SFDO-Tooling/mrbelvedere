@@ -332,7 +332,15 @@ class Contribution(models.Model):
                 installation = self.deploy_commit_to_org()
     
                 if installation:
-                    sync.log += 'DONE, Installed with PackageInstallation #%s\n' % installation.id
+                    if installation.status == 'Failed':
+                        sync.log += 'FAILED, Installation #%s failed\n' % installation.id
+                        sync.log += installation.log
+                        for step in installation.steps.filter(status='Failed'):
+                            sync.log += step.log
+                        sync.status = 'failed'
+                    else:
+                        sync.log += 'DONE, Installed with PackageInstallation #%s\n' % installation.id
+
                     sync.new_installation = installation
                     sync.save()
     
@@ -343,7 +351,7 @@ class Contribution(models.Model):
                 # FIXME: Implement handling
                 pass
     
-            if first_sync and self.last_deployed_commit:
+            if first_sync and self.last_deployed_commit and sync.status != 'failed':
                 sync.log += '----- Initial Deployment: Commit from org\n'
                 sync.log += 'Retrieving from org and committing\n'
                 sync.save()
@@ -369,7 +377,8 @@ class Contribution(models.Model):
             sync.post_state_behind_main = self.state_behind_main
             sync.post_state_undeployed_commit = self.state_undeployed_commit
             sync.post_state_uncommitted_changes = self.state_uncommitted_changes
-            sync.status = 'success'
+            if sync.status != 'failed':
+                sync.status = 'success'
             sync.save()
     
             return changed
@@ -459,17 +468,18 @@ class Contribution(models.Model):
                 step_obj.status = 'Succeeded'
             step_obj.save()
 
-        # Record the deployment on the Contribution
-        self.last_deployment_installation = installation_obj
-        if commit:
-            self.last_deployed_commit = commit
-        else:
-            branch = self.get_fork_branch()
-            self.last_deployed_commit = branch['object']['sha']
-        self.last_deployment_date = datetime.now()
-
         # Run the installer synchronously since we should already be inside a background process
         install_package_version(installation_obj.id)
+
+        # Record the deployment on the Contribution if successful
+        self.last_deployment_installation = installation_obj
+        self.last_deployment_date = datetime.now()
+        if installation_obj.status != 'Failed':
+            if commit:
+                self.last_deployed_commit = commit
+            else:
+                branch = self.get_fork_branch()
+                self.last_deployed_commit = branch['object']['sha']
 
         return installation_obj
 
