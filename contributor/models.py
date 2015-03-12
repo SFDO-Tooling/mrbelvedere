@@ -65,15 +65,19 @@ class Contribution(models.Model):
         if github_auth:
             return github_auth.tokens['access_token']
 
-    def github_api(self, path, data=None, fork=None):
+    def github_api(self, path, data=None, fork=None, as_contributor=None):
         if fork:
             owner = self.contributor.user.username
             username = self.github_token()
             password = ''
         else:
             owner = self.get_main_repo_owner()
-            username = self.package_version.github_username
-            password = self.package_version.github_password
+            if as_contributor:
+                username = self.github_token()
+                password = ''
+            else:
+                username = self.package_version.github_username
+                password = self.package_version.github_password
 
         return github_api(
             owner = owner,
@@ -99,7 +103,7 @@ class Contribution(models.Model):
             return fork
 
         # If no fork was found, create it
-        fork = self.github_api('/forks', data={})
+        fork = self.github_api('/forks', data={}, as_contributor=True)
 
         # Since fork creation happens async, wait for up to 5 minutes per GitHub
         timeout = time.time() + 60*5
@@ -108,15 +112,14 @@ class Contribution(models.Model):
             fork = self.github_api('', fork=True)
 
             if 'message' in fork:
-                if fork['message'] == 'Not Found':
-                    # If the fork doesn't exist, keep waiting until timeout
-                    continue
-                
-                # Anything other than Not Found will not be resolved with time, give up now
-                break
+                if fork['message'] != 'Not Found':
+                    # Anything other than Not Found will not be resolved with time, give up now
+                    break
+            else:
+                return fork
 
             if time.time() > timeout:
-                # We reach the timeout, give up and return whatever response we got from GitHub
+                # We reached the timeout, give up and return whatever response we got from GitHub
                 break
 
             print 'Timeout in %s seconds' % (timeout - time.time())
