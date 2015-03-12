@@ -91,11 +91,12 @@ class Contribution(models.Model):
         return self.package_version.repo_url.split('/')[4]
 
     def get_fork(self):
-        forks = self.github_api('/forks')
-        print 'DEBUG: %s' % forks
-        for fork in forks:
-            if fork['owner']['login'] == self.contributor.user.username:
+        fork = self.github_api('', fork=True)
+        if 'message' in fork:
+            if fork['message'] != 'Not Found':
                 return fork
+        else:
+            return fork
 
         # If no fork was found, create it
         fork = self.github_api('/forks', data={})
@@ -106,12 +107,12 @@ class Contribution(models.Model):
             time.sleep(3)
             fork = self.github_api('', fork=True)
 
-            if 'message' not in fork:
-                if fork['message'] != 'Not Found':
-                    # Anything other than Not Found will not be resolved with time, give up now
-                    break
-
-                # The message key only exists if there is an error
+            if 'message' in fork:
+                if fork['message'] == 'Not Found':
+                    # If the fork doesn't exist, keep waiting until timeout
+                    continue
+                
+                # Anything other than Not Found will not be resolved with time, give up now
                 break
 
             if time.time() > timeout:
