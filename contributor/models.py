@@ -92,6 +92,7 @@ class Contribution(models.Model):
 
     def get_fork(self):
         forks = self.github_api('/forks')
+        print 'DEBUG: %s' % forks
         for fork in forks:
             if fork['owner']['login'] == self.contributor.user.username:
                 return fork
