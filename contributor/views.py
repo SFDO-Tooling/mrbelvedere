@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from contributor.forms import CreateContributionForm
 from contributor.forms import ContributionEditBranchForm
 from contributor.forms import ContributionCommitForm
+from contributor.forms import ContributionSubmitForm
 from contributor.models import Contributor
 from contributor.models import Contribution
 from contributor.models import ContributionSync
@@ -160,6 +161,49 @@ def contribution_commit(request, contribution_id):
         form = ContributionCommitForm()
 
     return render_to_response('contributor/contribution_commit.html', {'contribution': contribution, 'form': form})
+
+@login_required
+def contribution_submit(request, contribution_id):
+    contribution = get_object_or_404(Contribution, id = contribution_id)
+
+    if request.user != contribution.contributor.user:
+        return HttpResponse('Unauthorized', status=401)
+
+    if request.method == 'POST':
+        form = ContributionSubmitForm(request.POST)
+        if form.is_valid():
+            body = []
+            if form.cleaned_data['reviewer_notes']:
+                body.append(form.cleaned_data['reviewer_notes'])
+
+            body.append('\n# Critical Changes\n')
+            if form.cleaned_data['critical_changes']:
+                body.append(form.cleaned_data['critical_changes'])
+           
+            body.append('\n# Changes\n')
+            if form.cleaned_data['changes']:
+                body.append(form.cleaned_data['changes'])
+
+            body.append('\n# Issues\n')
+            if form.cleaned_data['critical_changes']:
+                body.append('Fixes #%s' % contribution.github_issue)
+
+            data = {
+                'title': contribution.title,
+                'head': '%s:%s' % (contribution.contributor.user.username, contribution.fork_branch),
+                'base': '%s' % contribution.get_default_branch()['ref'].replace('refs/heads/',''),
+                'body': '\n'.join(body),
+            }
+
+            pull_request = contribution.github_api('/pulls', data)
+            contribution.fork_pull = pull_request['number']
+            contribution.save()
+
+            return HttpResponseRedirect('/contributor/contributions/%s' % contribution.id)
+    else:
+        form = ContributionSubmitForm()
+
+    return render_to_response('contributor/contribution_submit.html', {'contribution': contribution, 'form': form})
 
 @login_required
 def contribution_sync_state(request, contribution_id):

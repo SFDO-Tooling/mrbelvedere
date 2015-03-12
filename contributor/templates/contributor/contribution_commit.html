@@ -3,12 +3,25 @@
 {% load bootstrap3 %}
 {% load crispy_forms_tags %}
 
-{% block bootstrap3_title %}{% block title %}Edit Contribution Branch{% endblock %}{% endblock %}
+{% block bootstrap3_title %}{% block title %}Save Changes to Contribution{% endblock %}{% endblock %}
+{% block bootstrap3_page_title %}Save Changes to Contribution{% endblock %}
 
 {% block bootstrap3_content %}
 
 {% bootstrap_messages %}
 
-{% crispy form form.helper %}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      Saving your changes
+    </h3>
+  </div>
+  <div class="panel-body">
+    <p>Enter a message describing your changes in the form below.  Your changes will be retrieved from your DE org and committed to your feature branch in Github automatically.  After submitting, watch the sync status to make sure everything saved successfully.</p>
+
+    {% crispy form form.helper %}
+
+  </div>
+</div>
 
 {% endblock %}

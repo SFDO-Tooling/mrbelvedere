@@ -39,8 +39,14 @@
               <h3 class="list-group-item-heading">Fork Branch</h3>
               <p class="list-group-item-text">{{ contribution.fork_branch }}</p>
             </a>
+            {% if contribution.fork_pull %}
+            <a href="https://github.com/{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}/pulls/{{ contribution.fork_pull }}" class="list-group-item" target="_blank">
+              <h3 class="list-group-item-heading">Pull Request</h3>
+              <p class="list-group-item-text">#{{ contribution.fork_pull }}</p>
+            </a>
+            {% endif %}
             <a href="https://github.com/{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}/issues/{{ contribution.github_issue }}" class="list-group-item" target="_blank">
-              <h3 class="list-group-item-heading">Github Issue #{{ contribution.github_issue }}</h3>
+              <h3 class="list-group-item-heading">Issue #{{ contribution.github_issue }}</h3>
               <p class="list-group-item-text">{{ contribution.body|linebreaks }}</p>
             </a>
           </div>
