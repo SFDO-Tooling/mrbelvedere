@@ -183,7 +183,8 @@ class Contribution(models.Model):
             data = {
                 'title': self.title,
                 'body': self.body,
-                'assignee': self.contributor.user.username,
+                # FIXME: We can't set an assignee to the contributor as they need write access to the repo to receive issue assignments.  We need a reviewer for this
+                #'assignee': self.contributor.user.username,
             }
             issue = self.github_api('/issues', data=data)
         

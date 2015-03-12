@@ -85,7 +85,6 @@ class CreateContributionForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super(CreateContributionForm, self).save(commit=False)
         issue = instance.get_issue()
-        print 'DEBUG: %s' % issue
         instance.title = issue['title']
         instance.body = issue['body']
         instance.github_issue = issue['number']
