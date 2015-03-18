@@ -39,6 +39,10 @@ def contributor_contributions(request, username):
 def create_contribution(request):
     if request.user.is_anonymous():
         return HttpResponseRedirect('/social-auth/login/github?redirect=/contributor/create')
+
+    # If the user doesn't have a github social auth, redirect to login
+    if not request.user.social_auth.filter(provider='github').count():
+        return HttpResponseRedirect('/social-auth/login/github?redirect=/contributor/create')
     
     try:
         contributor = Contributor.objects.get(user = request.user)
