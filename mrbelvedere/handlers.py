@@ -49,7 +49,7 @@ def queue_moderate_pull_request_build(sender, **kwargs):
 
 @django_rq.job('default', timeout=120)
 def moderate_pull_request_build(pullrequest_id):
-    pull_request = PullRequest.objects.get(pullrequest_id)
+    pull_request = PullRequest.objects.get(id=pullrequest_id)
 
     # Build a query to look for RepositoryPullRequestJob objects which require modification for the pull request 
     forked = pull_request.source_branch.repository != pull_request.target_branch.repository
