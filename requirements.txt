@@ -7,7 +7,7 @@ anyjson==0.3.3
 billiard==2.7.3.33
 celery==3.0.23
 decorator==3.4.0
-distribute==0.6.24
+distribute==0.7.3
 dj-database-url==0.2.2
 dj-static==0.0.5
 django-angular==0.7.0
