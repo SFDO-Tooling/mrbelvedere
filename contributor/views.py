@@ -67,8 +67,8 @@ def create_contribution(request):
 @login_required
 def contribution(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
-    
-    if request.user != contribution.contributor.user:
+   
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     # If no fork_branch is set, send to the edit branch form
@@ -95,7 +95,7 @@ def contribution(request, contribution_id):
 def contribution_edit_branch(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
     
-    if request.user != contribution.contributor.user:
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     if request.method == 'POST':
@@ -115,7 +115,7 @@ def contribution_edit_branch(request, contribution_id):
 def contribution_edit_salesforce_org(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
     
-    if request.user != contribution.contributor.user:
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     # Set a redirect url in the session to be redirected back after a normal mpinstaller login
@@ -128,7 +128,7 @@ def contribution_capture_salesforce_org(request, contribution_id):
 
     contribution = get_object_or_404(Contribution, id = contribution_id)
     
-    if request.user != contribution.contributor.user:
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     # If there is no oauth key in session, redirect to the edit_salesforce_org view
@@ -148,7 +148,7 @@ def contribution_capture_salesforce_org(request, contribution_id):
 def contribution_commit(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
 
-    if request.user != contribution.contributor.user:
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     if request.method == 'POST':
@@ -170,7 +170,7 @@ def contribution_commit(request, contribution_id):
 def contribution_submit(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
 
-    if request.user != contribution.contributor.user:
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     if request.method == 'POST':
@@ -213,7 +213,7 @@ def contribution_submit(request, contribution_id):
 def contribution_sync_state(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
 
-    if request.user != contribution.contributor.user:
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     state = {
@@ -228,7 +228,7 @@ def contribution_sync_state(request, contribution_id):
 def contribution_syncs(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
 
-    if request.user != contribution.contributor.user:
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     syncs = contribution.syncs.all().order_by('-date_started')
@@ -239,7 +239,7 @@ def contribution_syncs(request, contribution_id):
 def contribution_status(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
 
-    if request.user != contribution.contributor.user:
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     status = {
@@ -266,7 +266,7 @@ def contribution_status(request, contribution_id):
 def contribution_check_state(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
 
-    if request.user != contribution.contributor.user:
+    if not contribution.can_view(request.user): 
         return HttpResponse('Unauthorized', status=401)
 
     contribution.save()

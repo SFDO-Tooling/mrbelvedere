@@ -57,6 +57,19 @@ class Contribution(models.Model):
         if self.sf_oauth:
             return json.loads(self.sf_oauth)
 
+    def can_view(self, user):
+        # Only the contributor or a staff user can view
+        if self.contributor.user != user and not user.is_staff:
+            return False
+        return True
+    
+    def can_edit(self, user):
+        # For now, view and edit are the same permission, replace this later to implement different acl logic
+        return self.can_view(user)
+
+    def can_review(self, user):
+        return False
+
     def github_token(self):
         github_auth = self.contributor.user.social_auth.filter(provider = 'github')
         if github_auth.count():
@@ -104,6 +117,10 @@ class Contribution(models.Model):
 
         # If no fork was found, create it
         fork = self.github_api('/forks', data={}, as_contributor=True)
+
+        # If there was any message in the response, we hit an error... return it
+        if 'message' in fork:
+            return fork
 
         # Since fork creation happens async, wait for up to 5 minutes per GitHub
         timeout = time.time() + 60*5
@@ -303,7 +320,7 @@ class Contribution(models.Model):
                         'ref': 'refs/heads/%s' % self.merge_branch,
                         'sha': self.last_deployed_commit,
                     }
-                    branch = self.github_api('/git/refs', data=data)
+                    branch = self.github_api('/git/refs', data=data, fork=True)
     
                     sync.log += 'DONE, sha = %s\n' % branch['object']['sha']
                     sync.save()
@@ -318,6 +335,8 @@ class Contribution(models.Model):
                     sync.save()
     
                     changed = True
+
+                    # FIXME: Merge the branch
                 else:
                     # If there are no undeployed changes, do nothing.  Commits are 
                     # only made manually by the user when they provide a commit message
