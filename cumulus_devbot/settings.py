@@ -167,7 +167,7 @@ if GITHUB_EXTENDED_PERMISSIONS:
 else:
     GITHUB_EXTENDED_PERMISSIONS = ['public_repo',]
 
-LOGIN_URL = '/social_auth/github/login'
+LOGIN_URL = '/social-auth/login/github'
 LOGIN_REDIRECT_URL = '/contributor'
 #LOGIN_ERROR_URL = '/login-error/'
 
