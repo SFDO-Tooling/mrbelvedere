@@ -69,6 +69,8 @@ def contribution(request, contribution_id):
     contribution = get_object_or_404(Contribution, id = contribution_id)
    
     if not contribution.can_view(request.user): 
+        if request.user.is_anonymous():
+            return HttpResponseRedirect('/social-auth/login/github?redirect=/contributor/contributions/%s' % contribution_id)
         return HttpResponse('Unauthorized', status=401)
 
     # If no fork_branch is set, send to the edit branch form
