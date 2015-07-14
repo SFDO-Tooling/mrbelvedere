@@ -36,7 +36,7 @@ def queue_trigger_jenkins_jobs_on_push(sender, **kwargs):
     push = kwargs['instance']
     trigger_jenkins_jobs_on_push.delay(push.id)
 
-@django_rq.job('default', timeout=120)
+@django_rq.job('default', timeout=300)
 def trigger_jenkins_jobs_on_push(push_id):
     push = Push.objects.get(id=push_id)
     for trigger in push.branch.branchjobtrigger_set.all():
