@@ -1,27 +1,37 @@
-{% extends 'mpinstaller/base.html' %}
+{% extends 'contributor/base.html' %}
 
-{% load bootstrap3 %}
-{% load crispy_forms_tags %}
-
-{% block bootstrap3_title %}{% block title %}{{ contribution.title }} - Connect Salesforce Org{% endblock %}{% endblock %}
-{% block bootstrap3_page_title %}<a href="/contributor/contributions/{{ contribution.id }}">{{ contribution }}</a> - Connect Salesforce Org{% endblock %}
-
-{% block bootstrap3_content %}
-
-{% bootstrap_messages %}
-
-<div class="panel">
-  <div class="panel-heading">
-    <h3>Connect to a Salesforce Developer Edition Org</h3>
-  </div>
-  <div class="panel-body">
-    <p>You will manage the development of your contribution in a Salesforce Devleoper Edition org.  It is recommended that you create a new Developer Edition org for your contribution to avoid any issues with existing metadata.</p>
-    <p>Before clicking the button below, log into your new DE org in a separate browser window to ensure you are connecting to the correct org.</p>
+{% block base_page_header %}
+<div class="slds-page-header" role="banner">
+  <nav class="slds-m-bottom--xx-small" role="navigation">
+    <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+    <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+      <li class="slds-list__item slds-text-heading--label"><a href="/contributor">Contributions</a></li>
+      <li class="slds-list__item slds-text-heading--label"><a href="/contributor/contributions/{{ contribution.id }}">{{ contribution.title }}</a></li>
+    </ol>
+  </nav>
+  <div class="slds-grid">
+    <div class="slds-media">
+      <div class="slds-media__body">
+        <h1 class="slds-text-heading--medium slds-m-right--small slds-truncate slds-align-middle" title="Connect to Salesforce Developer Edition Org">Connect to Salesforce Developer Edition Org</h1>
+      </div>
+    </div>
   </div>
 </div>
+{% endblock %}
 
-<div class="btn-group btn-group-lg" role="group">
-  <a role="button" class="btn btn-primary" href="/mpinstaller/oauth/login?redirect={{ redirect }}">Connect to Org</a>
-</div>
+{% block base_body %}
+
+  <div class="slds-grid">
+    <div class="slds-col slds-size--2-of-3 slds-col--padded-large">
+      <div class="slds-button-group" role="group">
+        <button class="slds-button slds-button--brand" href="/mpinstaller/oauth/login?redirect={{ redirect }}">Connect to Org</a>
+      </div>
+    </div>
+
+    <div class="slds-col slds-size--1-of-3 slds-col--padded-large">
+      <p>You will manage the development of your contribution in a Salesforce Devleoper Edition org.  It is recommended that you create a new Developer Edition org for your contribution to avoid any issues with existing metadata.</p>
+      <p>Before clicking the button below, log into your new DE org in a separate browser window to ensure you are connecting to the correct org.</p>
+    </div>
+  </div>
 
 {% endblock %}

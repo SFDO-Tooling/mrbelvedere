@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from mpinstaller.utils import obscure_salesforce_log
 from tinymce.models import HTMLField
 
@@ -51,6 +52,15 @@ class MetadataCondition(models.Model):
             self.search,
             excluding,
         )
+
+class OrgAction(models.Model):
+    slug = models.SlugField()
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    force_sandbox = models.BooleanField(default=False, help_text="If checked, production installs will be blocked unless the action has been successfully run against a sandbox of the production org.")
+    content_intro = HTMLField(null=True, blank=True, help_text="Shown on the page to start an installation in the Action Information panel if provided.")
+    content_success = HTMLField(null=True, blank=True, help_text="Shown on the installation status page after a successful installation in the Next Steps panel if provided.")
+    content_failure = HTMLField(null=True, blank=True, help_text="Shown on the installation status page after a failed installation in the Next Steps panel if provided.")
 
 class Package(models.Model):
     namespace = models.SlugField(max_length=128)
@@ -348,16 +358,24 @@ class PackageVersion(models.Model):
 
 class PackageVersionDependency(models.Model):
     version = models.ForeignKey(PackageVersion, related_name='dependencies')
-    requires = models.ForeignKey(PackageVersion, related_name='required_by')
+    requires = models.ForeignKey(PackageVersion, related_name='required_by', null=True, blank=True)
+    action = models.ForeignKey(OrgAction, related_name='required_by', null=True, blank=True)
     order = models.IntegerField()
 
     def __unicode__(self):
-        return '%s (%s) requires %s (%s)' % (
-            self.version.number,
-            self.version.package.namespace,
-            self.requires.number,
-            self.requires.package.namespace,
-        )
+        if self.requires:
+            return '%s (%s) requires %s (%s)' % (
+                self.version.number,
+                self.version.package.namespace,
+                self.requires.number,
+                self.requires.package.namespace,
+            )
+        else:
+            return '%s (%s) requires action ' % (
+                self.version.number,
+                self.version.package.namespace,
+                self.action.name,
+            )
 
     class Meta:
         ordering = ['order',]
@@ -542,6 +560,7 @@ class PackageInstallationStep(models.Model):
     installation = models.ForeignKey(PackageInstallation, related_name='steps')
     package = models.ForeignKey(Package, related_name='installation_steps', null=True, blank=True)
     version = models.ForeignKey(PackageVersion, related_name='installation_steps', null=True, blank=True)
+    action = models.ForeignKey(OrgAction, related_name='installation_steps', null=True, blank=True)
     previous_version = models.CharField(max_length=255, null=True, blank=True)
     action = models.CharField(choices=INSTALLATION_ACTION_CHOICES, max_length=32)
     status = models.CharField(choices=INSTALLATION_STEP_STATUS_CHOICES, max_length=32)
@@ -575,3 +594,42 @@ class PackageInstallationStep(models.Model):
     def __unicode__(self):
         return '%s %s' % (self.action, self.version)
 
+EDIT_PICKLIST_ACTION_CHOICES = (
+    ('insert', 'Insert if not existing'),
+    ('upsert', 'Upsert'),
+    ('delete', 'Delete'),
+)
+
+class BaseActionEditPicklist(models.Model):
+    action = models.CharField(choices=EDIT_PICKLIST_ACTION_CHOICES, max_length=16)
+    custom_object = models.CharField(max_length=255)
+    custom_field = models.CharField(max_length=255)
+    value = models.CharField(max_length=255)
+    default = models.BooleanField()
+
+    class Meta:
+        abstract = True
+
+class ActionEditPicklist(OrgAction, BaseActionEditPicklist):
+    class Meta:
+        pass
+
+STAGE_FORECAST_CATEGORY_CHOICES = (
+    ('Best Case', 'Best Case'),
+    ('Closed', 'Closed'),
+    ('Commit', 'Commit'),
+    ('Omitted', 'Omitted'),
+    ('Pipeline', 'Pipeline'),
+)
+
+def validate_probability(value):
+    if int(value) > 100:
+        raise ValidationError('Probability cannot be greater than 100')
+    if int(value) < 0:
+        raise ValidationError('Probability cannot be less than 100')
+
+class ActionEditStageName(OrgAction, BaseActionEditPicklist):
+    closed = models.BooleanField()
+    won = models.BooleanField()
+    probability = models.IntegerField(validators=[validate_probability])
+    forecast_category = models.CharField(max_length=16, choices=STAGE_FORECAST_CATEGORY_CHOICES)

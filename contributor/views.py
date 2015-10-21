@@ -110,7 +110,7 @@ def contribution_edit_branch(request, contribution_id):
     else:
         form = ContributionEditBranchForm(instance=contribution)
 
-    context = RequestContext(request, {'form': form})
+    context = RequestContext(request, {'form': form, 'contribution': contribution})
     return render_to_response('contributor/contribution_edit_branch.html', context)
 
 @login_required

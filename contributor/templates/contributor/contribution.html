@@ -1,11 +1,6 @@
 {% extends 'contributor/base.html' %}
 
-{% load bootstrap3 %}
-
-{% block bootstrap3_title %}{% block title %}{{ contribution.title }}{% endblock %}{% endblock %}
-{% block bootstrap3_page_title %}<a href="/contributor/contributions/{{ contribution.id }}">{{ contribution }}</a>{% endblock %}
-
-{% block extra_head %}
+{% block base_head %}
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-sanitize.js"></script>
 <script type="text/javascript">
@@ -13,105 +8,378 @@
 </script>
 <script src="/static/js/contribution_status.js"></script>
 {% endblock %}
-
-{% block bootstrap3_content %}
-
-{% bootstrap_messages %}
-
+ 
+{% block base_body_wrapper_header %}
 <div class="contribution-status" ng-app="ContributionStatusApp" ng-controller="ContributionStatusController">
-  <div class="row">
-    <div class="col-md-6">
-      <div class="panel">
-        <div class="panel-heading">
-          <h3 class="panel-title">Contribution Info</h3>
+{% endblock %}
+
+{% block base_page_header %}
+<div class="slds-page-header" role="banner">
+  <div class="slds-grid">
+    <div class="slds-col slds-has-flexi-truncate">
+      <div class="slds-media">
+        <div class="slds-media__figure">
+          <svg aria-hidden="true" class="slds-icon slds-icon--large slds-icon-standard-user">
+            {% autoescape off %}
+            <use xlink:href="/static/slds/assets/icons/action-sprite/svg/symbols.svg#share_thanks"></use>
+            {% endautoescape %}
+          </svg>
         </div>
-        <div class="panel-body">
-          <div class="list-group">
-            <a href="https://github.com/{{ contribution.contributor.user.username }}" class="list-group-item" target="_blank">
-              <h3 class="list-group-item-heading">Contributor</h3>
-              <p class="list-group-item-text">{{ contribution.contributor.user.username }}</p>
-            </a>
-            <a href="https://github.com/{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}" class="list-group-item" target="_blank">
-              <h3 class="list-group-item-heading">Main Repository</h3>
-              <p class="list-group-item-text">{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}</p>
-            </a>
-            <a href="https://github.com/{{ contribution.contributor.user.username }}/{{ contribution.get_main_repo_name }}/tree/{{ contribution.fork_branch }}" class="list-group-item" target="_blank">
-              <h3 class="list-group-item-heading">Fork Branch</h3>
-              <p class="list-group-item-text">{{ contribution.fork_branch }}</p>
-            </a>
-            {% if contribution.fork_pull %}
-            <a href="https://github.com/{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}/pulls/{{ contribution.fork_pull }}" class="list-group-item" target="_blank">
-              <h3 class="list-group-item-heading">Pull Request</h3>
-              <p class="list-group-item-text">#{{ contribution.fork_pull }}</p>
-            </a>
-            {% endif %}
-            <a href="https://github.com/{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}/issues/{{ contribution.github_issue }}" class="list-group-item" target="_blank">
-              <h3 class="list-group-item-heading">Issue #{{ contribution.github_issue }}</h3>
-              <p class="list-group-item-text">{{ contribution.body|linebreaks }}</p>
-            </a>
+        <div class="slds-media__body">
+          <p class="slds-text-heading--label">Contribution</p>
+          <div class="slds-grid">
+            <h1 class="slds-text-heading--medium slds-m-right--small slds-truncate slds-align-middle" title="{{ contribution.title }}">{{ contribution.title }}</h1>
           </div>
         </div>
       </div>
     </div>
-    
-    <div class="col-md-6">
-      <div class="panel">
-        <div class="panel-heading">
-          <h3 class="panel-title">Manage</h3>
-        </div>
-        <div class="panel-body">
-      
-          <div class="btn-group btn-group-lg" role="group" aria-label="Actions">
-            <a role="button" class="btn btn-default" href="/contributor/contributions/{{ contribution.id }}/check-state">Check for Changes</a></button>
-            {% if contribution.state_behind_main %}
-            <a role="button" class="btn btn-default" href="/contributor/contributions/{{ contribution.id }}/pull">Pull from Main Repo</a></button>
-            {% endif %}
-            <a role="button" class="btn" {% verbatim %}ng-class="{'btn-success': (contribution.state_uncommitted_changes == true), 'btn-default': (contribution.state_uncommitted_changed != true)}"{% endverbatim %} href="/contributor/contributions/{{ contribution.id }}/commit">Save Changes</a></button>
-            <a role="button" class="btn btn-primary" href="/contributor/contributions/{{ contribution.id }}/submit">Submit for Review</a></button>
-          </div>
-          
-          {% verbatim %} 
-          <div class="alert alert-info" ng-hide="contribution.state_behind_main != true">
-            <strong>Behind Main Repository</strong>
-            Your feature branch is behind the project's main repository.  When ready, you can <a href="/contributor/contributions/{{contribution.contribution}}/pull">Update</a> to pull the changes into your repository.
-          </div>
-    
-          <div class="alert alert-warning" ng-hide="contribution.state_undeployed_commit != true">
-            <strong>Undeployed Commit</strong>
-            There are changes in your Github repository which have not yet been deployed to your Salesforce org.  The sync process should take care of this automatically for you.  If you notice a sync failure below, please contact your reviewer for assistance.
-          </div>
-    
-          <div class="alert alert-danger" ng-hide="contribution.state_uncommitted_changes != true">
-            <strong>Unsaved Changes</strong>
-            There appear to be changes in your Salesforce org which are not yet saved to Github.  Use the Save Changes when you are ready to save your changes.
-          </div>
-          {% endverbatim %} 
-
-        </div>
+    <div class="slds-col slds-no-flex slds-align-bottom">
+      <div class="slds-button-group" role="group">
+        <button class="slds-button slds-button--neutral"><a href="/contributor/contributions/{{ contribution.id }}/check-state">Check for Changes</a></button>
+        <button class="slds-button slds-button--neutral" {% verbatim %}ng-disabled="{'': (contribution.state_uncommitted_changes == true), 'checked': (contribution.state_uncommitted_changed != true)}"{% endverbatim %}> <a href="/contributor/contributions/{{ contribution.id }}/commit">Save Changes</a></button>
+        <button class="slds-button slds-button--neutral slds-button--last"><a href="/contributor/contributions/{{ contribution.id }}/submit">Submit for Review</a></button>
       </div>
-      {% verbatim %} 
-      <div class="row" ng-hide="contribution.last_sync == null">
-        <div class="col-md-12">    
-          <div class="panel" ng-class="{'panel-info': (contribution.last_sync.status == 'pending'),'panel-primary': (contribution.last_sync.status == 'in_progress'), 'panel-danger': (contribution.last_sync.status == 'failed'), 'panel-success': (contribution.last_sync.status == 'success')}">
-            <div class="panel-heading">
-              <h3 class="panel-title">
-                Last sync status: {{contribution.last_sync.status}}
-              </h3>
-            </div>
-      
-            <div class="panel-body">
-              <div class="last-sync" ng-hide="contribution.last_sync == null">
-                <div class="well" ng-bind-html="contribution.last_sync.log">
+    </div>
+  </div>
+  <div class="slds-grid slds-page-header__detail-row">
+    <div class="slds-col--padded slds-size--1-of-3">
+      <dl>
+        <dt>
+          <p class="slds-truncate" title="Contributor">Contributor</p>
+        </dt>
+        <dd>
+          <a href="https://github.com/{{ contribution.contributor.user.username }}" target="_blank" >
+            {{ contribution.contributor.user.username }}
+          </a>
+        </dd>
+      </dl>
+    </div>
+    <div class="slds-col--padded slds-size--1-of-3">
+      <dl>
+        <dt>
+          <p class="slds-text-heading--label slds-truncate" title="Main Repository">Main Repository</p>
+        </dt>
+        <dd>
+          <a href="https://github.com/{{ contribution.contributor.user.username }}/{{ contribution.get_main_repo_name }}" target="_blank">{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}</a></p>
+        </dd>
+      </dl>
+    </div>
+    <div class="slds-col--padded slds-size--1-of-3">
+      <dl>
+        <dt>
+          <p class="slds-text-heading--label slds-truncate" title="Branch">Branch</p>
+        </dt>
+        <dd><a href="https://github.com/{{ contribution.contributor.user.username }}/{{ contribution.get_main_repo_name }}/tree/{{ contribution.fork_branch }}">{{ contribution.fork_branch }}</a></dd>
+      </dl>
+    </div>
+  </div>
+</div> 
+{% endblock %}
+
+{% block base_body %}
+
+  <div class="slds-grid">
+
+    <div class="slds-col slds-size--2-of-3 slds-p-around--large">
+
+
+
+  <div class="slds-tabs--default">
+    <ul class="slds-tabs--default__nav" role="tablist">
+      <li class="slds-tabs__item slds-text-heading--label slds-active" title="Item One" role="presentation"><a href="#" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-default-1">Activity History</a></li>
+{% comment %}
+      <li class="slds-tabs__item slds-text-heading--label" title="Item Two" role="presentation"><a href="#" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-2">Comments</a></li>
+{% endcomment %}
+    </ul>
+    <div id="tab-default-1" class="slds-tabs__content slds-show" role="tabpanel">
+
+
+      <ul class="slds-timeline">
+
+        {% for sync in contribution.syncs.all %}
+        {% if sync.message or sync.new_installation %}
+        <li class="slds-timeline__item">
+          <div class="slds-media slds-media--reverse">
+            <div class="slds-media__figure">
+              <div class="slds-timeline__actions">
+                <p class="slds-timeline__date">{{ sync.date_started }}</p>
+              </div>
+            </div> 
+            <div class="slds-media__body">
+              <div class="slds-media slds-media--timeline slds-timeline__media--task">
+                <div class="slds-media__figure">
+                  <svg aria-hidden="true" class="slds-icon{% if sync.status == 'failed' %} slds-icon-text-warning{% endif %} slds-icon-standard-task slds-timeline__icon">
+                    {% autoescape off %}
+                    {% if sync.message %}
+                    <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#upload"></use>
+                    {% elif sync.new_installation %}
+                    <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#download"></use>
+                    {% else %}
+                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
+                    {% endif %}
+                    {% endautoescape %}
+                  </svg>
+                </div>
+                <div class="slds-media__body">
+                  <div class="slds-media slds-tile slds-media--small">
+                    {% if sync.message %}
+                    <div class="slds-media__body">
+                      <p class="slds-tile__title slds-truncate"><a href="#">Committed Changes from Org</a></p>
+                      <p>{{ sync.message }}</p>
+                      <ul class="slds-tile__detail slds-list--vertical slds-text-body--small">
+                        <li class="slds-list__item">
+                          <dl class="slds-dl--inline">
+                            <dt class="slds-dl--inline__label">Status:</dt>
+                            <dd class="slds-dl--inline__detail">{{ sync.status }}</dd>
+                          </dl>
+                        </li>
+                        <li class="slds-list__item">
+                          <dl class="slds-dl--inline">
+                            <dt class="slds-dl--inline__label">Commit:</dt>
+                            <dd class="slds-dl--inline__detail"><a href="#">{{ sync.new_commit }}</a></dd>
+                          </dl>
+                        </li>
+                      </ul>
+                    </div>
+                    {% elif sync.new_installation %}
+                    <div class="slds-media__body">
+                      <p class="slds-tile__title slds-truncate"><a href="#">Deployed Changes from Github to Org</a></p>
+                      <ul class="slds-tile__detail slds-list--vertical slds-text-body--small">
+                        <li class="slds-list__item">
+                          <dl class="slds-dl--inline">
+                            <dt class="slds-dl--inline__label">Status:</dt>
+                            <dd class="slds-dl--inline__detail">{{ sync.status }}</dd>
+                          </dl>
+                        </li>
+                        <li class="slds-list__item">
+                          <dl class="slds-dl--inline">
+                            <dt class="slds-dl--inline__label">Installation:</dt>
+                            <dd class="slds-dl--inline__detail"><a href="/mpinstaller/installation/{{ sync.new_installation.id }}">{{ sync.new_installation.id }}</a></dd>
+                          </dl>
+                        </li>
+                      </ul>
+                    </div>
+                    {% endif %}
+                  </div>
                 </div>
               </div>
-          
             </div>
           </div>
+        </li>
+        {% elif sync.pre_state_undeployed_commit != sync.post_state_undeployed_commit %}
+        <li class="slds-timeline__item">
+          <div class="slds-media slds-media--reverse">
+            <div class="slds-media__figure">
+              <div class="slds-timeline__actions">
+                <p class="slds-timeline__date">{{ sync.date_started }}</p>
+              </div>
+            </div> 
+            <div class="slds-media__body">
+              <div class="slds-media slds-media--timeline slds-timeline__media--task">
+                <div class="slds-media__figure">
+                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon">
+                    {% autoescape off %}
+                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#case_change_status"></use>
+                    {% endautoescape %}
+                  </svg>
+                </div>
+                <div class="slds-media__body">
+                  <div class="slds-media slds-tile slds-media--small">
+                    <div class="slds-media__body">
+                      <p class="slds-tile__title slds-truncate">Detected new undeployed commit</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </li>
+        {% elif sync.pre_state_uncommitted_changes != sync.post_state_uncommitted_changes %}
+        <li class="slds-timeline__item">
+          <div class="slds-media slds-media--reverse">
+            <div class="slds-media__figure">
+              <div class="slds-timeline__actions">
+                <p class="slds-timeline__date">{{ sync.date_started }}</p>
+              </div>
+            </div> 
+            <div class="slds-media__body">
+              <div class="slds-media slds-media--timeline slds-timeline__media--task">
+                <div class="slds-media__figure">
+                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon">
+                    {% autoescape off %}
+                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#drafts"></use>
+                    {% endautoescape %}
+                  </svg>
+                </div>
+                <div class="slds-media__body">
+                  <div class="slds-media slds-tile slds-media--small">
+                    <div class="slds-media__body">
+                      <p class="slds-tile__title slds-truncate">Detected new uncommitted changes in org</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </li>
+        {% endif %}
+        {% endfor %}
+        {% if contribution.fork_branch %} 
+        <li class="slds-timeline__item">
+          <div class="slds-media slds-media--reverse">
+            <div class="slds-media__body">
+              <div class="slds-media slds-media--timeline slds-timeline__media--task">
+                <div class="slds-media__figure">
+                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon">
+                    {% autoescape off %}
+                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
+                    {% endautoescape %}
+                  </svg>
+                </div>
+                <div class="slds-media__body">
+                  <div class="slds-media slds-tile slds-media--small">
+                    <div class="slds-media__body">
+                      <p class="slds-tile__title slds-truncate">Created branch in Github: <a href="">{{contribution.fork_branch}}</a></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </li>
+        {% endif %}
+
+        {% if contribution.github_issue %} 
+        <li class="slds-timeline__item">
+          <div class="slds-media slds-media--reverse">
+            <div class="slds-media__body">
+              <div class="slds-media slds-media--timeline slds-timeline__media--task">
+                <div class="slds-media__figure">
+                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon">
+                    {% autoescape off %}
+                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
+                    {% endautoescape %}
+                  </svg>
+                </div>
+                <div class="slds-media__body">
+                  <div class="slds-media slds-tile slds-media--small">
+                    <div class="slds-media__body">
+                      <p class="slds-tile__title slds-truncate">Linked to Github Issue: <a href="">#{{contribution.github_issue}}</a></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </li>
+        {% endif %}
+
+      </ul>
+
+
+
+
+
+
+    </div>
+    <div id="tab-default-2" class="slds-tabs__content slds-hide" role="tabpanel">
+    </div>
+  </div>
+
+
+
+
+
+
+
+    </div>
+
+    <div class="slds-col slds-size--1-of-3 slds-theme--shade slds-p-around--large">
+
+      <!-- Next Steps, controlled by Angular -->
+      {% verbatim %} 
+      <div class="slds-card">
+        <div class="slds-card__header slds-grid">
+          <div class="slds-media slds-media--center slds-has-flexi-truncate">
+            <div class="slds-media__figure">
+              <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small">
+                {% autoescape off %}
+                <use xlink:href="/static/slds/assets/icons/action-sprite/svg/symbols.svg#change_record_type"></use>
+                {% endautoescape %}
+              </svg>
+            </div>
+            <div class="slds-media__body">
+              <h2 class="slds-text-heading--small slds-truncate">
+                Current Sync Status 
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        <div class="slds-card__body">
+          <div class="slds-box slds-theme--success" ng-hide="contribution.state_uncommitted_changes += true or contribution.state_uncommit_changes == true">
+            <h2>All Synced Up!</h2>
+            <p>Your DE org is synced with Github.  If you've made changes in your org and are still seeing this message, click the Check for Changes button</p>
+          </div>
+
+          <div class="slds-box slds-theme--warning" ng-hide="contribution.state_undeployed_commit != true">
+            <span class="slds-assistive-text">Warning</span>
+            <h2 class="slds-text-heading--small">Undeployed Commit</h2>
+            <p>There are changes in your Github repository which have not yet been deployed to your Salesforce org.  The sync process should take care of this automatically for you.  If you notice a sync failure below, please contact your reviewer for assistance.</p>
+          </div>
+   
+          <div class="slds-box slds-theme--warning" ng-hide="contribution.state_uncommitted_changes != true">
+            <span class="slds-assistive-text">Warning</span>
+            <h2 class="slds-text-heading--small">Unsaved Changes</h2>
+            <p>There appear to be changes in your Salesforce org which are not yet saved to Github.  Use the Save Changes when you are ready to save your changes.</p>
+          </div>
+
         </div>
       </div>
       {% endverbatim %}
+
+
+      <!-- Github Issue -->
+      <div class="slds-card">
+
+        <div class="slds-card__header slds-grid">
+          <div class="slds-media slds-media--center slds-has-flexi-truncate">
+            <div class="slds-media__figure">
+              <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small">
+                {% autoescape off %}
+                <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#case"></use>
+                {% endautoescape %}
+              </svg>
+            </div>
+            <div class="slds-media__body">
+              <h2 class="slds-text-heading--small slds-truncate">
+                Github Issue
+                <span class="slds-badge"><a href="https://github.com/{{ contribution.get_main_repo_owner }}/{{ contribution.get_main_repo_name }}/issues/{{ contribution.github_issue }}" title="View Issue on Github" target="_blank">#{{ contribution.github_issue }}</a></span>
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        <div class="slds-card__body">
+
+
+          <div class="slds-grid">
+            <div class="slds-col slds-col--padded-large">
+              <p>{{ contribution.body|linebreaks }}</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   </div>
- 
+
+
+
+
+{% endblock %}
+
+{% block base_body_wrapper_footer %}
 </div>
 {% endblock %}
