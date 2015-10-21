@@ -1,0 +1,14 @@
+{% if field.is_hidden %}
+    {{ field }}
+{% else %}
+    <fieldset id="fieldset_{{ field.auto_id }}" class="slds-form-element{% if form_show_errors and field.errors %} slds-has-error{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}{% if field.field.required %} slds-is-required{% endif %}">
+
+        {% if field.label %}
+            <legend class="slds-form-element__label slds-form-element__label--top">
+                {{ field.label|safe }}
+            </legend>
+        {% endif %}
+
+        {% include 'crispy_slds/layout/radioselect.html' %}
+    </fieldset>
+{% endif %}
