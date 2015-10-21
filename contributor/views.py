@@ -260,7 +260,10 @@ def contribution_status(request, contribution_id):
         status['last_sync']['commit'] = sync.new_commit
         if sync.new_installation:
             status['last_sync']['installation'] = sync.new_installation.id
-
+            steps = list(sync.new_installation.steps.all().order_by('-date_started')[:1])
+            if steps:
+                step = steps[0]
+                status['last_sync']['installation']['status'] = step.status
 
     return HttpResponse(json.dumps(status), content_type='application/json')
         
