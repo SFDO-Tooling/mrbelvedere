@@ -22,15 +22,17 @@
 {% block base_body %}
 
   <div class="slds-grid">
-    <div class="slds-col slds-size--2-of-3 slds-col--padded-large">
+    <div class="slds-col slds-size--2-of-3 slds-p-around--large">
       <div class="slds-button-group" role="group">
         <a href="/mpinstaller/oauth/login?redirect={{ redirect }}"><button class="slds-button slds-button--brand">Connect to Org</button></a>
       </div>
     </div>
 
-    <div class="slds-col slds-size--1-of-3 slds-col--padded-large">
+    <div class="slds-col slds-size--1-of-3 slds-p-around--large slds-theme--shade">
       <p>You will manage the development of your contribution in a Salesforce Devleoper Edition org.  It is recommended that you create a new Developer Edition org for your contribution to avoid any issues with existing metadata.</p>
-      <p>Before clicking the button below, log into your new DE org in a separate browser window to ensure you are connecting to the correct org.</p>
+      <div class="slds-box slds-theme--warning">
+        <p>Before clicking the Connect to Org button, log into your new DE org in a separate browser window to ensure you are connecting to the correct org.</p>
+      </div>
     </div>
   </div>
 

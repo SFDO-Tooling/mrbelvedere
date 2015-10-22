@@ -88,6 +88,7 @@ def contribution(request, contribution_id):
 
     context = {
         'contribution': contribution,
+        'syncs': contribution.syncs.all().order_by('-date_started'),
         'last_sync': last_sync,
     }
 
@@ -252,18 +253,25 @@ def contribution_status(request, contribution_id):
         'last_sync': {},
     }
 
-    res = list(contribution.syncs.all().order_by('-date_started')[:1])
-    if res:
+    res = list(contribution.syncs.all().order_by('-date_started'))
+    if res.count:
         sync = res[0]
         status['last_sync']['status'] = sync.status
         status['last_sync']['log'] = sync.log.replace('\n','<br />\n')
         status['last_sync']['commit'] = sync.new_commit
         if sync.new_installation:
-            status['last_sync']['installation'] = sync.new_installation.id
-            steps = list(sync.new_installation.steps.all().order_by('-date_started')[:1])
-            if steps:
-                step = steps[0]
-                status['last_sync']['installation']['status'] = step.status
+            status['last_sync']['installation'] = {}
+            status['last_sync']['installation']['id'] = sync.new_installation.id
+            status['last_sync']['installation']['status'] = sync.new_installation.status
+            status['last_sync']['installation']['log'] = sync.new_installation.status
+            status['last_sync']['installation']['steps'] = []
+            for step in sync.new_installation.steps.all().order_by('-created'):
+                status['last_sync']['installation']['steps'].append({
+                    'id': step.id,
+                    'status': step.status,
+                    'version': unicode(step.version),
+                    'log': step.log,
+                })
 
     return HttpResponse(json.dumps(status), content_type='application/json')
         
