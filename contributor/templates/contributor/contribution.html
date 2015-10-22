@@ -134,10 +134,10 @@
                   <div class="slds-media slds-tile slds-media--small">
                     <div class="slds-media__body">
                       <p class="slds-tile__title slds-truncate">
-                        <a ng-hide="sync.type != 'manual_commit'" ng-href="https://github.com/{{contribution.contributor.user.username}}/{{contribution.repo_name}}/commit/{{sync.new_commit}}" target="_blank">
+                        <a ng-hide="sync.type != 'manual_commit'" ng-href="https://github.com/{{contribution.contributor.user.username}}/{{contribution.repo_name}}/commit/{{sync.commit}}" target="_blank">
                           Committed Changes from Org
                         </a>
-                        <a ng-hide="sync.type != 'installation'" ng-href="/mpinstaller/installation/{{sync.new_installation.id}}" target="_blank">
+                        <a ng-hide="sync.type != 'installation'" ng-href="/mpinstaller/installation/{{sync.installation.id}}" target="_blank">
                           Deployed Changes from Github to Org
                         </a>
                         <span ng-hide="sync.type != 'sync'">Check Sync Status and Sync</span>
@@ -182,8 +182,8 @@
                           <dl class="slds-dl--inline">
                             <dt class="slds-dl--inline__label">Installation:</dt>
                             <dd class="slds-dl--inline__detail">
-                              <a ng-href="/mpinstaller/installation/{{sync.new_installation.id}}" target="_blank">
-                                {{sync.new_installation.id}}
+                              <a ng-href="/mpinstaller/installation/{{sync.installation.id}}" target="_blank">
+                                {{sync.installation.id}}
                               </a>
                             </dd>
                           </dl>

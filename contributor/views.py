@@ -284,19 +284,21 @@ def contribution_status(request, contribution_id):
             sync_data['log'] = None
 
         # If there was a new installation, include information about the installation
-        if sync.new_installation and not status['syncs']:
+        if sync.new_installation:
             sync_data['installation'] = {}
             sync_data['installation']['id'] = sync.new_installation.id
             sync_data['installation']['status'] = sync.new_installation.status
-            sync_data['installation']['log'] = sync.new_installation.log
-            sync_data['installation']['steps'] = []
-            for step in sync.new_installation.steps.all().order_by('-created'):
-                sync_data['installation']['steps'].append({
-                    'id': step.id,
-                    'status': step.status,
-                    'version': unicode(step.version),
-                    'log': step.log,
-                })
+            
+            if not status['syncs']:
+                sync_data['installation']['log'] = sync.new_installation.log
+                sync_data['installation']['steps'] = []
+                for step in sync.new_installation.steps.all().order_by('-created'):
+                    sync_data['installation']['steps'].append({
+                        'id': step.id,
+                        'status': step.status,
+                        'version': unicode(step.version),
+                        'log': step.log,
+                    })
 
         status['syncs'].append(sync_data)
 
