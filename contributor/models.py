@@ -15,6 +15,7 @@ from mpinstaller.models import PackageInstallation
 from mpinstaller.models import PackageInstallationSession
 from mpinstaller.models import PackageInstallationStep
 from mpinstaller.models import PackageVersion
+from contributor.exceptions import DefaultBranchSyncFailed
 from tinymce.models import HTMLField
 
 SYNC_STATUS_CHOICES = (
@@ -42,6 +43,7 @@ class Contribution(models.Model):
     main_branch = models.CharField(max_length=255, null=True, blank=True)
     fork_pull = models.IntegerField(null=True, blank=True)
     main_pull = models.IntegerField(null=True, blank=True)
+    default_branch_synced = models.BooleanField(default=False)
     state_behind_main = models.BooleanField(default=False)
     state_undeployed_commit = models.BooleanField(default=False)
     state_uncommitted_changes = models.BooleanField(default=False)
@@ -152,6 +154,9 @@ class Contribution(models.Model):
         if not self.fork_branch:
             return
 
+        if not self.default_branch_synced:
+            self.update_default_branch()
+
         branch = self.github_api('/git/refs/heads/%s' % self.fork_branch, fork=True)
         if 'message' in branch and branch['message'] == 'Not Found':
 
@@ -194,6 +199,24 @@ class Contribution(models.Model):
         # FIXME: Needs implementation
         pass
 
+    def update_default_branch(self):
+        """ Updates the fork's default branch with the main repository's default branch's HEAD """
+
+        if self.default_branch_synced:
+            return True
+
+        default_branch = self.github_api('')['default_branch']
+        main_sha = self.github_api('/git/refs/heads/%s' % default_branch)['object']['sha']
+        fork_sha = self.github_api('/git/refs/heads/%s' % default_branch, fork=True)['object']['sha']
+        if main_sha != fork_sha:
+            res = self.github_api('/merges', data={"base": default_branch, "head": main_sha}, fork=True)
+            if res == 204 or 'messages' not in res:
+                self.default_branch_synced = True
+                self.save()
+            else:
+                raise DefaultBranchException('Failed to merge commit "%s" from main repository default branch "%s" to fork' % (main_sha, default_branch), res)
+        return True
+
     def get_issue(self):
         if not self.github_issue:
             if not self.title or not self.body:
@@ -219,7 +242,7 @@ class Contribution(models.Model):
         count = self.syncs.filter(status = 'success', message__isnull = False).count()
         return count > 0
 
-    def check_sync_state(self):
+    def check_sync_state(self, sync=None):
         # Check if behind_main
         # FIXME: Needs implementation
             
@@ -227,6 +250,9 @@ class Contribution(models.Model):
         branch = self.get_fork_branch()
 
         # Check if undeployed_commit
+        if sync:
+            sync.log += '--- * Checking for undeployed commit from Github\n'
+            sync.save()
         if not self.last_deployed_commit:
             # If we've never deployed a commit, set True
             self.state_undeployed_commit = True
@@ -239,12 +265,18 @@ class Contribution(models.Model):
                 self.state_undeployed_commit = False
 
         # Check if uncommitted_changes
+        if sync:
+            sync.log += '--- * Checking for unsaved changes in the Salesforce DE org\n'
+            sync.save()
         if not self.last_retrieve_checksum:
             # If we've never done a retrieve, set False since we assume we start from a clean org
             self.state_uncommitted_changes = False
         else:
             # Attempt to retrieve from the org
             org_metadata = self.retrieve_packaged()
+            if sync:
+                sync.log += '--- * Retrieving packaged metadata from Salesforce DE org\n'
+                sync.save()
             org_checksum = self.calculate_retrieve_checksum(org_metadata)
 
             if org_checksum != self.last_retrieve_checksum:
@@ -281,9 +313,10 @@ class Contribution(models.Model):
 
             # Update current sync state
             state_before = (self.state_behind_main, self.state_undeployed_commit, self.state_uncommitted_changes)
-            self.check_sync_state()
+            self.check_sync_state(sync)
   
             sync.log += 'DONE\n' 
+            sync.save()
             sync.pre_state_behind_main = self.state_behind_main
             sync.pre_state_undeployed_commit = self.state_undeployed_commit
             sync.pre_state_uncommitted_changes = self.state_uncommitted_changes
@@ -352,17 +385,20 @@ class Contribution(models.Model):
                 sync.log += 'Deploying HEAD commit to org...\n'
                 sync.save()
     
-                installation = self.deploy_commit_to_org()
+                installation = self.deploy_commit_to_org(sync)
     
                 if installation:
                     if installation.status == 'Failed':
                         sync.log += 'FAILED, Installation #%s failed\n' % installation.id
                         sync.log += installation.log
+                        sync.save()
                         for step in installation.steps.filter(status='Failed'):
                             sync.log += step.log
+                            sync.save()
                         sync.status = 'failed'
                     else:
                         sync.log += 'DONE, Installed with PackageInstallation #%s\n' % installation.id
+                        sync.save()
 
                     sync.new_installation = installation
                     sync.save()
@@ -394,9 +430,10 @@ class Contribution(models.Model):
             if state_before != after_state:
                 changed = True
     
-            self.check_sync_state()
+            self.check_sync_state(sync)
     
             sync.log += 'DONE\n'
+            sync.save()
             sync.post_state_behind_main = self.state_behind_main
             sync.post_state_undeployed_commit = self.state_undeployed_commit
             sync.post_state_uncommitted_changes = self.state_uncommitted_changes
@@ -417,12 +454,20 @@ class Contribution(models.Model):
             # Return a normal result since the job did complete
             return changed
 
-    def deploy_commit_to_org(self, commit=None):
+    def deploy_commit_to_org(self, commit=None, sync=None):
         if not self.sf_oauth:
+            if sync:
+                sync.log += 'FAILED: No Saleforce Org credentials available to sync with DE org\n'
+                sync.status = 'failed'
+                sync.save()
             return 
 
         # If there is currently an installation running, return None
         if self.last_deployment_installation and self.last_deployment_installation.status in ('Pending','In Progress'):
+            if sync:
+                sync.log += 'FAILED: Another installation is already in progress for this contribution.  Please try again later\n'
+                sync.status = 'failed'
+                sync.save()
             return
 
         version = self.package_version
@@ -437,7 +482,15 @@ class Contribution(models.Model):
 
         # Get installed packages in org
         api = ApiRetrieveInstalledPackages(oauth)
+        if sync:
+            sync.log += '--- Getting list of installed packages in org\n'
+            sync.save()
         installed = api()
+        if sync:
+            sync.log += 'DONE'
+            sync.save()
+       
+        # Store the access token from the api call if it changed 
         if api.oauth != oauth:
             self.sf_oauth = json.dumps(api.oauth)
         else:
@@ -448,6 +501,10 @@ class Contribution(models.Model):
 
         # Build the install map
         install_map = version_install_map(version, installed, metadata, git_ref, fork)
+
+        if sync:
+            sync.log += '--- Configuring installation steps\n'
+            sync.save()
 
         # Build the Installation object
         installation_obj = PackageInstallation(
@@ -489,10 +546,25 @@ class Contribution(models.Model):
             order += 1
             if step_obj.action == 'skip':
                 step_obj.status = 'Succeeded'
+            else:
+                if sync:
+                    sync.log += '--- * %s: %s\n' % (step_obj.version, step_obj.action)
+                    sync.save()
             step_obj.save()
+
+        if sync:
+            sync.log += 'DONE\n\n'
+            sync.log += '--- Starting installation #%s\n' % installation_obj.id
+            sync.log += '--- * NOTE: This can take anywhere from 5-15 minutes to complete\n'
+            sync.log += '--- * <a href="/mpinstaller/installations/%s" target="_blank">View installation status in separate tab</a>\n'
+            sync.save()
 
         # Run the installer synchronously since we should already be inside a background process
         install_package_version(installation_obj.id)
+
+        if sync:
+            sync.log += 'DONE\n\n'
+            sync.save()
 
         # Record the deployment on the Contribution if successful
         self.last_deployment_installation = installation_obj
