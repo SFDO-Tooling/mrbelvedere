@@ -31,7 +31,7 @@ def contributor_contributions(request, username):
         return HttpResponse('Unauthorized', status=401)
 
     context = {
-        'contributions': contributor.contributions.all(),
+        'contributions': contributor.contributions.all().order_by('-id'),
     }
 
     return render_to_response('contributor/my_contributions.html', context)

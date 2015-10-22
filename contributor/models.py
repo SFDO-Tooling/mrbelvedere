@@ -51,6 +51,9 @@ class Contribution(models.Model):
     last_deployment_installation = models.ForeignKey('mpinstaller.PackageInstallation', related_name='contributions', null=True, blank=True)
     last_deployed_commit = models.CharField(max_length=255, null=True, blank=True)
     last_retrieve_checksum = models.CharField(max_length=255, null=True, blank=True)
+    date_started = models.DateTimeField(auto_now_add=True)
+    date_modified = models.DateTimeField(auto_now=True)
+    release_url = models.TextField(null=True, blank=True)
 
     def __unicode__(self):
         return '%s: %s' % (self.package_version.package.namespace, self.title)
