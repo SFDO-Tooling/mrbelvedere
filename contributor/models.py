@@ -215,6 +215,10 @@ class Contribution(models.Model):
     def search_issues(self, q):
         return self.github_api('/search/issues?q=%s' % quote(q))
 
+    def has_user_commit(self):
+        count = self.syncs.filter(status = 'success', message__isnull = False).count()
+        return count > 0
+
     def check_sync_state(self):
         # Check if behind_main
         # FIXME: Needs implementation

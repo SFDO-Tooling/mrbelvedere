@@ -90,6 +90,9 @@
       </dl>
     </div>
   </div>
+
+  {% include "contributor/contribution_status.html" %}
+
 </div> 
 {% endblock %}
 
@@ -122,12 +125,12 @@
             <div class="slds-media__body">
               <div class="slds-media slds-media--timeline slds-timeline__media--task">
                 <div class="slds-media__figure">
-                  <svg aria-hidden="true" class="slds-icon{% if sync.status == 'failed' %} slds-icon-text-warning{% endif %} slds-icon-standard-task slds-timeline__icon">
+                  <svg aria-hidden="true" class="slds-icon slds-timeline__icon slds-icon-standard-task{% if sync.status == 'failed' %} slds-theme--warning{% endif %}">
                     {% autoescape off %}
                     {% if sync.message %}
-                    <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#upload"></use>
+                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
                     {% elif sync.new_installation %}
-                    <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#download"></use>
+                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
                     {% else %}
                     <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
                     {% endif %}
@@ -153,6 +156,14 @@
                             <dd class="slds-dl--inline__detail"><a href="https://github.com/{{ contribution.contributor.user.username }}/{{ contribution.get_main_repo_name }}/commit/{{ sync.new_commit }}" target="_blank">{{ sync.new_commit }}</a></dd>
                           </dl>
                         </li>
+                        {% if sync.status == 'failed' %}
+                        <li class="slds-list__item">
+                          <dl class="slds-dl--inline">
+                            <dt class="slds-dl--inline__label">Log:</dt>
+                            <dd class="slds-dl--inline__detail">{{ sync.log|linebreaks }}</dd>
+                          </dl>
+                        </li>
+                        {% endif %}
                       </ul>
                     </div>
                     {% elif sync.new_installation %}
@@ -171,6 +182,14 @@
                             <dd class="slds-dl--inline__detail"><a href="/mpinstaller/installation/{{ sync.new_installation.id }}" target="_blank">{{ sync.new_installation.id }}</a></dd>
                           </dl>
                         </li>
+                        {% if sync.status == 'failed' %}
+                        <li class="slds-list__item">
+                          <dl class="slds-dl--inline">
+                            <dt class="slds-dl--inline__label">Log:</dt>
+                            <dd class="slds-dl--inline__detail">{{ sync.log|linebreaks }}</dd>
+                          </dl>
+                        </li>
+                        {% endif %}
                       </ul>
                     </div>
                     {% endif %}
@@ -247,9 +266,9 @@
             <div class="slds-media__body">
               <div class="slds-media slds-media--timeline slds-timeline__media--task">
                 <div class="slds-media__figure">
-                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon">
+                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon{% if sync.status == 'failed' %} slds-theme--warning{% endif %}">
                     {% autoescape off %}
-                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#drafts"></use>
+                    <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#refresh"></use>
                     {% endautoescape %}
                   </svg>
                 </div>
@@ -264,18 +283,22 @@
                             <dd class="slds-dl--inline__detail">{{ sync.status }}</dd>
                           </dl>
                         </li>
+                        {% if sync.status == 'failed' %}
                         <li class="slds-list__item">
                           <dl class="slds-dl--inline">
                             <dt class="slds-dl--inline__label">Commit:</dt>
-                            <dd class="slds-dl--inline__detail">{{ sync.new_commit }}</dd>
+                            <dd class="slds-dl--inline__detail"><a href="https://github.com/{{ contribution.contributor.user.username }}/{{ contribution.get_main_repo_name }}/commit/{{ sync.new_commit }}" target="_blank">{{ sync.new_commit }}</a></dd>
                           </dl>
                         </li>
+                        {% endif %}
+                        {% if sync.status == 'failed' %}
                         <li class="slds-list__item">
                           <dl class="slds-dl--inline">
                             <dt class="slds-dl--inline__label">Log:</dt>
-                            <dd class="slds-dl--inline__detail">{{ sync.log }}</dd>
+                            <dd class="slds-dl--inline__detail">{{ sync.log|linebreaks }}</dd>
                           </dl>
                         </li>
+                        {% endif %}
                       </ul>
                     </div>
                   </div>
@@ -363,7 +386,7 @@
                 </div>
               </div>
 
-              <div class="slds-card">
+              <div class="slds-card" ng-hide="contribution.last_sync.installation == null">
                 <div class="slds-card__header">
                   <h3>Deployment to Salesforce</h3>
                 </div>
@@ -418,19 +441,22 @@
 
         <div class="slds-card__body">
           <div class="slds-box slds-theme--success" ng-hide="(contribution.state_uncommitted_changes == true || contribution.state_uncommit_changes == true)">
-            <h2>All Synced Up!</h2>
-            <p>Your DE org is synced with Github.  If you've made changes in your org and are still seeing this message, click the Check for Changes button</p>
+            <h3 class="slds-text-heading--small slds-p-bottom--medium">All Synced Up!</h3>
+            <p>Your DE org is synced with Github.  If you've made changes in your org and are still seeing this message:</p>
+            <ul class="slds-list--dotted">
+              <li>Click the Check for Changes button</li>
+              <li>Ensure any new metadata you've added has been added to the package under Setup -&gt; Create -&gt; Packages and then try Check for Change</li>
           </div>
 
           <div class="slds-box slds-theme--warning" ng-hide="contribution.state_undeployed_commit != true">
             <span class="slds-assistive-text">Warning</span>
-            <h2 class="slds-text-heading--small">Undeployed Commit</h2>
+            <h3 class="slds-text-heading--small slds-p-bottom--medium">Undeployed Commit</h3>
             <p>There are changes in your Github repository which have not yet been deployed to your Salesforce org.  The sync process should take care of this automatically for you.  If you notice a sync failure below, please contact your reviewer for assistance.</p>
           </div>
    
           <div class="slds-box slds-theme--warning" ng-hide="contribution.state_uncommitted_changes != true">
             <span class="slds-assistive-text">Warning</span>
-            <h2 class="slds-text-heading--small">Unsaved Changes</h2>
+            <h3 class="slds-text-heading--small slds-p-bottom--medium">Unsaved Changes</h3>
             <p>There appear to be changes in your Salesforce org which are not yet saved to Github.  Use the Save Changes when you are ready to save your changes.</p>
           </div>
 
