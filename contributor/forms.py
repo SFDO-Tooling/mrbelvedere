@@ -51,31 +51,30 @@ class CreateContributionForm(forms.ModelForm):
         # django-crispy-forms FormHelper configuration
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-lg-2'
-        self.helper.field_class = 'col-lg-8'
         self.helper.layout = Layout(
             HTML(CREATE_CONTRIBUTION_JS),
             Field('contributor', type='hidden'),
             Fieldset(
                 'Select a Package...',
-                'package_version',
+                Field('package_version', css_class='slds-select'),
+                css_class='slds-form-element',
             ),
             Fieldset(
                 'Select or Create an Issue...',
                 InlineRadios('issue_type'),
                 Div(
-                    'github_issue',
+                    Field('github_issue', css_class="slds-input"),
                     css_class='issue-existing',
                 ),
                 Div(
-                    'title',
-                    'body',
+                    Field('title', css_class="slds-input"),
+                    Field('body', css_class="slds-textarea"),
                     css_class='issue-new',
                 ),
+                css_class='slds-form-element',
             ),
             FormActions(
-                Submit('submit', 'Submit')
+                Submit('submit', 'Submit', css_class='slds-button slds-button--brand')
             ),
         )
 
@@ -101,16 +100,15 @@ class ContributionEditBranchForm(forms.ModelForm):
         # django-crispy-forms FormHelper configuration
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-lg-2'
-        self.helper.field_class = 'col-lg-8'
+        self.helper.form_class = 'form-vertical'
         self.helper.layout = Layout(
             Fieldset(
                 'Select a name for your branch...',
-                PrependedText('fork_branch', 'feature/%s-' % self.instance.github_issue),
+                PrependedText('fork_branch', 'feature/%s-' % self.instance.github_issue, css_class="slds-input"),
+                css_class='slds-form-element',
             ),
             FormActions(
-                Submit('submit', 'Submit')
+                Submit('submit', 'Submit', css_class='slds-button slds-button--brand')
             ),
         )
 
@@ -141,10 +139,11 @@ class ContributionCommitForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 'Provide a description of your changes',
-                'message',
+                Field('message', css_class='slds-textarea'),
+                css_class='slds-form-element',
             ),
             FormActions(
-                Submit('submit', 'Submit')
+                Submit('submit', 'Submit', css_class='slds-button slds-button--brand')
             ),
         )
 
@@ -159,21 +158,20 @@ class ContributionSubmitForm(forms.Form):
         # django-crispy-forms FormHelper configuration
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-lg-2'
-        self.helper.field_class = 'col-lg-8'
         self.helper.layout = Layout(
             Fieldset(
                 'Notes to reviewer',
-                'reviewer_notes',
+                Field('reviewer_notes', css_class='slds-textarea'),
+                css_class='slds-form-element',
             ),
             Fieldset(
                 'Release notes content',
-                'critical_changes',
-                'changes',
+                Field('critical_changes', css_class='slds-textarea'),
+                Field('changes', css_class='slds-textarea'),
+                css_class='slds-form-element',
             ),
             FormActions(
-                Submit('submit', 'Submit')
+                Submit('submit', 'Submit', css_class='slds-button slds-button--brand')
             ),
         )
     

@@ -1,15 +1,36 @@
-{% extends 'mpinstaller/base.html' %}
+{% extends 'contributor/base.html' %}
 
-{% load bootstrap3 %}
 {% load crispy_forms_tags %}
 
-{% block bootstrap3_title %}{% block title %}{{ contribution.title }} - Edit Branch{% endblock %}{% endblock %}
-{% block bootstrap3_page_title %}<a href="/contributor/contributions/{{ contribution.id }}">{{ contribution }}</a> - Edit Branch{% endblock %}
+{% block base_page_header %}
+<div class="slds-page-header" role="banner">
+  <nav class="slds-m-bottom--xx-small" role="navigation">
+    <p id="bread-crumb-label" class="slds-assistive-text">You are here:</p>
+    <ol class="slds-breadcrumb slds-list--horizontal" aria-labelledby="bread-crumb-label">
+      <li class="slds-list__item slds-text-heading--label"><a href="/contributor">Contributions</a></li>
+      <li class="slds-list__item slds-text-heading--label"><a href="/contributor/contributions/{{ contribution.id }}">{{ contribution.title }}</a></li>
+    </ol>
+  </nav>
+  <div class="slds-grid">
+    <div class="slds-media">
+      <div class="slds-media__body">
+        <h1 class="slds-text-heading--medium slds-m-right--small slds-truncate slds-align-middle" title="{% if contribution.fork_branch %}Edit{% else %}Create{% endif %} Github Branch">{% if contribution.fork_branch %}Edit{% else %}Create{% endif %} Github Branch</h1>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
 
-{% block bootstrap3_content %}
+{% block base_body %}
 
-{% bootstrap_messages %}
+  <div class="slds-grid">
+    <div class="slds-col slds-size--1-of-3 slds-p-around--large">
+      {% crispy form form.helper %}
+    </div>
 
-{% crispy form form.helper %}
+    <div class="slds-col slds-size--1-of-3 slds-p-around--large slds-theme--shade">
+      <p>We'll need to create a branch in Github to store your changes.  Enter a branch name that provides a brief name for your changes using only alphanumeric characters and hyphens.</p>
+    </div>
+  </div>
 
 {% endblock %}

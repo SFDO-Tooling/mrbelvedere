@@ -22,7 +22,9 @@ def zip_subfolder(zip_src, path, namespace_token=None, namespace=None):
             else:
                 content = content.replace(namespace_token, '')
 
-        zip_dest.writestr(name.replace(path, '', 1), content)
+        rel_name = name.replace(path, '', 1)
+        if rel_name:
+            zip_dest.writestr(name.replace(path, '', 1), content)
 
     return zip_dest
 

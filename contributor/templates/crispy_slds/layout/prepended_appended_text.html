@@ -1,0 +1,24 @@
+{% load crispy_forms_field %}
+
+{% if field.is_hidden %}
+    {{ field }}
+{% else %}
+    <div id="div_{{ field.auto_id }}" class="slds-form-element__control{% if form_show_errors and field.errors %} slds-has-errors{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}{% if field.field.required %} slds-is-required{% endif %}">
+
+        {% if field.label and form_show_labels %}
+            <label for="{{ field.id_for_label }}" class="slds-form-element__label">
+                {{ field.label|safe }}
+            </label>
+        {% endif %}
+
+        <div class="controls">
+            <div class="slds-grid">
+                {% if crispy_prepended_text %}<div class="slds-col slds-size--1-of-3">{{ crispy_prepended_text|safe }}</div>{% endif %}
+                <div class="slds-col slds-size--2-of-3">{% crispy_field field %}</div>
+                {% if crispy_appended_text %}<div class="slds-col slds-size--1-of-3">{{ crispy_appended_text|safe }}</div>{% endif %}
+            </div>
+
+            {% include 'bootstrap/layout/help_text_and_errors.html' %}
+        </div>
+    </div>
+{% endif %}

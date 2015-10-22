@@ -301,3 +301,17 @@ GOOGLE_ANALYTICS_ORG = os.environ.get('GOOGLE_ANALYTICS_ORG', None)
 
 # django-cripsy-forms config
 CRISPY_TEMPLATE_PACK='bootstrap3'
+
+# Support svg maps
+import mimetypes
+
+mimetypes.add_type("image/svg+xml", ".svg", True)
+mimetypes.add_type("image/svg+xml", ".svgz", True)
+
+CRISPY_TEMPLATE_PACK = 'crispy_slds'
+CRISPY_ALLOWED_TEMPLATE_PACKS = ('bootstrap', 'crispy_slds')
+
+RQ_SYNC = os.environ.get('RQ_SYNC')
+if RQ_SYNC:
+    for queueConfig in RQ_QUEUES.itervalues():
+        queueConfig['ASYNC'] = False

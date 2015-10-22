@@ -1,0 +1,36 @@
+{% load crispy_forms_field %}
+
+{% if field.is_hidden %}
+	{{ field }}
+{% else %}
+	<{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="slds-form-element{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} slds-has-error{% endif %}{% endif %}{% if field.field.required %} slds-is-required{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}">
+		{% if field.label and not field|is_checkbox and form_show_labels %}
+			<label for="{{ field.id_for_label }}" class="slds-form-element__label">
+				{{ field.label|safe }}
+			</label>
+		{% endif %}
+
+        {% if field|is_checkboxselectmultiple %}
+            {% include 'crispy_slds/layout/checkboxselectmultiple.html' %}
+        {% endif %}
+
+        {% if field|is_radioselect %}
+            {% include 'crispy_slds/layout/radioselect.html' %}
+        {% endif %}
+
+        {% if not field|is_checkboxselectmultiple and not field|is_radioselect %}
+            <div class="slds-form-element__control">
+                {% if field|is_checkbox and form_show_labels %}
+                    <label for="{{ field.id_for_label }}" class="checkbox {% if field.field.required %}requiredField{% endif %}">
+                        {% crispy_field field {'classes': 'slds-select' %}
+                        {{ field.label|safe }}
+                        {% include 'crispy_slds/layout/help_text_and_errors.html' %}
+                    </label>
+                {% else %}
+                    {% crispy_field field %}
+                    {% include 'crispy_slds/layout/help_text_and_errors.html' %}
+                {% endif %}
+            </div>
+        {% endif %}
+	</{% if tag %}{{ tag }}{% else %}div{% endif %}>
+{% endif %}
