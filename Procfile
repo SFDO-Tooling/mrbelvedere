@@ -1,2 +1,2 @@
 web: newrelic-admin run-program gunicorn cumulus_devbot.wsgi
-worker: python manage.py rqworker default --worker-class mpinstaller.worker.RequeueingWorker
+worker: newrelic-admin run-program python manage.py rqworker default --worker-class mpinstaller.worker.RequeueingWorker
