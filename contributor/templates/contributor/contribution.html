@@ -162,7 +162,7 @@
                             <dd class="slds-dl--inline__detail">{{sync.status}}</dd>
                           </dl>
                         </li>
-                        <li class="slds-list__item" ng-hide="sync.new_commit == null">
+                        <li class="slds-list__item" ng-hide="sync.commit == null">
                           <dl class="slds-dl--inline">
                             <dt class="slds-dl--inline__label">Commit:</dt>
                             <dd class="slds-dl--inline__detail">
@@ -178,7 +178,7 @@
                             <dd class="slds-dl--inline__detail" ng-bind-html="sync.log"></dd>
                           </dl>
                         </li>
-                        <li class="slds-list__item" ng-hide="sync.new_installation == null">
+                        <li class="slds-list__item" ng-hide="sync.installation == null">
                           <dl class="slds-dl--inline">
                             <dt class="slds-dl--inline__label">Installation:</dt>
                             <dd class="slds-dl--inline__detail">
