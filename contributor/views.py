@@ -1,4 +1,5 @@
 import json
+import datetime
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -246,34 +247,69 @@ def contribution_status(request, contribution_id):
         return HttpResponse('Unauthorized', status=401)
 
     status = {
-        'contribution': contribution.id,
+        'id': contribution.id,
+        'contributor': {
+            'user': {
+                'id': contribution.contributor.user.id,
+                'username': contribution.contributor.user.username,
+            },
+        },
+        'repo_name': contribution.get_main_repo_name(),
+        'fork_pull': contribution.fork_pull,
         'state_behind_main': contribution.state_behind_main,
         'state_undeployed_commit': contribution.state_undeployed_commit,
         'state_uncommitted_changes': contribution.state_uncommitted_changes,
-        'last_sync': {},
+        'has_user_commit': contribution.has_user_commit(),
+        'syncs': [],
+        'current_sync': {},
     }
 
-    res = list(contribution.syncs.all().order_by('-date_started'))
-    if res.count:
-        sync = res[0]
-        status['last_sync']['status'] = sync.status
-        status['last_sync']['log'] = sync.log.replace('\n','<br />\n')
-        status['last_sync']['commit'] = sync.new_commit
-        if sync.new_installation:
-            status['last_sync']['installation'] = {}
-            status['last_sync']['installation']['id'] = sync.new_installation.id
-            status['last_sync']['installation']['status'] = sync.new_installation.status
-            status['last_sync']['installation']['log'] = sync.new_installation.status
-            status['last_sync']['installation']['steps'] = []
+    # Include previous contribution syncs
+    for sync in contribution.syncs.all().order_by('-date_started'):
+        sync_data = {}
+        sync_data['status'] = sync.status
+        sync_data['message'] = sync.message
+        sync_data['commit'] = sync.new_commit
+        sync_data['type'] = sync.get_sync_type()
+        sync_data['date_started'] = sync.date_started
+        sync_data['pre_state_uncommitted_changes'] = sync.pre_state_uncommitted_changes
+        sync_data['pre_state_deployed_commit'] = sync.pre_state_undeployed_commit
+        sync_data['post_state_uncommitted_changes'] = sync.pre_state_uncommitted_changes
+        sync_data['post_state_deployed_commit'] = sync.pre_state_undeployed_commit
+
+        # If the sync failed, include the log
+        if sync.status in ['pending','in_progress','failed']:
+            sync_data['log'] = sync.log.replace('\n','<br />\n')
+        else:
+            sync_data['log'] = None
+
+        # If there was a new installation, include information about the installation
+        if sync.new_installation and not status['syncs']:
+            sync_data['installation'] = {}
+            sync_data['installation']['id'] = sync.new_installation.id
+            sync_data['installation']['status'] = sync.new_installation.status
+            sync_data['installation']['log'] = sync.new_installation.log
+            sync_data['installation']['steps'] = []
             for step in sync.new_installation.steps.all().order_by('-created'):
-                status['last_sync']['installation']['steps'].append({
+                sync_data['installation']['steps'].append({
                     'id': step.id,
                     'status': step.status,
                     'version': unicode(step.version),
                     'log': step.log,
                 })
 
-    return HttpResponse(json.dumps(status), content_type='application/json')
+        status['syncs'].append(sync_data)
+
+    if status['syncs'] and status['syncs'][0]['status'] in ['pending','in_progress']:
+        status['current_sync'] = status['syncs'][0]
+
+    dthandler = lambda obj: (
+        obj.isoformat()
+        if isinstance(obj, datetime.datetime)
+        or isinstance(obj, datetime.date)
+        else None)
+
+    return HttpResponse(json.dumps(status, default=dthandler), content_type='application/json')
         
 @login_required
 def contribution_check_state(request, contribution_id):

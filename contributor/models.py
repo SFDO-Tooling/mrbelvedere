@@ -306,9 +306,9 @@ class Contribution(models.Model):
         try:
             sync = ContributionSync(
                 contribution = self,
-                pre_state_behind_main = self.state_behind_main,
-                pre_state_undeployed_commit = self.state_undeployed_commit,
-                pre_state_uncommitted_changes = self.state_uncommitted_changes,
+                initial_state_behind_main = self.state_behind_main,
+                initial_state_undeployed_commit = self.state_undeployed_commit,
+                initial_state_uncommitted_changes = self.state_uncommitted_changes,
                 log = '---- Checking current sync state\n',
                 status = 'in_progress',   
             )
@@ -627,6 +627,9 @@ class ContributionSync(models.Model):
     message = models.TextField(null=True, blank=True)
     new_commit = models.CharField(max_length=64, null=True, blank=True)
     new_installation = models.ForeignKey('mpinstaller.PackageInstallation', null=True, blank=True, related_name='contribution_syncs')
+    initial_state_behind_main = models.BooleanField()
+    initial_state_undeployed_commit = models.BooleanField()
+    initial_state_uncommitted_changes = models.BooleanField()
     pre_state_behind_main = models.BooleanField()
     pre_state_undeployed_commit = models.BooleanField()
     pre_state_uncommitted_changes = models.BooleanField()
@@ -635,5 +638,15 @@ class ContributionSync(models.Model):
     post_state_uncommitted_changes = models.BooleanField()
     date_started = models.DateTimeField(auto_now_add = True)
     date_modified = models.DateTimeField(auto_now = True)
+
+    def get_sync_type(self):
+        if self.message:
+            return 'manual_commit'
+
+        if self.new_installation:
+            return 'installation'
+
+        return 'sync'
+            
 
 from contributor.handlers import *

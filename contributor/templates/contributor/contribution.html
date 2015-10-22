@@ -51,9 +51,11 @@
       </a>
         
       <a href="/contributor/contributions/{{ contribution.id }}/submit">
-        <button class="slds-button slds-button--neutral slds-button--last">
+        {% verbatim %}
+        <button class="slds-button slds-button--neutral slds-button--last" ng-disabled="contribution.has_user_commit && contribution.fork_pull != null">
         Submit for Review
         </button>
+        {% endverbatim %}
       </a>
       </div>
     </div>
@@ -113,192 +115,79 @@
 
       <ul class="slds-timeline">
 
-        {% for sync in syncs %}
-        {% if sync.message or sync.new_installation %}
-        <li class="slds-timeline__item">
+        {% verbatim %}
+        <li class="slds-timeline__item" ng-repeat="sync in contribution.syncs">
           <div class="slds-media slds-media--reverse">
             <div class="slds-media__figure">
               <div class="slds-timeline__actions">
-                <p class="slds-timeline__date">{{ sync.date_started }}</p>
+                <p class="slds-timeline__date">{{sync.date_started | date:'M/d/yy h:mma'}}</p>
               </div>
             </div> 
             <div class="slds-media__body">
               <div class="slds-media slds-media--timeline slds-timeline__media--task">
                 <div class="slds-media__figure">
-                  <svg aria-hidden="true" class="slds-icon slds-timeline__icon slds-icon-standard-task{% if sync.status == 'failed' %} slds-theme--warning{% endif %}">
-                    {% autoescape off %}
-                    {% if sync.message %}
+                  <svg aria-hidden="true" class="slds-icon slds-timeline__icon slds-icon-standard-task" ng-class="{'slds-theme--warning': sync.status == 'failed'}">
                     <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
-                    {% elif sync.new_installation %}
-                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
-                    {% else %}
-                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
-                    {% endif %}
-                    {% endautoescape %}
                   </svg>
                 </div>
                 <div class="slds-media__body">
                   <div class="slds-media slds-tile slds-media--small">
-                    {% if sync.message %}
                     <div class="slds-media__body">
-                      <p class="slds-tile__title slds-truncate"><a href="https://github.com/{{ contribution.contributor.user.username }}/{{ contribution.get_main_repo_name }}/commit/{{ sync.new_commit }}" target="_blank">Committed Changes from Org</a></p>
-                      <p>{{ sync.message }}</p>
+                      <p class="slds-tile__title slds-truncate">
+                        <a ng-hide="sync.type != 'manual_commit'" ng-href="https://github.com/{{contribution.contributor.user.username}}/{{contribution.repo_name}}/commit/{{sync.new_commit}}" target="_blank">
+                          Committed Changes from Org
+                        </a>
+                        <a ng-hide="sync.type != 'installation'" ng-href="/mpinstaller/installation/{{sync.new_installation.id}}" target="_blank">
+                          Deployed Changes from Github to Org
+                        </a>
+                        <span ng-hide="sync.type != 'sync'">Check Sync Status and Sync</span>
+                      </p>
+                      <p ng-hide="sync.message == null">{{sync.message}}</p>
                       <ul class="slds-tile__detail slds-list--vertical slds-text-body--small">
-                        <li class="slds-list__item">
+                        <li ng-hide="sync.pre_state_uncommitted_changes != true || sync.post_state_uncommitted_changes != false" class="slds-list__item">
                           <dl class="slds-dl--inline">
-                            <dt class="slds-dl--inline__label">Status:</dt>
-                            <dd class="slds-dl--inline__detail">{{ sync.status }}</dd>
+                            <dt class="slds-dl--inline__label">Uncommitted Changes:</dt>
+                            <dd class="slds-dl--inline__detail">All uncommitted changes committed successfully</dd>
+                          </dl>
+                        </li>
+                        <li ng-hide="sync.pre_state_undeployed_commit != true || sync.post_state_undeployed_commit != false" class="slds-list__item">
+                          <dl class="slds-dl--inline">
+                            <dt class="slds-dl--inline__label">Undeployed Commit:</dt>
+                            <dd class="slds-dl--inline__detail">Latest commit was deployed to salesforce successfully</dd>
                           </dl>
                         </li>
                         <li class="slds-list__item">
+                          <dl class="slds-dl--inline">
+                            <dt class="slds-dl--inline__label">Status:</dt>
+                            <dd class="slds-dl--inline__detail">{{sync.status}}</dd>
+                          </dl>
+                        </li>
+                        <li class="slds-list__item" ng-hide="sync.new_commit == null">
                           <dl class="slds-dl--inline">
                             <dt class="slds-dl--inline__label">Commit:</dt>
-                            <dd class="slds-dl--inline__detail"><a href="https://github.com/{{ contribution.contributor.user.username }}/{{ contribution.get_main_repo_name }}/commit/{{ sync.new_commit }}" target="_blank">{{ sync.new_commit }}</a></dd>
+                            <dd class="slds-dl--inline__detail">
+                              <a ng-href="https://github.com/{{contribution.contributor.user.username}}/{{contribution.repo_name}}/commit/{{sync.commit}}" target="_blank">
+                                {{sync.commit}}
+                              </a>
+                            </dd>
                           </dl>
                         </li>
-                        {% if sync.status == 'failed' %}
-                        <li class="slds-list__item">
+                        <li class="slds-list__item" ng-hide="sync.status != 'failed'">
                           <dl class="slds-dl--inline">
                             <dt class="slds-dl--inline__label">Log:</dt>
-                            <dd class="slds-dl--inline__detail">{{ sync.log|linebreaks }}</dd>
+                            <dd class="slds-dl--inline__detail" ng-bind-html="sync.log"></dd>
                           </dl>
                         </li>
-                        {% endif %}
-                      </ul>
-                    </div>
-                    {% elif sync.new_installation %}
-                    <div class="slds-media__body">
-                      <p class="slds-tile__title slds-truncate"><a href="/mpinstaller/installation/{{ sync.new_installation.id }}" target="_blank">Deployed Changes from Github to Org</a></p>
-                      <ul class="slds-tile__detail slds-list--vertical slds-text-body--small">
-                        <li class="slds-list__item">
-                          <dl class="slds-dl--inline">
-                            <dt class="slds-dl--inline__label">Status:</dt>
-                            <dd class="slds-dl--inline__detail">{{ sync.status }}</dd>
-                          </dl>
-                        </li>
-                        <li class="slds-list__item">
+                        <li class="slds-list__item" ng-hide="sync.new_installation == null">
                           <dl class="slds-dl--inline">
                             <dt class="slds-dl--inline__label">Installation:</dt>
-                            <dd class="slds-dl--inline__detail"><a href="/mpinstaller/installation/{{ sync.new_installation.id }}" target="_blank">{{ sync.new_installation.id }}</a></dd>
+                            <dd class="slds-dl--inline__detail">
+                              <a ng-href="/mpinstaller/installation/{{sync.new_installation.id}}" target="_blank">
+                                {{sync.new_installation.id}}
+                              </a>
+                            </dd>
                           </dl>
                         </li>
-                        {% if sync.status == 'failed' %}
-                        <li class="slds-list__item">
-                          <dl class="slds-dl--inline">
-                            <dt class="slds-dl--inline__label">Log:</dt>
-                            <dd class="slds-dl--inline__detail">{{ sync.log|linebreaks }}</dd>
-                          </dl>
-                        </li>
-                        {% endif %}
-                      </ul>
-                    </div>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </li>
-        {% elif sync.pre_state_undeployed_commit != sync.post_state_undeployed_commit %}
-        <li class="slds-timeline__item">
-          <div class="slds-media slds-media--reverse">
-            <div class="slds-media__figure">
-              <div class="slds-timeline__actions">
-                <p class="slds-timeline__date">{{ sync.date_started }}</p>
-              </div>
-            </div> 
-            <div class="slds-media__body">
-              <div class="slds-media slds-media--timeline slds-timeline__media--task">
-                <div class="slds-media__figure">
-                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon">
-                    {% autoescape off %}
-                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#case_change_status"></use>
-                    {% endautoescape %}
-                  </svg>
-                </div>
-                <div class="slds-media__body">
-                  <div class="slds-media slds-tile slds-media--small">
-                    <div class="slds-media__body">
-                      <p class="slds-tile__title slds-truncate">Detected new undeployed commit</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </li>
-        {% elif sync.pre_state_uncommitted_changes != sync.post_state_uncommitted_changes %}
-        <li class="slds-timeline__item">
-          <div class="slds-media slds-media--reverse">
-            <div class="slds-media__figure">
-              <div class="slds-timeline__actions">
-                <p class="slds-timeline__date">{{ sync.date_started }}</p>
-              </div>
-            </div> 
-            <div class="slds-media__body">
-              <div class="slds-media slds-media--timeline slds-timeline__media--task">
-                <div class="slds-media__figure">
-                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon">
-                    {% autoescape off %}
-                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#drafts"></use>
-                    {% endautoescape %}
-                  </svg>
-                </div>
-                <div class="slds-media__body">
-                  <div class="slds-media slds-tile slds-media--small">
-                    <div class="slds-media__body">
-                      <p class="slds-tile__title slds-truncate">Detected new uncommitted changes in org</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </li>
-        {% else %}
-        <li class="slds-timeline__item">
-          <div class="slds-media slds-media--reverse">
-            <div class="slds-media__figure">
-              <div class="slds-timeline__actions">
-                <p class="slds-timeline__date">{{ sync.date_started }}</p>
-              </div>
-            </div> 
-            <div class="slds-media__body">
-              <div class="slds-media slds-media--timeline slds-timeline__media--task">
-                <div class="slds-media__figure">
-                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon{% if sync.status == 'failed' %} slds-theme--warning{% endif %}">
-                    {% autoescape off %}
-                    <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#refresh"></use>
-                    {% endautoescape %}
-                  </svg>
-                </div>
-                <div class="slds-media__body">
-                  <div class="slds-media slds-tile slds-media--small">
-                    <div class="slds-media__body">
-                      <p class="slds-tile__title slds-truncate">Checked for new changes in org</p>
-                      <ul class="slds-tile__detail slds-list--vertical slds-text-body--small">
-                        <li class="slds-list__item">
-                          <dl class="slds-dl--inline">
-                            <dt class="slds-dl--inline__label">Status:</dt>
-                            <dd class="slds-dl--inline__detail">{{ sync.status }}</dd>
-                          </dl>
-                        </li>
-                        {% if sync.status == 'failed' %}
-                        <li class="slds-list__item">
-                          <dl class="slds-dl--inline">
-                            <dt class="slds-dl--inline__label">Commit:</dt>
-                            <dd class="slds-dl--inline__detail"><a href="https://github.com/{{ contribution.contributor.user.username }}/{{ contribution.get_main_repo_name }}/commit/{{ sync.new_commit }}" target="_blank">{{ sync.new_commit }}</a></dd>
-                          </dl>
-                        </li>
-                        {% endif %}
-                        {% if sync.status == 'failed' %}
-                        <li class="slds-list__item">
-                          <dl class="slds-dl--inline">
-                            <dt class="slds-dl--inline__label">Log:</dt>
-                            <dd class="slds-dl--inline__detail">{{ sync.log|linebreaks }}</dd>
-                          </dl>
-                        </li>
-                        {% endif %}
                       </ul>
                     </div>
                   </div>
@@ -307,57 +196,7 @@
             </div>
           </div>
         </li>
-        {% endif %}
-        {% endfor %}
-        {% if contribution.fork_branch %} 
-        <li class="slds-timeline__item">
-          <div class="slds-media slds-media--reverse">
-            <div class="slds-media__body">
-              <div class="slds-media slds-media--timeline slds-timeline__media--task">
-                <div class="slds-media__figure">
-                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon">
-                    {% autoescape off %}
-                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
-                    {% endautoescape %}
-                  </svg>
-                </div>
-                <div class="slds-media__body">
-                  <div class="slds-media slds-tile slds-media--small">
-                    <div class="slds-media__body">
-                      <p class="slds-tile__title slds-truncate">Created branch in Github: <a href="">{{contribution.fork_branch}}</a></p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </li>
-        {% endif %}
-
-        {% if contribution.github_issue %} 
-        <li class="slds-timeline__item">
-          <div class="slds-media slds-media--reverse">
-            <div class="slds-media__body">
-              <div class="slds-media slds-media--timeline slds-timeline__media--task">
-                <div class="slds-media__figure">
-                  <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-timeline__icon">
-                    {% autoescape off %}
-                    <use xlink:href="/static/slds/assets/icons/standard-sprite/svg/symbols.svg#task"></use>
-                    {% endautoescape %}
-                  </svg>
-                </div>
-                <div class="slds-media__body">
-                  <div class="slds-media slds-tile slds-media--small">
-                    <div class="slds-media__body">
-                      <p class="slds-tile__title slds-truncate">Linked to Github Issue: <a href="">#{{contribution.github_issue}}</a></p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </li>
-        {% endif %}
+        {% endverbatim %}
 
       </ul>
 
@@ -370,29 +209,29 @@
 
     <!-- Deploy to SF Status Modal, controller by Angular-->
     {% verbatim %} 
-    <div ng-hide="contribution.last_sync.status != 'in_progress' && contribution.last_sync.status != 'pending'">
+    <div ng-hide="contribution.current_sync.status != 'in_progress' && contribution.current_sync.status != 'pending'">
       <div aria-hidden="false" role="dialog" class="slds-modal slds-fade-in-open">
         <div class="slds-modal__container">
           <div class="slds-modal__header">
             <h2 class="slds-text-heading--medium">Synchronizing Salesforce and Github</h2>
           </div>
           <div class="slds-modal__content">
-            <div class="slds-box" ng-class="{'slds-theme--alert': contribution.last_sync.status == 'in_progress', 'slds-theme--warning': contribution.last_sync_status == 'failed', 'slds-theme--success': contribution.last_sync_status == 'success'}">
-              <h3>Status: {{contribution.last_sync.status}}</h3>
+            <div class="slds-box" ng-class="{'slds-theme--alert': contribution.current_sync.status == 'in_progress', 'slds-theme--warning': contribution.current_sync == 'failed', 'slds-theme--success': contribution.current_sync == 'success'}">
+              <h3>Status: {{contribution.current_sync.status}}</h3>
               <div class="slds-box">
-                <p ng-bind-html="contribution.last_sync.log"></p>
+                <p ng-bind-html="contribution.current_sync.log"></p>
                 <div class="slds-spinner--medium">
                   <img src="/static/slds/assets/images/spinners/slds_spinner.gif" alt="Loading..." />
                 </div>
               </div>
 
-              <div class="slds-card" ng-hide="contribution.last_sync.installation == null">
+              <div class="slds-card" ng-hide="contribution.current_sync.installation == null">
                 <div class="slds-card__header">
                   <h3>Deployment to Salesforce</h3>
                 </div>
                 <div class="slds-card__body">
                   <div class="slds-box">
-                    <h5>Installation Status: {{contribution.last_sync.installation.status}}</h5>
+                    <h5>Installation Status: {{contribution.current_sync.installation.status}}</h5>
                   </div>
                 </div>
               </div>
