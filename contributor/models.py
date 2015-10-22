@@ -388,7 +388,7 @@ class Contribution(models.Model):
                 sync.log += 'Deploying HEAD commit to org...\n'
                 sync.save()
     
-                installation = self.deploy_commit_to_org(sync)
+                installation = self.deploy_commit_to_org(sync=sync)
     
                 if installation:
                     if installation.status == 'Failed':
