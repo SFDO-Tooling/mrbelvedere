@@ -216,7 +216,7 @@ class Contribution(models.Model):
         try:
             fork_sha = fork_sha['object']['sha']
         except KeyError:
-            DefaultBranchException('Failed to fetch commit sha of default branch on forked repository.  Does the fork exist?', fork_sha)
+            DefaultBranchSyncFailed('Failed to fetch commit sha of default branch on forked repository.  Does the fork exist?', fork_sha)
 
         if main_sha != fork_sha:
             res = self.github_api('/merges', data={"base": default_branch, "head": main_sha}, fork=True)
@@ -224,7 +224,7 @@ class Contribution(models.Model):
                 self.default_branch_synced = True
                 self.save()
             else:
-                raise DefaultBranchException('Failed to merge commit "%s" from main repository default branch "%s" to fork' % (main_sha, default_branch), res)
+                raise DefaultBranchSyncFailed('Failed to merge commit "%s" from main repository default branch "%s" to fork' % (main_sha, default_branch), res)
         return True
 
     def get_issue(self):
