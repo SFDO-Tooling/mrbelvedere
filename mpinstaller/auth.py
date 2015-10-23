@@ -49,9 +49,10 @@ class SalesforceOAuth2(object):
             'authorize_url': self.authorization_url,
             'clientid': self.client_id,
             'redirect_uri': quote(self.redirect_uri),
-            'scope': scope
+            'scope': scope,
+            'prompt': 'login',
         }
-        return "{site}{authorize_url}?response_type=code&client_id={clientid}&redirect_uri={redirect_uri}&scope={scope}".format(**fields)
+        return "{site}{authorize_url}?response_type=code&client_id={clientid}&redirect_uri={redirect_uri}&scope={scope}&prompt={prompt}".format(**fields)
 
     def get_token(self, code):
         from urllib import quote
