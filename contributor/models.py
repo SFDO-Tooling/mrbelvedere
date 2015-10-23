@@ -210,7 +210,14 @@ class Contribution(models.Model):
 
         default_branch = self.github_api('')['default_branch']
         main_sha = self.github_api('/git/refs/heads/%s' % default_branch)['object']['sha']
-        fork_sha = self.github_api('/git/refs/heads/%s' % default_branch, fork=True)['object']['sha']
+
+        fork = self.get_fork()
+        fork_sha = self.github_api('/git/refs/heads/%s' % default_branch, fork=True)
+        try:
+            fork_sha = fork_sha['object']['sha']
+        except KeyError:
+            DefaultBranchException('Failed to fetch commit sha of default branch on forked repository.  Does the fork exist?', fork_sha)
+
         if main_sha != fork_sha:
             res = self.github_api('/merges', data={"base": default_branch, "head": main_sha}, fork=True)
             if res == 204 or 'messages' not in res:
