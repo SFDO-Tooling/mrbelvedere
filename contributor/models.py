@@ -499,12 +499,13 @@ class Contribution(models.Model):
         if sync:
             sync.log += 'DONE'
             sync.save()
-       
+      
+        if not installed: 
+            installed = {}
+
         # Store the access token from the api call if it changed 
         if api.oauth != oauth:
             self.sf_oauth = json.dumps(api.oauth)
-        else:
-            installed = {}
 
         # With GitHub installations, we don't run conditions since we dynamically construct the install map
         metadata = {}
