@@ -166,7 +166,7 @@ class Contribution(models.Model):
             # FIXME: Verify that fork default branch is not behind main default branch
 
             repo = self.github_api('', fork=True)
-            default_branch = self.get_default_branch(fork=True)
+            default_branch = self.get_default_branch()
 
             data = {
                 'ref': 'refs/heads/%s' % self.fork_branch,
