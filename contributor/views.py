@@ -184,6 +184,9 @@ def contribution_submit(request, contribution_id):
             if form.cleaned_data['reviewer_notes']:
                 body.append(form.cleaned_data['reviewer_notes'])
 
+            body.append('\n# Contribution Info\n')
+            body.append('\nThis external contribution was submitted by @%s and Fixes #%s\n' % (contribution.contributor.user.username, contribution.github_issue))
+
             body.append('\n# Critical Changes\n')
             if form.cleaned_data['critical_changes']:
                 body.append(form.cleaned_data['critical_changes'])
