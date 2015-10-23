@@ -567,7 +567,7 @@ class Contribution(models.Model):
             sync.log += 'DONE\n\n'
             sync.log += '--- Starting installation #%s\n' % installation_obj.id
             sync.log += '--- * NOTE: This can take anywhere from 5-15 minutes to complete\n'
-            sync.log += '--- * <a href="/mpinstaller/installations/%s" target="_blank">View installation status in separate tab</a>\n'
+            sync.log += '--- * <a href="/mpinstaller/installation/%s" target="_blank">View installation status in separate tab</a>\n' % installation_obj.id
             sync.save()
 
         # Run the installer synchronously since we should already be inside a background process
