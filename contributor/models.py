@@ -235,9 +235,11 @@ class Contribution(models.Model):
         issue = self.github_api('/issues/%s' % self.github_issue)
         if 'message' in issue and issue['message'] == 'Not Found':
             # The issue was not found, create it
+            body = '**External Contribution Issue created by @%s**\n\n' % self.contributor.user.username
+            body += self.body
             data = {
                 'title': self.title,
-                'body': self.body,
+                'body': body,
                 # FIXME: We can't set an assignee to the contributor as they need write access to the repo to receive issue assignments.  We need a reviewer for this
                 #'assignee': self.contributor.user.username,
             }
