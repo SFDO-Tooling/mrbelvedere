@@ -150,7 +150,7 @@ class SalesforcePackageToGithub(object):
             'path': name,
             'mode': '100644',
             'type': 'blob',
-            'content': blob_file.read(),
+            'content': blob_file.read().decode('utf-8'),
         })
 
         blob_file.close()
@@ -166,7 +166,7 @@ class SalesforcePackageToGithub(object):
             'path': name,
             'mode': '100644',
             'type': 'blob',
-            'content': blob_file.read(),
+            'content': blob_file.read().decode('utf-8'),
         })
     
         blob_file.close()
