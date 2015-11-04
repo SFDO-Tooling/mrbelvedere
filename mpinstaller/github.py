@@ -25,7 +25,7 @@ def github_api(owner, repo, subpath, data=None, username=None, password=None):
 
     if data is not None:
         if data:
-            kwargs['data'] = json.dumps(data)
+            kwargs['data'] = json.dumps(data, ensure_ascii=False)
         resp = requests.post(api_url, **kwargs)
     else:
         resp = requests.get(api_url, **kwargs)
