@@ -164,7 +164,7 @@ class SalesforcePackageToGithub(object):
         blob_content = self.encode_content(blob_file.read())
        
         # Check to make sure the contents are different after the decoding
-        repo_content = self.repo_metadata.open(name).read()
+        repo_content = self.repo.open(name).read()
         if blob_content == repo_content:
             return
 
