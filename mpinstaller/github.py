@@ -139,6 +139,9 @@ class SalesforcePackageToGithub(object):
             password = self.password,
         )
 
+    def encode_content(self, content):
+        return content.decode('ISO-8859-1').encode('utf-8')
+
     def tree_add(self, name, subpath):
         blob_file = self.org_metadata.open(name)
 
@@ -150,13 +153,20 @@ class SalesforcePackageToGithub(object):
             'path': name,
             'mode': '100644',
             'type': 'blob',
-            'content': blob_file.read(),
+            'content': self.encode_content(blob_file.read()),
         })
 
         blob_file.close()
 
     def tree_update(self, name, subpath):
         blob_file = self.org_metadata.open(name)
+
+        blob_content = self.encode_content(blob_file.read())
+       
+        # Check to make sure the contents are different after the decoding
+        repo_content = self.repo_metadata.open(name).read()
+        if blob_content == repo_content:
+            return
 
         if subpath:
             name = '%s/%s' % (subpath, name)
@@ -166,7 +176,7 @@ class SalesforcePackageToGithub(object):
             'path': name,
             'mode': '100644',
             'type': 'blob',
-            'content': blob_file.read(),
+            'content': blob_content,
         })
     
         blob_file.close()
