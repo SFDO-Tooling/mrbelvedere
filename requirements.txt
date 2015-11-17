@@ -15,7 +15,7 @@ django-bootstrap3==2.5.6
 django-crispy-forms==1.4.0
 django-filter==0.7
 django-postgrespool==0.3.0
-django-rq==0.6.2
+django-rq==0.8.0
 django-social-auth==0.7.28
 django-sslify==0.2.3
 django-tinymce==1.5.2
