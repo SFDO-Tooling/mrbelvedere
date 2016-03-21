@@ -50,6 +50,7 @@ class MockVersionDependency(object):
     def __init__(self, dependency):
         self.requires = dependency['package_version']
         self.order = dependency['order']
+        self.option_type = dependency['option_type']
     
 def create_repo_package_versions(version, git_ref=None, fork=None):
     """ Creates all dependent PackageVersion objects from a PackageVersion with a repo_url """
@@ -162,6 +163,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
                     'subfolder': '%s/%s' % (subfolder, bundle),
                     'branch': version.branch,
                     'order': counter_pre,
+                    'option_type': 'default',
                 })
 
         # Handle the namespace package
@@ -171,6 +173,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
             'name': version_number,
             'number': version_number,
             'order': counter_pre,
+            'option_type': 'default',
         })
 
         # Handle post bundles for the namespace
@@ -186,6 +189,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
                     'subfolder': '%s/%s' % (subfolder, bundle),
                     'branch': version.branch,
                     'order': counter_pre,
+                    'option_type': 'default',
                 })
 
         counter_pre += 1
@@ -200,6 +204,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
                 'subfolder': subfolder,
                 'branch': version.branch,
                 'order': counter_pre,
+                'option_type': 'default',
             })
             counter_pre += 1
 
@@ -214,6 +219,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
                 'subfolder': subfolder,
                 'branch': version.branch,
                 'order': counter_post,
+                'option_type': 'optional',
             })
             counter_post += 1
     
@@ -303,12 +309,14 @@ def version_install_map(version, installed=None, metadata=None, git_ref=None, fo
         if dependency.order < 100:
             packages.append({
                 'version': dependency.requires,
+                'option_type': dependency.option_type,
                 'installed': installed_version,
                 'action': 'uninstall',
             })
         else:
             packages_post.append({
                 'version': dependency.requires,
+                'option_type': dependency.option_type,
                 'installed': installed_version,
                 'action': 'uninstall',
             })
@@ -332,6 +340,7 @@ def version_install_map(version, installed=None, metadata=None, git_ref=None, fo
     if uninstall:
         packages.append({
             'version': version,
+            'option_type': 'required',
             'installed': installed_version,
             'action': 'uninstall',
         })
@@ -364,12 +373,14 @@ def version_install_map(version, installed=None, metadata=None, git_ref=None, fo
                 if dependency.order < 100:
                     packages.append({
                         'version': dependency.requires,
+                        'option_type': dependency.option_type,
                         'installed': installed_version,
                         'action': 'skip',
                     })
                 else:
                     packages_post.append({
                         'version': dependency.requires,
+                        'option_type': dependency.option_type,
                         'installed': installed_version,
                         'action': 'skip',
                     })
@@ -378,12 +389,14 @@ def version_install_map(version, installed=None, metadata=None, git_ref=None, fo
         if dependency.order < 100:
             packages.append({
                 'version': dependency.requires,
+                'option_type': dependency.option_type,
                 'installed': installed_version,
                 'action': 'install',
             })
         else:
             packages_post.append({
                 'version': dependency.requires,
+                'option_type': dependency.option_type,
                 'installed': installed_version,
                 'action': 'install',
             })
@@ -401,6 +414,7 @@ def version_install_map(version, installed=None, metadata=None, git_ref=None, fo
         if installed_version != version.number:
             packages.append({
                 'version': version,
+                'option_type': 'required',
                 'installed': installed_version,
                 'action': 'install',
             })
@@ -408,6 +422,7 @@ def version_install_map(version, installed=None, metadata=None, git_ref=None, fo
         elif not version.number:
             packages.append({
                 'version': version,
+                'option_type': 'required',
                 'installed': installed_version,
                 'action': 'install',
             })
@@ -415,12 +430,14 @@ def version_install_map(version, installed=None, metadata=None, git_ref=None, fo
         else:
             packages.append({
                 'version': version,
+                'option_type': 'required',
                 'installed': installed_version,
                 'action': 'skip',
             })
     else:
         packages.append({
             'version': version,
+            'option_type': 'required',
             'installed': installed_version,
             'action': 'skip',
         })
@@ -453,9 +470,11 @@ def install_map_to_package_list(install_map):
                 'upgrade': False,
                 'uninstall': False,
                 'skip': False,
+                'default_checked': True,
                 'namespace': package.namespace,
                 'installed': step['installed'],
                 'version': step['version'],
+                'option_type': step['option_type'],
             }
 
         # Set the install, upgrade, uninstall, and skip values
@@ -470,6 +489,7 @@ def install_map_to_package_list(install_map):
 
         if not namespaces[package.namespace]['uninstall'] and not namespaces[package.namespace]['install'] and not namespaces[package.namespace]['upgrade']:
             namespaces[package.namespace]['skip'] = True
+            namespaces[package.namespace]['default_checked'] = False
 
     # Convert the dictionary into an ordered list for use in templates.
     namespaces_list = []

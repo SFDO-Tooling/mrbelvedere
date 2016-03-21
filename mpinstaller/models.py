@@ -356,10 +356,17 @@ class PackageVersion(models.Model):
     class Meta:
         ordering = ['package__namespace','number']
 
+OPTION_TYPE_CHOICES = (
+    ('required', 'Required'),
+    ('default', 'Default'),
+    ('optional', 'Optional'),
+)
+
 class PackageVersionDependency(models.Model):
     version = models.ForeignKey(PackageVersion, related_name='dependencies')
     requires = models.ForeignKey(PackageVersion, related_name='required_by', null=True, blank=True)
     action = models.ForeignKey(OrgAction, related_name='required_by', null=True, blank=True)
+    option_type = models.CharField(choices=OPTION_TYPE_CHOICES, default='required', max_length=32)
     order = models.IntegerField()
 
     def __unicode__(self):

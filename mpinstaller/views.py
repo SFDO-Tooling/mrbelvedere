@@ -93,12 +93,6 @@ def package_version_overview(request, namespace, version_id):
         logout_url = None
 
     install_url = request.build_absolute_uri('/mpinstaller/%s/version/%s/install' % (namespace, version_id))
-    if git_ref:
-        install_url += '?git_ref=%s' % urllib.quote(git_ref)
-        if fork:
-            install_url += '&fork=%s' % urllib.quote(fork)
-    elif fork:
-        install_url += '?fork=%s' % urllib.quote(fork)
 
     repo_url = version.repo_url
     if repo_url and fork:
@@ -193,6 +187,7 @@ def start_package_installation(request, namespace, version_id):
 
     git_ref = request.GET.get('git_ref',None)
     fork = request.GET.get('fork',None)
+    steps = request.GET.getlist('steps')
 
     # Redirect back to the package overview page if not connected to an org
     if not oauth or not oauth.get('access_token'):
@@ -241,6 +236,10 @@ def start_package_installation(request, namespace, version_id):
     order = 0
 
     for step in install_map:
+        # If the step's package namespace is in the bypass_steps list
+        if steps and step['version'].package.namespace not in steps:
+            step['action'] = 'skip'
+
         step_obj = PackageInstallationStep(
             installation = installation_obj,
             package = step['version'].package,
