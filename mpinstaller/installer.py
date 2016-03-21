@@ -319,7 +319,7 @@ def version_install_map(version, installed=None, metadata=None, git_ref=None, fo
     uninstall = False
     if installed:
         installed_version = installed.get(version.package.namespace, None)
-    if installed_version:
+    if installed_version and version.number:
         if installed_version.find('Beta') != -1:
             if installed_version != version.number:
                 uninstall = True
