@@ -132,7 +132,7 @@ def check_installation_available(request, version):
         return HttpResponseRedirect(version.get_installer_url(request))
 
     # If the user does not have Modify All Data permissions, don't allow install
-    if not oauth['perm_modifyalldata']:
+    if not oauth.get('perm_modifyalldata'):
         return 'modify-all-data'
 
     # If the install requires beta versions, verify org type
