@@ -9,28 +9,43 @@ def zip_subfolder(zip_src, path, namespace_token=None, namespace=None):
     if not path.endswith('/'):
         path = path + '/'
 
+    if namespace_token:
+        # The default namespace token for CumulusCI is %%%NAMESPACE%%% but that doesn't
+        # work well with filenames so replace all %'s with _'s for the filename token
+        filename_namespace_token = namespace_token.replace('%','_')
+
     zip_dest = zipfile.ZipFile(StringIO.StringIO(), 'w', zipfile.ZIP_DEFLATED)
     for name in zip_src.namelist():
         if not name.startswith(path):
             continue
 
         content = zip_src.read(name)
+        rel_name = name.replace(path, '', 1)
+
         if namespace_token:
             # If a namespace_token was specified, replace the token with the namespace or nothing
             if namespace:
                 content = content.replace(namespace_token, '%s__' % namespace)
+                if rel_name:
+                    rel_name = name.replace(filename_namespace_token, '%s__' % namespace)
             else:
                 content = content.replace(namespace_token, '')
+                if rel_name:
+                    rel_name = name.replace(filename_namespace_token, '')
 
-        rel_name = name.replace(path, '', 1)
         if rel_name:
-            zip_dest.writestr(name.replace(path, '', 1), content)
+            zip_dest.writestr(rel_name, content)
 
     return zip_dest
 
 def zip_subfolders(zip_src, path, namespace_token=None, namespace=None):
     if not path.endswith('/'):
         path = path + '/'
+
+    if namespace_token:
+        # The default namespace token for CumulusCI is %%%NAMESPACE%%% but that doesn't
+        # work well with filenames so replace all %'s with _'s for the filename token
+        filename_namespace_token = namespace_token.replace('%','_')
 
     zips = {}
     for name in zip_src.namelist():
@@ -55,14 +70,18 @@ def zip_subfolders(zip_src, path, namespace_token=None, namespace=None):
         # Write the file 
         content = zip_src.read(name)
 
+        zip_name = '/'.join(name_parts[1:])
+
         if namespace_token:
             # If a namespace_token was specified, replace the token with the namespace or nothing
             if namespace:
                 content = content.replace(namespace_token, '%s__' % namespace)
+                zip_name = zip_name.replace(filename_namespace_token, '%s__' % namespace)
             else:
                 content = content.replace(namespace_token, '')
+                zip_name = zip_name.replace(filename_namespace_token, '')
     
-        zips[subfolder].writestr('/'.join(name_parts[1:]), content)
+        zips[subfolder].writestr(zip_name, content)
 
     return zips
 
