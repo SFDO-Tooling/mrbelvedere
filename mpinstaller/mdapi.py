@@ -446,7 +446,7 @@ class ApiRetrievePackaged(BaseMetadataApiCall):
     def process_response(self, response):
         # Parse the metadata zip file from the response
         zipstr = parseString(response.content).getElementsByTagName('zipFile')
-        if zipstr and zipstr.firstChild:
+        if zipstr and zipstr[0].firstChild:
             zipstr = zipstr[0].firstChild.nodeValue
         else:
             return self.packages
