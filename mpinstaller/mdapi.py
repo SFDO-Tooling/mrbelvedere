@@ -449,7 +449,7 @@ class ApiRetrievePackaged(BaseMetadataApiCall):
         if zipstr and zipstr[0].firstChild:
             zipstr = zipstr[0].firstChild.nodeValue
         else:
-            return self.packages
+            return response.content
         zipfp = TemporaryFile()
         zipfp.write(base64.b64decode(zipstr))
 
