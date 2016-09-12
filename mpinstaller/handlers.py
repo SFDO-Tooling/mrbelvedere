@@ -69,7 +69,7 @@ def queue_installation(sender, **kwargs):
         return
     install_package_version.delay(kwargs['instance'].id)
 
-@django_rq.job('default', timeout=1800)
+@django_rq.job('default', timeout=3600)
 def install_package_version(installation_id):
     """ Installs a PackageVersion and its dependencies into an org using a PackageInstallationSession for authentication """
 
