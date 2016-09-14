@@ -27,11 +27,11 @@ def zip_subfolder(zip_src, path, namespace_token=None, namespace=None):
             if namespace:
                 content = content.replace(namespace_token, '%s__' % namespace)
                 if rel_name:
-                    rel_name = name.replace(filename_namespace_token, '%s__' % namespace)
+                    rel_name = rel_name.replace(filename_namespace_token, '%s__' % namespace)
             else:
                 content = content.replace(namespace_token, '')
                 if rel_name:
-                    rel_name = name.replace(filename_namespace_token, '')
+                    rel_name = rel_name.replace(filename_namespace_token, '')
 
         if rel_name:
             zip_dest.writestr(rel_name, content)
