@@ -138,8 +138,9 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
         if subdir in ('pre','post'):
             unpackaged_subdirs[subdir].sort()
             continue
-        for subsubdir in subdir.keys():
-            unpackaged_subdirs[subdir][subsubdir].sort()
+        # FIXME: Handle pre/post folders for managed packages required by version.properties
+        #for subsubdir in subdir.keys():
+        #    unpackaged_subdirs[subdir][subsubdir].sort()
 
     # Assemble a linear order of dependencies
     dependencies = []
