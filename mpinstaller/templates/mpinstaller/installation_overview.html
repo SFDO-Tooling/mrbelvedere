@@ -105,7 +105,8 @@
               </div>
 
               <div class="col-md-3">
-                <span ng-hide="step.version.zip_url == null || (step.version.zip_url == '' && step.version.repo_url" class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata Bundle</span>
+                <span ng-hide="step.version.zip_url == null || step.version.zip_url == ''" class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata from Zip</span>
+                <span ng-hide="step.version.repo_url == null || step.version.repo_url == ''" class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata from Github</span>
                 <span ng-hide="step.version.number == null || step.version.number == ''" class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
                 <span ng-hide="step.version.is_beta != true" class="badge alert-warning"><span class="glyphicon glyphicon-warning-sign"></span> Beta Release</span>
               </div>
