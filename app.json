@@ -6,11 +6,11 @@
   "keywords": ["python", "django", "salesforce", "github"],
   "env": {
     "MPINSTALLER_CLIENT_ID": {
-      "description": "The Client ID of the Salesforce Connected App"
+      "description": "The Client ID of the Salesforce Connected App",
       "value": "Enter your Client ID here"
     },
     "MPINSTALLER_CLIENT_SECRET": {
-      "description": "The Client Secret of the Salesforce Connected App"
+      "description": "The Client Secret of the Salesforce Connected App",
       "value": "Enter your Client Secret here"
     },
     "MPINSTALLER_CALLBACK_URL": {
@@ -41,7 +41,7 @@
   "formation": {
     "web": {
       "quantity": 1
-    }
+    },
     "worker": {
       "quantity": 1
     }
