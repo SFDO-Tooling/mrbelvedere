@@ -10,16 +10,16 @@
       "value": "False"
     },
     "MPINSTALLER_CLIENT_ID": {
-      "description": "The Client ID of the Salesforce Connected App",
-      "value": "Enter your Client ID here"
+      "description": "The Client ID of the Salesforce Connected App (see mrbelvedere installation docs for more info)",
+      "value": ""
     },
     "MPINSTALLER_CLIENT_SECRET": {
       "description": "The Client Secret of the Salesforce Connected App",
-      "value": "Enter your Client Secret here"
+      "value": ""
     },
     "MPINSTALLER_CALLBACK_URL": {
-      "description": "The callback url configured for the Connected App",
-      "value": "Enter your callback url here, ex: https://someapp.herokuapp.com/mpinstaller/oauth/callback"
+      "description": "The callback url configured for the Connected App, ex: https://your-app-name.herokuapp.com/mpinstaller/oauth/callback",
+      "value": ""
     },
     "GITHUB_APP_ID": {
       "description": "The Github Developer App ID used by the Contributor Tool to do Github OAuth2 logins.  Not needed if you are not using the Contributor Tool",
@@ -55,11 +55,12 @@
     }
   },
   "scripts": {
-    "postdeploy": "python manage.py migrate; python manage.py collectstatic"
+    "postdeploy": "python manage.py migrate"
   },
   "image": "heroku/python",
   "addons": [
-    "redistogo:nano"
+    "redistogo:nano",
+    "newrelic:wayne"
   ],
   "buildpack": "heroku/python"
 }
