@@ -55,7 +55,7 @@
     }
   },
   "scripts": {
-    "postdeploy": "python manage.py syncdb; python manage.py migrate"
+    "postdeploy": "python manage.py syncdb --migrate"
   },
   "image": "heroku/python",
   "addons": [
