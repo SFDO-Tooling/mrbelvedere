@@ -24,17 +24,17 @@
     },
     "GITHUB_API_SECRET": {
       "description": "The Github Developer App API Secret used by the Contributor Tool to do Github OAuth2 logins.  Not needed if you are not using the Contributor Tool",
-      "value": ""
+      "value": "",
       "required": false
     },
     "GOOGLE_ANALYTICS_CODE": {
       "description": "Enter a Google Analytics code to get web analytics, ex: U-12345678-1",
-      "value": ""
+      "value": "",
       "required": false
     },
     "GOOGLE_ANALYTICS_CODE": {
       "description": "Enter a Google Analytics code to get web analytics, ex: U-12345678-1",
-      "value": ""
+      "value": "",
       "required": false
     },
     "WEB_CONCURRENCY": {
@@ -52,7 +52,7 @@
   },
   "scripts": {
     "postdeploy": "python manage.py migrate; python manage.py collectstatic"
-  }
+  },
   "image": "heroku/python",
   "addons": [
     "redistogo:nano"
