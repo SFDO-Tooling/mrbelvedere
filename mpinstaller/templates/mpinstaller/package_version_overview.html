@@ -122,9 +122,9 @@
                 {% if step.version.number %}
                 <span class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
                 {% elif step.version.zip_url %}
-                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata from Zip</span>
+                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> <a href="{{ step.version.zip_url }}">Metadata from Zip</a></span>
                 {% elif step.version.repo_url %}
-                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata from Github</span>
+                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> <a href="{{ step.version.repo_url }}/tree/{{ step.version.branch }}/{{ step.version.subdir }}">Metadata from Github</span>
                 {% endif %}
     
                 {% if step.version.is_beta %}
