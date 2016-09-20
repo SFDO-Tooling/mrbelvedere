@@ -1,0 +1,54 @@
+{
+  "name": "mrbelvedere",
+  "description": "A Python/Django web app to help Salesforce developers and ISV partners release metadata to end users via OAuth access",
+  "repository": "https://github.com/SalesforceFoundation/mrbelvedere",
+  "logo": "https://avatars.githubusercontent.com/u/5545431?v=3&s=100",
+  "keywords": ["python", "django", "salesforce", "github"],
+  "env": {
+    "MPINSTALLER_CLIENT_ID": {
+      "description": "The Client ID of the Salesforce Connected App"
+      "value": "Enter your Client ID here"
+    },
+    "MPINSTALLER_CLIENT_SECRET": {
+      "description": "The Client Secret of the Salesforce Connected App"
+      "value": "Enter your Client Secret here"
+    },
+    "MPINSTALLER_CALLBACK_URL": {
+      "description": "The callback url configured for the Connected App",
+      "value": "Enter your callback url here, ex: https://someapp.herokuapp.com/mpinstaller/oauth/callback"
+    },
+    "GITHUB_APP_ID": {
+      "description": "The Github Developer App ID used by the Contributor Tool to do Github OAuth2 logins.  Not needed if you are not using the Contributor Tool",
+      "value": ""
+    },
+    "GITHUB_API_SECRET": {
+      "description": "The Github Developer App API Secret used by the Contributor Tool to do Github OAuth2 logins.  Not needed if you are not using the Contributor Tool",
+      "value": ""
+    },
+    "GOOGLE_ANALYTICS_CODE": {
+      "description": "Enter a Google Analytics code to get web analytics, ex: U-12345678-1",
+      "value": ""
+    },
+    "GOOGLE_ANALYTICS_CODE": {
+      "description": "Enter a Google Analytics code to get web analytics, ex: U-12345678-1",
+      "value": ""
+    },
+    "WEB_CONCURRENCY": {
+      "description": "The number of processes to run.",
+      "value": "5"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+    "worker": {
+      "quantity": 1
+    }
+  },
+  "image": "heroku/python",
+  "addons": [
+    "redistogo:nano"
+  ],
+  "buildpack": "heroku/python"
+}
