@@ -122,7 +122,9 @@
                 {% if step.version.number %}
                 <span class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
                 {% elif step.version.zip_url %}
-                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata Bundle</span>
+                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata from Zip</span>
+                {% elif step.version.repo_url %}
+                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata from Github</span>
                 {% endif %}
     
                 {% if step.version.is_beta %}
