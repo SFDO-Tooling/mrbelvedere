@@ -112,7 +112,7 @@
                 <h4 class="list-group-item-heading">
                   {{ step.version.package.name }}
                   {% if step.version.number %}
-                    <span class="text-muted">- current: {{ step.previous_version.number|default:"Not Installed" }}</span>
+                    <span class="text-muted">- current: {{ step.installed|default:"Not Installed" }}</span>
                   {% endif %}
                 </h4>
                 {% if step.version.package.description %}<p>{{ step.version.package.description }}</p>{% endif %}
