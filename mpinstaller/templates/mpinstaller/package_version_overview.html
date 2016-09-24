@@ -176,7 +176,7 @@
       {% if step.action == 'uninstall' %}
       <div class="alert alert-danger">
         <h4>WARNING: Package Uninstall</h4>
-        <p>You are about to uninstall this beta version of the {{ step.version.package }}.  Any data that references metadata from this package will be destroyed.</p>
+        <p>You are about to uninstall version {{ step.version.number }} of the {{ step.version.package }}.  Any data that references metadata from this package will be destroyed.</p>
         <input type="checkbox" class="install-confirm-checkbox" id="uninstall-warning-version-{{ step.version.id }}">
         <label for="uninstall-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with uninstalling the package.</label>
       </div>
