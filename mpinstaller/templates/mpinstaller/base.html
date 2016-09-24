@@ -2,6 +2,7 @@
 {% load bootstrap3 %}
 {% load staticfiles %}
 {% load googleanalyticsjs %}
+{% load site_logo %}
 <html lang="en">
   <head>
     <!-- Meta, title, CSS, favicons, etc. -->
@@ -52,10 +53,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-{% endcomment %}
       <a href="http://www.salesforcefoundation.org" class="navbar-brand" target="_blank">
         <img src="{% static "logo.png" %}" alt="Salesforce.com Foundation" />
       </a>
+{% endcomment %}
+
+      {% site_logo_header %}
     </div>
 {% comment %}
     <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">

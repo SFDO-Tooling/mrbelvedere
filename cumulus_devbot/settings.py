@@ -315,3 +315,8 @@ RQ_SYNC = os.environ.get('RQ_SYNC')
 if RQ_SYNC:
     for queueConfig in RQ_QUEUES.itervalues():
         queueConfig['ASYNC'] = False
+
+# Configurable site logo
+SITE_LOGO_IMAGE_URL=os.environ.get('SITE_LOGO_IMAGE_URL')
+SITE_LOGO_LINK_URL=os.environ.get('SITE_LOGO_LINK_URL')
+SITE_LOGO_ALT_TEXT=os.environ.get('SITE_LOGO_ALT_TEXT')
