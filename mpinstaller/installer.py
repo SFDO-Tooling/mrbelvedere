@@ -159,6 +159,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
                 dependencies.append({
                     'namespace': '%s_%s_%s_pre_%s' % (owner, repo, package, bundle),
                     'name': '%s/%s' % (subfolder, bundle),
+                    'type': 'managed',
                     'repo_url': version.repo_url,
                     'subfolder': '%s/%s' % (subfolder, bundle),
                     'branch': version.branch,
@@ -170,6 +171,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
         dependencies.append({
             'namespace': package,
             'name': version_number,
+            'type': 'managed',
             'number': version_number,
             'order': counter_pre,
         })
@@ -181,6 +183,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
                 dependencies.append({
                     'namespace': '%s_%s_%s_post_%s' % (owner, repo, package, bundle),
                     'name': '%s/%s' % (subfolder, bundle),
+                    'type': 'unmanaged',
                     'namespace_token': '%%%NAMESPACE%%%',
                     'namespace_replace': package,
                     'repo_url': version.repo_url,
@@ -197,6 +200,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
             dependencies.append({
                 'namespace': '%s_%s_pre_%s' % (owner, repo, bundle),
                 'name': subfolder,
+                'type': 'unmanaged',
                 'repo_url': version.repo_url,
                 'subfolder': subfolder,
                 'branch': version.branch,
@@ -210,6 +214,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
             dependencies.append({
                 'namespace': '%s_%s_post_%s' % (owner, repo, bundle),
                 'name': subfolder,
+                'type': 'unmanaged',
                 'namespace_token': '%%%NAMESPACE%%%',
                 'repo_url': version.repo_url,
                 'subfolder': subfolder,
@@ -221,10 +226,17 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
 
     # Now, get or create the Package and PackageVersions for the dependencies
     for dependency in dependencies:
+        # Use name for unmanaged name, namespace for managed name
+        default_name = dependency['name']
+        if dependency['type'] == 'managed':
+            default_name = dependency['namespace']
+
+        # Get or create package
         package, created = Package.objects.get_or_create(
             namespace = dependency['namespace'],
-            defaults = {'name': dependency['name']},
+            defaults = {'name': default_name},
         )
+
         if 'number' in dependency:
             package_version, created = PackageVersion.objects.get_or_create(
                 package = package,
