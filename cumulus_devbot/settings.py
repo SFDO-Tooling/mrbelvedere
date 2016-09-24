@@ -152,6 +152,8 @@ INSTALLED_APPS = (
     'api',
     'social_auth',
     'crispy_forms',
+    'django_slds',
+    'django_slds_crispyforms',
 )
 
 AUTHENTICATION_BACKENDS = (
