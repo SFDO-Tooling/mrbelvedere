@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from mpinstaller.models import InstallationError
 from mpinstaller.models import InstallationErrorContent
 from mpinstaller.models import MetadataCondition
@@ -39,9 +40,17 @@ class PackageInstallationStepAdmin(admin.ModelAdmin):
     list_filter = ('package','status','action')
 admin.site.register(PackageInstallationStep, PackageInstallationStepAdmin)
 
+class PackageVersionAdminForm(forms.ModelForm):
+    class Meta:
+        model = PackageVersion
+        widgets = {
+            'github_password': forms.PasswordInput(render_value=True),
+        }
+
 class PackageVersionAdmin(admin.ModelAdmin):
     list_display = ('package', 'number', 'name')
     list_filter = ('package',)
+    form = PackageVersionAdminForm
 admin.site.register(PackageVersion, PackageVersionAdmin)
 
 class PackageVersionDependencyAdmin(admin.ModelAdmin):
