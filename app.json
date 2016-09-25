@@ -31,6 +31,26 @@
       "value": "",
       "required": false
     },
+    "SITE_LOGO_IMAGE_URL": {
+      "description": "Enter a url to a hosted image file to use as the site logo",
+      "value": "",
+      "required": false
+    },
+    "SITE_LOGO_LINK_URL": {
+      "description": "Enter a url that the logo image should link to.  This is typically your main website",
+      "value": "",
+      "required": false
+    },
+    "SITE_LOGO_ALT_TEXT": {
+      "description": "Enter the logo alt text which will be shown in browsers that don't display images.  This is typically your company name",
+      "value": "",
+      "required": false
+    },
+    "SITE_LOGO_ALT_TEXT": {
+      "description": "Enter a url to a hosted image file to use as the site logo",
+      "value": "",
+      "required": false
+    },
     "GOOGLE_ANALYTICS_CODE": {
       "description": "Enter a Google Analytics code to get web analytics, ex: U-12345678-1",
       "value": "",

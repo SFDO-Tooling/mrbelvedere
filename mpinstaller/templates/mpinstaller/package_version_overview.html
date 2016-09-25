@@ -103,7 +103,7 @@
       </div>
      
       <div class="panel-body"> 
-        <p>{{ version.package }} {{ version.number }} requires the following bundles and packages:</p>
+        <p>{{ version.package }} {{ version.number }} requires the following unmanaged metadata and managed packages:</p>
         <ul class="list-group">
           {% for step in package_list %}
           <li class="list-group-item{% if step.uninstall %} list-group-item-danger{% elif step.install %} list-group-item-success{% elif step.upgrade %} list-group-item-info{% endif %}">
@@ -112,7 +112,7 @@
                 <h4 class="list-group-item-heading">
                   {{ step.version.package.name }}
                   {% if step.version.number %}
-                    <span class="text-muted">- {{ step.version.number }}
+                    <span class="text-muted">- current: {{ step.installed|default:"Not Installed" }}</span>
                   {% endif %}
                 </h4>
                 {% if step.version.package.description %}<p>{{ step.version.package.description }}</p>{% endif %}
@@ -122,7 +122,9 @@
                 {% if step.version.number %}
                 <span class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
                 {% elif step.version.zip_url %}
-                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata Bundle</span>
+                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> <a href="{{ step.version.zip_url }}">Metadata from Zip</a></span>
+                {% elif step.version.repo_url %}
+                <span class="badge"><span class="glyphicon glyphicon-compressed"></span> <a href="{{ step.version.repo_url }}/tree/{{ step.version.branch }}/{{ step.version.subfolder }}">Metadata from Github</a></span>
                 {% endif %}
     
                 {% if step.version.is_beta %}
@@ -174,7 +176,7 @@
       {% if step.action == 'uninstall' %}
       <div class="alert alert-danger">
         <h4>WARNING: Package Uninstall</h4>
-        <p>You are about to uninstall this beta version of the {{ step.version.package }}.  Any data that references metadata from this package will be destroyed.</p>
+        <p>You are about to uninstall version {{ step.version.number }} of the {{ step.version.package }}.  Any data that references metadata from this package will be destroyed.</p>
         <input type="checkbox" class="install-confirm-checkbox" id="uninstall-warning-version-{{ step.version.id }}">
         <label for="uninstall-warning-version-{{ step.version.id }}">Yes, I understand the risks and want to proceed with uninstalling the package.</label>
       </div>
