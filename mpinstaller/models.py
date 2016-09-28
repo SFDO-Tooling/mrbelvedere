@@ -513,7 +513,7 @@ class InstallationErrorManager(models.Manager):
             'date_end': q_steps.aggregate(models.Max('created'))['created__max'],
         }
 
-        return {'errors': errors, 'facets': facets}
+        return {'errors': errors, 'facets': facets, 'parent_package': parent_package, 'parent_version': parent_version}
 
     def drilldown_steps(self, parent_package=None, parent_version=None, packages=None, versions=None, org_types=None, date_start=None, date_end=None):
         q_steps = PackageInstallationStep.objects.all()
@@ -560,7 +560,6 @@ class PackageInstallationStep(models.Model):
     installation = models.ForeignKey(PackageInstallation, related_name='steps')
     package = models.ForeignKey(Package, related_name='installation_steps', null=True, blank=True)
     version = models.ForeignKey(PackageVersion, related_name='installation_steps', null=True, blank=True)
-    action = models.ForeignKey(OrgAction, related_name='installation_steps', null=True, blank=True)
     previous_version = models.CharField(max_length=255, null=True, blank=True)
     action = models.CharField(choices=INSTALLATION_ACTION_CHOICES, max_length=32)
     status = models.CharField(choices=INSTALLATION_STEP_STATUS_CHOICES, max_length=32)

@@ -1,39 +1,58 @@
-{% extends 'mpinstaller/base.html' %}
+{% extends 'django_slds/base_slds.html' %}
 
 {% load bootstrap3 %}
 
-{% block bootstrap3_title %}{{ package }} Installer{% endblock %}
-{% block bootstrap3_page_title %}{{ package }} Installer{% endblock %}
-{% block bootstrap3_page_description %}{{ package.description }}{% endblock %}
+{% block base_title %}{{ package }} Installer{% endblock %}
 
-{% block bootstrap3_content %}
 
-{% bootstrap_messages %}
-
-<div class="panel panel-warning">
-  <div class="panel-heading">
-    <h3 class="panel-title">Installation Unavailable</h3>
+{% block base_page_header %}
+<div class="slds-page-header" role="banner">
+  <div class="slds-grid">
+    <div class="slds-media">
+      <div class="slds-media__body">
+        <p class="slds-text-heading--label"><a href="/mpinstaller">Installer</a></p>
+        <h1 class="slds-text-heading--medium slds-m-right--small slds-truncate slds-align-middle" title="Record Title">
+          {% if version %}<a href="{{ version.get_installer_url }}">{{ version.package }} {{ version.number }} Installer</a>{% else %}Installer{% endif %}
+        </h1>
+        {% if version and version.package.description %}
+        <p>{{ version.package.description }}</p>
+        {% endif %}
+      </div>
+    </div>
   </div>
-     
-  <div class="panel-body"> 
-    {% if reason == 'modify-all-data' %}
-    <p>You must have the Modify All Data permission enabled before you can run this installer.  The profile associated with the username you connected with does not have this permission.  You must either add the Modify All Data permission to your profile, or log in as a user who has the correct permission assigned.</p>
+</div>
+{% endblock %}
 
-    <p>You have been logged out and will need to log in to your organization again as a user who has the Modify All Data permission.  You may need to open your Salesforce org in a browser and log out so that you can log in again as a different user.</p>
-    {% endif %}
+{% block base_body %}
 
-    {% if reason == 'beta-in-prod-org' %}
-    <p>You are trying to install a beta package into a production organization.  You can only install beta packages in Developer Edition or sandbox organizations.</p>
- 
-    <p>You have been logged out.  Please return to the installer and log in to a Developer Edition or sandbox organization.</p>
-    {% endif %}
-
-    {% if reason == 'sandbox-required' %}
-    <p>Before upgrading a production organization, you must first complete a successful upgrade in a sandbox.  This is a best practice and is required for upgrades to reduce the risk of issues in your production organization.  Please go to Setup -> Deploy -> Sandboxes to create a sandbox.  Once you have your sandbox, return to the installer and connect to your sandbox.</p>
-    <p>When you have completed a successful upgrade in your sandbox, you will be able to run the upgrade against your production organization.</p>
-    {% endif %}
-    <span class="gylphicon glyphicon-arrow-up"></span> <a href="{{ install_url }}">Return to installer</a>.
+<div>
+  <div aria-hidden="false" aria-labelledby="prompt-heading-id" aria-describedby="prompt-message-wrapper" role="alertdialog" class="slds-modal slds-modal--prompt slds-fade-in-open">
+    <div class="slds-modal__container slds-modal--prompt" role="document" id="prompt-message-wrapper" tabindex="0">
+      <div class="slds-modal__header slds-theme--error slds-theme--alert-texture">
+        <h2 class="slds-text-heading--medium" id="prompt-heading-id">Installation Unavailable</h2>
+      </div>
+      <div class="slds-modal__content slds-p-around--medium">
+        <div>
+          {% if reason == 'modify-all-data' %}
+          <p>You must have the Modify All Data permission enabled before you can run this installer.  The profile associated with the username you connected with does not have this permission.  You must either add the Modify All Data permission to your profile, or log in as a user who has the correct permission assigned.</p>
+          <p class="slds-p-top--medium">You have been logged out and will need to log in to your organization again as a user who has the Modify All Data permission.  You may need to open your Salesforce org in a browser and log out so that you can log in again as a different user.</p>
+          {% endif %}
+          {% if reason == 'beta-in-prod-org' %}
+          <p>You are trying to install a beta package into a production organization.  You can only install beta packages in Developer Edition or sandbox organizations.</p>
+          <p>You have been logged out.  Please return to the installer and log in to a Developer Edition or sandbox organization.</p>
+          {% endif %}
+          {% if reason == 'sandbox-required' %}
+          <p>Before upgrading a production organization, you must first complete a successful upgrade in a sandbox.  This is a best practice and is required for upgrades to reduce the risk of issues in your production organization.  Please go to Setup -&gt; Deploy -&gt; Sandboxes to create a sandbox.  Once you have your sandbox, return to the installer and connect to your sandbox.</p>
+          <p>When you have completed a successful upgrade in your sandbox, you will be able to run the upgrade against your production organization.</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="slds-modal__footer slds-theme--default">
+        <a class="slds-button slds-button--neutral" href="{{ install_url }}">Return to installer</a>
+      </div>
+    </div>
   </div>
+  <div class="slds-backdrop slds-backdrop--open"></div>
 </div>
 
 {% endblock %}

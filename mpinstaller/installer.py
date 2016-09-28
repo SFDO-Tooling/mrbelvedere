@@ -492,8 +492,16 @@ def install_map_to_package_list(install_map):
             continue
         package = step['version'].package
         namespace = namespaces[package.namespace]
+        if namespace['upgrade']:
+            namespace['action'] = 'Upgrade'
+        elif namespace['uninstall'] and namespace['install']:
+            namespace['action'] = 'Uninstall/Install'
+        elif namespace['uninstall']:
+            namespace['action'] = 'Uninstall'
+        else:
+            namespace['action'] = 'Install'
         namespaces_list.append(namespaces[package.namespace])
-            
+
     return namespaces_list
 
 def install_map_to_json(install_map):

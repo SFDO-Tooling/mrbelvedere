@@ -12,6 +12,7 @@ admin.autodiscover()
 
 
 urlpatterns = [
+    url(r'^$', 'mpinstaller.views.redirect_to_package_list'),
     url(r'^api/', include('api.urls')),
     url(r'^mrbelvedere/', include('mrbelvedere.urls')),
     url(r'^mpinstaller/', include('mpinstaller.urls')),

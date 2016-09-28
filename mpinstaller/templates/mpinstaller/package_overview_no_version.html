@@ -1,21 +1,10 @@
-{% extends 'mpinstaller/base.html' %}
+{% extends 'mpinstaller/layout_workspace.html' %}
 
-{% load bootstrap3 %}
-
-{% block bootstrap3_title %}{{ package }} Installer{% endblock %}
-{% block bootstrap3_page_title %}{{ package }} Installer{% endblock %}
-{% block bootstrap3_page_description %}{{ package.description }}{% endblock %}
-
-{% block bootstrap3_content %}
-
-{% bootstrap_messages %}
-
-<div class="panel panel-warning">
-  <div class="panel-heading">
-    <h3 class="panel-title">Release not found</h3>
-  </div>
+{% block layout_body %}
+<div class="slds-box">
+  <h3 class="slds-text-heading--medium">Release not found</h3>
      
-  <div class="panel-body"> 
+  <div class="slds-box--body"> 
     This package has not yet published a {% if beta %}beta{% else %}production{% endif %} release.  Please check back later.
 
     {% if not beta and package.current_beta %}
@@ -23,6 +12,4 @@
     {% endif %}
   </div>
 </div>
-
-
 {% endblock %}
