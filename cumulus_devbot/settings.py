@@ -1,11 +1,16 @@
 # Django settings for cumulus_devbot project.
 import os
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 DEBUG = os.environ.get('DEBUG', True)
 if DEBUG in ('false','False'):
     DEBUG = False
 
-TEMPLATE_DEBUG = DEBUG
+#SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT') == 'True'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Get admins from env variable in format jdoe@mailinator.com,John Doe
 admins = os.environ.get('ADMINS', None)
@@ -101,15 +106,31 @@ STATICFILES_FINDERS = (
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '-)3=k_d8821*k+v0cm&unyc429hm&tfs%#6y(ndk*%+l4a+7+('
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'social.apps.django_app.context_processors.backends',
+                'social.apps.django_app.context_processors.login_redirect',
+            ],
+            'debug': DEBUG,
+        },
+    },
+]
 
 MIDDLEWARE_CLASSES = (
-    'sslify.middleware.SSLifyMiddleware',
     'hirefire.contrib.django.middleware.HireFireMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -126,9 +147,6 @@ ROOT_URLCONF = 'cumulus_devbot.urls'
 WSGI_APPLICATION = 'cumulus_devbot.wsgi.application'
 
 PROJECT_DIR = os.path.dirname(__file__) # this is not Django setting.
-TEMPLATE_DIRS = (
-    os.path.join(PROJECT_DIR, "templates"),
-)
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -139,38 +157,37 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'south',
     'django_rq',
     'bootstrap3',
-    'mrbelvedere',
     'mpinstaller',
     'contributor',
-    'djangular',
+    'djng',
     'cumulus_devbot',
     'tinymce',
     'rest_framework',
     'api',
-    'social_auth',
+    'social.apps.django_app.default',
     'crispy_forms',
     'django_slds',
     'django_slds_crispyforms',
 )
 
-AUTHENTICATION_BACKENDS = (
-    'social_auth.backends.contrib.github.GithubBackend',
+AUTHENTICATION_BACKENDS = [
+    'social.backends.github.GithubOAuth2',
     'django.contrib.auth.backends.ModelBackend',
-)
+]
 
-GITHUB_APP_ID = os.environ.get('GITHUB_APP_ID')
-GITHUB_API_SECRET = os.environ.get('GITHUB_API_SECRET')
-GITHUB_EXTENDED_PERMISSIONS = os.environ.get('GITHUB_EXTENDED_PERMISSIONS', None)
-if GITHUB_EXTENDED_PERMISSIONS:
-    GITHUB_EXTENDED_PERMISSIONS = GITHUB_EXTENDED_PERMISSIONS.split(',')
+# GitHub OAuth config
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('SOCIAL_AUTH_GITHUB_KEY')
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('SOCIAL_AUTH_GITHUB_SECRET')
+SOCIAL_AUTH_GITHUB_SCOPE = os.environ.get('SOCIAL_AUTH_GITHUB_SCOPE')
+if SOCIAL_AUTH_GITHUB_SCOPE:
+    SOCIAL_AUTH_GITHUB_SCOPE = SOCIAL_AUTH_GITHUB_SCOPE.split(',')
 else:
-    GITHUB_EXTENDED_PERMISSIONS = ['public_repo',]
-
-LOGIN_URL = '/social-auth/login/github'
+    SOCIAL_AUTH_GITHUB_SCOPE = ['public_repo', ]
+LOGIN_URL = '/login/github/'
 LOGIN_REDIRECT_URL = '/contributor'
+
 #LOGIN_ERROR_URL = '/login-error/'
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'

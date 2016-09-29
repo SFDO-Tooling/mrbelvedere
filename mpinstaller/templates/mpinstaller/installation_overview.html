@@ -24,6 +24,10 @@
   .slds-wizard__progress {
     z-index: 0;
   }
+  .slds-theme--default {
+    color: #16325c;
+  }
+
 </style>
 {% endblock %}
 
@@ -86,42 +90,32 @@
             <span class="slds-wizard__progress-bar" style="width:{{installation.progress}}%;" ng-class="{'slds-theme--success': (installation.status == 'Succeeded'), 'slds-theme--error': (installation.status == 'Failed')}"></span>
           </span>
         </div>
-        <div class="slds-box slds-theme--success slds-p-top--large content-next-steps content-next-steps-succeeded" ng-if="installation.status == 'Succeeded' && installation.content_success">
-          <h3 class="slds-text-heading--large">Next Steps</h3>
+        <div class="slds-box slds-theme--success slds-p-top--large" ng-if="installation.status == 'Succeeded' && installation.content_success">
+          <h3 class="slds-text-heading--large slds-p-bottom--large">Next Steps</h3>
           <div class="slds-box--body">
-            <ul class="list-group">
-              <li class="list-group-item list-group-item-success contextual-content" ng-repeat="content in installation.content_success">
-                <div class="row">
-                  <div class="col-md-3">
-                    <h4>{{content.heading}}</h4>
-                  </div>
-                  <div class="col-md-9">
-                    <span ng-bind-html="content.body" />
-                  </div>
-                </div>
-              </li>
-            </ul>
+            <div class="slds-box slds-theme--default" ng-repeat="content in installation.content_success">
+              <h3 class="slds-text-heading--medium slds-p-bottom--medium">{{content.heading}}</h3>
+              <div class="slds-box--body">
+                <span ng-bind-html="content.body" />
+              </div>
+            </div>
           </div>
         </div>
           
-        <div class="slds-box slds-theme--error slds-p-top--large content-next-steps content-next-steps-succeeded" ng-if="installation.status == 'Failed' && installation.content_failure">
-          <h3 class="slds-text-heading--large">Next Steps</h3>
+        <div class="slds-box slds-theme--error slds-p-top--large" ng-if="installation.status == 'Failed' && installation.content_failure">
+          <h3 class="slds-text-heading--large slds-p-bottom--large">Next Steps</h3>
           <div class="slds-box--body">
-            <ul class="list-group">
-              <li class="list-group-item list-group-item-warning contextual-content" ng-repeat="content in installation.content_failure">
-                <div class="row">
-                  <div class="col-md-3">
-                    <h4>{{content.heading}}</h4>
-                  </div>
-                  <div class="col-md-9">
-                    <span ng-bind-html="content.body" />
-                  </div>
-                </div>
-              </li>
-            </ul>
-    
-            <a href="{% endverbatim %}{{ version.get_installer_url }}{% verbatim %}"><span class="glyphicon glyphicon-arrow-left"></span> Return to package overview to retry the installation</a>
+            <div class="slds-box slds-theme--default" ng-repeat="content in installation.content_failure">
+              <h3 class="slds-text-heading--medium slds-p-bottom--medium">{{content.heading}}</h3>
+              <div class="slds-box--body">
+                <span ng-bind-html="content.body" />
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div class="slds-button-group slds-p-top--large" ng-if="installation.status == 'Failed'">
+          <a href="{% endverbatim %}{{ version.get_installer_url }}{% verbatim %}"><button class="slds-button slds-button--brand">Retry Installation</button></a>
         </div>
       </div>
     </div>
@@ -205,7 +199,7 @@
                     </div>
                     <div class="slds-box" ng-class="{'slds-theme--error': (step.status == 'Failed'), 'slds-theme--shaded': (step.status == 'Cancelled')}" ng-hide="step.log == '' || step.log == null">
                       <div class="slds-box--body">
-                        <p>{{step.log}}</p>
+                        <pre>{{step.log}}</pre>
                       </div>
                     </div>
                   </div>

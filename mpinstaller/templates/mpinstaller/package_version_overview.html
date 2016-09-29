@@ -9,8 +9,8 @@
         <p>You must be connected to a Salesforce organization to run the installer</p>
         <p><strong>NOTE:</strong> <i>Your login information only remains cached during the installation</i></p>
         <div class="slds-button-group slds-p-top--large" role="group">
-          <a href="{{ login_url }}" class="slds-button slds-button--brand">{% if not version.is_beta %}Production or {% endif %}Developer Edition org</a>
-          <a href="{{ login_url }}&sandbox=true" class="slds-button slds-p-left--medium slds-button--brand">Sandbox org</a>
+          <a href="{{ login_url }}"><button class="slds-button slds-button--brand">{% if not version.is_beta %}Production or {% endif %}Developer Edition</button></a>
+          <a href="{{ login_url }}&sandbox=true"><button class="slds-button slds-p-left--medium slds-button--neutral">Sandbox</button></a>
         </div>
       </div>
       {% else %}
@@ -22,7 +22,7 @@
           <div><strong>Type:</strong> {{ oauth.org_type }}</div>
         </p>
         <div class="slds-button-group slds-p-top--large" role="group">
-          <a class="slds-button slds-p-left--large slds-button--brand" href="{{ logout_url }}">Log Out</a>
+          <a class="slds-button slds-p-left--large slds-button--neutral" href="{{ logout_url }}">Log Out</a>
         </div>
       </div>
       {% endif %}
@@ -52,6 +52,7 @@
           <div class="slds-box slds-p-top--large">
             <h3 class="slds-text-heading--large slds-p-bottom--large">Installation Steps</h3>
 
+            {% if oauth.access_token %}
             <p>{{ version.package }} {{ version.number }} requires the following unmanaged metadata and managed packages:</p>
 
             <ul class="slds-p-top--large">
@@ -106,6 +107,9 @@
             <div class="slds-button-group slds-p-top--large" role="group">
               <a class="slds-button slds-p-left--large slds-button--brand" href="{{ install_url }}">Install</a>
             </div>
+            {% else %}
+              Please log in using the Connect to Salesforce box.  The installer will examine your org and show you what steps it will take.  You will have to approve the steps before the installation will start.
+            {% endif %}
           </div>
 {% endblock %}
 

@@ -42,6 +42,24 @@ admin.site.register(PackageInstallationStep, PackageInstallationStepAdmin)
 
 class PackageVersionAdminForm(forms.ModelForm):
     class Meta:
+        fields = [
+            'package',
+            'name',
+            'number',
+            'zip_url',
+            'repo_url',
+            'github_username',
+            'github_password',
+            'branch',
+            'subfolder',
+            'namespace_token',
+            'namespace',
+            'package_name',
+            'conditions',
+            'content_intro',
+            'content_success',
+            'content_failure',
+        ]
         model = PackageVersion
         widgets = {
             'github_password': forms.PasswordInput(render_value=True),

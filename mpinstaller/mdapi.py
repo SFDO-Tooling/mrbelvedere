@@ -195,9 +195,18 @@ class BaseMetadataApiCall(object):
         if self.status != 'Failed':
             return self.process_response(response)
 
-    def set_status(self, status, log=None):
+    def set_status(self, status, log=None, no_newline=None):
         self.status = status
-        self.log = log
+        if log:
+            if hasattr(self, 'log') and self.log is not None:
+                if no_newline:
+                    self.log += log
+                else:
+                    self.log += '\n{}'.format(log)
+            else:
+                self.log = log
+        else:
+            self.log = None
 
         if not self.installation_step:
             # return now if there is no installation step object to log to
@@ -271,13 +280,22 @@ class BaseMetadataApiCall(object):
         ids = parseString(response.content).getElementsByTagName('id')
         if ids:
             self.process_id = ids[0].firstChild.nodeValue
+            self.set_status('InProgress', 'Deployment process submitted with id {}\nChecking status...'.format(self.process_id))
         return response
 
     def process_response_status(self, response):
-        done = parseString(response.content).getElementsByTagName('done')
+        resp_xml = parseString(response.content)
+        done = resp_xml.getElementsByTagName('done')
         if done:
             if done[0].firstChild.nodeValue == 'true':
                 self.set_status('Done')
+            else:
+                state_detail = resp_xml.getElementsByTagName('stateDetail')
+                if state_detail:
+                    log = state_detail[0].firstChild.nodeValue
+                    self.set_status('InProgress', log)
+                else:
+                    self.set_status('InProgress', '.', no_newline=True)
         else:
             # If no done element was in the xml, fail logging the entire SOAP envelope as the log
             self.set_status('Failed', response.content)

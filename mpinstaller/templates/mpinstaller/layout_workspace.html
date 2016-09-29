@@ -1,6 +1,6 @@
 {% extends 'django_slds/base_slds.html' %}
 
-{% block base_title %}{% if package %}{{ package }} {% elif version %}{{ version.package }} {% endif %}Installer{% endblock %}
+{% block base_title %}{% if package %}{{ package }} {% elif version %}{{ version.package }} {% endif %}{% endblock %}
 
 {% block base_page_header %}
 <div class="slds-page-header" role="banner">
@@ -11,7 +11,7 @@
         <h1 class="slds-text-heading--medium slds-m-right--small slds-truncate slds-align-middle" title="Record Title">
         {% block layout_header_text %}
         {% if package %}
-          {{ package }} Installer
+          {{ package }}
         {% elif version %}
           <a href="{{ version.get_installer_url }}">{{ version.package }}</a>
         {% endif %}

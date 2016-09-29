@@ -12,7 +12,7 @@ Available Packages
      
   <div class="slds-box--body"> 
     <div class="slds-grid slds-clearfix slds-wrap">
-      <div class="slds-col slds-size--3-of-6 slds-p-bottom--medium">
+      <div class="slds-col slds-size--2-of-6 slds-p-bottom--medium">
         <h3 class="slds-text-heading--medium">Package Name</h3>
       </div>
       <div class="slds-col slds-size--1-of-6 slds-p-bottom--medium">
@@ -24,15 +24,18 @@ Available Packages
       <div class="slds-col slds-size--1-of-6 slds-p-bottom--medium">
         <h3 class="slds-text-heading--medium">Github</h3>
       </div>
+      <div class="slds-col slds-size--1-of-6 slds-p-bottom--medium">
+        <h3 class="slds-text-heading--medium">Contribute</h3>
+      </div>
     {% for package in packages %}
-      <div class="slds-col slds-size--3-of-6 slds-p-bottom--medium">
+      <div class="slds-col slds-size--2-of-6 slds-p-bottom--medium">
         <h3 class="slds-text-heading--small">{{ package }}</h3>
       </div>
       <div class="slds-col slds-size--1-of-6 slds-p-bottom--medium">
       {% if package.current_prod %}
         <div class="slds-button-group" role="group">
         <a href="{{ package.namespace }}">
-          <button class="slds-button slds-button--neutral">
+          <button class="slds-button slds-button--brand">
             Install
           </button>
         </a>
@@ -60,6 +63,19 @@ Available Packages
         <a href="{{ package.namespace }}/github">
           <button class="slds-button slds-button--neutral">
             Install
+          </button>
+        </a>
+        </div>
+      {% else %}
+        - 
+      {% endif %}
+      </div>
+      <div class="slds-col slds-size--1-of-6 slds-p-bottom--medium">
+      {% if package.current_github %}
+        <div class="slds-button-group" role="group">
+        <a href="/contributor">
+          <button class="slds-button slds-button--neutral">
+            Contribute
           </button>
         </a>
         </div>
