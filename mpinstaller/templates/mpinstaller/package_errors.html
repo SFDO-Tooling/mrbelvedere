@@ -1,50 +1,76 @@
-{% extends 'mpinstaller/base.html' %}
+{% extends 'mpinstaller/layout_workspace.html' %}
 
-{% load bootstrap3 %}
+{% block base_title %}Installation Errors for {{ package }}{% endblock %}
 
-{% block bootstrap3_title %}{{ package }} Installation Errors{% endblock %}
-{% block bootstrap3_page_title %}{{ package }} Installation Errors{% endblock %}
+{% block layout_header_text %}Installation Errors for {{ parent_package }}{% endblock %}
 
-{% block bootstrap3_content %}
-
-{% bootstrap_messages %}
+{% block layout_sidebar %}
 
     <form>
-      <input type="text" name="keyword" placeholder="Search"{% if facet_values.keyword %} value="{{ facet_values.keyword }}"{% endif %} />
+      <div class="slds-form-element">
+        <label class="slds-form-element__label" for="filter-keyword">Keyword Search</label>
+        <div class="slds-form-element__control">
+          <input id="filter-keyword" type="text" class="slds-input" name="keyword" placeholder="Search errors"{% if facet_values.keyword %} value="{{ facet_values.keyword }}"{% endif %} />
+        </div>
+      </div>
+      <div class="slds-form-element">
+        <label class="slds-form-element__label" for="filter-count-min">Minimum Count</label>
+        <div class="slds-form-element__control">
+          <input id="filter-count-min" type="text" class="slds-input" name="count_min" placeholder="0"{% if facet_values.count_min %} value="{{ facet_values.count_min }}"{% endif %} />
+        </div>
+      </div>
 
-      <input type="text" name="count_min" placeholder="count min"{% if facet_values.count_min %} value="{{ facet_values.count_min }}"{% endif %} />
-
-      <select name="packages" multiple="multiple">
-      {% for package in facets.packages %}
-        <option value="{{ package.package }}"{% if package.selected %} selected="selected"{% endif %}>{{ package.package__namespace }} ({{ package.count }})</option>
-      {% endfor %}
-      </select>
+{% comment %}
+          <select name="packages" multiple="multiple">
+            {% for package in facets.packages %}
+            <option value="{{ package.package }}"{% if package.selected %} selected="selected"{% endif %}>{{ package.package__namespace }} ({{ package.count }})</option>
+            {% endfor %}
+          </select>
+          <select name="versions" multiple="multiple">
+          {% for version in facets.versions %}
+            <option value="{{ version.version }}"{% if version.selected %} selected="selected"{% endif %}>{{ version.version__package__namespace }}: {{ version.version__name }} ({{ version.count }})</option>
+          {% endfor %}
+          </select>
+{% endcomment %}        
         
-      <select name="versions" multiple="multiple">
-      {% for version in facets.versions %}
-        <option value="{{ version.version }}"{% if version.selected %} selected="selected"{% endif %}>{{ version.version__package__namespace }}: {{ version.version__name }} ({{ version.count }})</option>
-      {% endfor %}
-      </select>
-        
-      <select name="org_types" multiple="multiple">
-      {% for org_type in facets.org_types %}
-        <option value="{{ org_type.value }}"{% if org_type.selected %} selected="selected"{% endif %}>{{ org_type.org_type }} ({{ org_type.count }})</option>
-      {% endfor %}
-      </select>
+      <div class="slds-form-element">
+        <label class="slds-form-element__label" for="filter-org-type">Minimum Count</label>
+        <div class="slds-form-element__control">
+          <select id="filter-org-type" name="org_types" multiple="multiple" class="slds-select">
+          {% for org_type in facets.org_types %}
+            <option value="{{ org_type.value }}"{% if org_type.selected %} selected="selected"{% endif %}>{{ org_type.org_type }} ({{ org_type.count }})</option>
+          {% endfor %}
+          </select>
+        </div>
+      </div>
 
-      <input type="submit" />
+      <div class="slds-form-element">
+        <div class="slds-form-element__control">
+          <input type="submit" class="slds-button slds-button--neutral" value="Search" />
+        </div>
+      </div>
     </form>
+{% endblock %}
 
-    <ul class="list-group">
+{% block layout_body %}
     {% for error in errors %}
-      <li class="list-group-item">
-        <span class="badge alert-info">{{ error.count }}</span>
-        <span class="badge alert-warning"><a href="/admin/mpinstaller/installationerror/{{ error.error.id }}/">edit</a></span>
-        {% if error.error.content %}
-        <span class="badge alert-success"><a href="/admin/mpinstaller/installationerrorcontent/{{ error.error.content.id }}/">resolution</a></span>
-        {% endif %}
-        <h4>{{ error.error.message }}</h4>
-      </li>
+      <div class="slds-box">
+        <div class="slds-grid">
+          <div class="slds-col slds-size-1-of-8">
+            <span class="slds-badge">{{ error.count }}</span>
+          </div>
+          <div class="slds-col slds-size-5-of-8">
+            <h3 class="slds-text-heading--small slds-m-left--medium">{{ error.error.message }}</h4>
+          </div>
+          <div class="slds-col slds-size-2-of-8">
+            <div class="slds-button-group slds-float--right">
+              <a href="/admin/mpinstaller/installationerror/{{ error.error.id }}/"><button class="slds-button slds-button--neutral">edit</button></a></span>
+              {% if error.error.content %}
+              <a href="/admin/mpinstaller/installationerrorcontent/{{ error.error.content.id }}/"><button class="slds-button slds-button--neutral">resolution</button></a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
     {% endfor %}
-    </ul>
 {% endblock %}

@@ -4,6 +4,8 @@ import traceback
 from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
+from social.apps.django_app.utils import load_strategy
 from mpinstaller.github import github_api
 from mpinstaller.github import SalesforcePackageToGithub
 from mpinstaller.handlers import install_package_version
@@ -76,12 +78,13 @@ class Contribution(models.Model):
         return False
 
     def github_token(self):
+        strategy = load_strategy()
         github_auth = self.contributor.user.social_auth.filter(provider = 'github')
         if github_auth.count():
             github_auth = github_auth[0]
-            github_auth.refresh_token()
+            github_auth.refresh_token(strategy)
         if github_auth:
-            return github_auth.tokens['access_token']
+            return github_auth.access_token
 
     def github_api(self, path, data=None, fork=None, as_contributor=None):
         if fork:
@@ -312,6 +315,7 @@ class Contribution(models.Model):
         return hashlib.md5(''.join(aggregate_crc)).hexdigest()
 
     def sync(self):
+        changed = False
         try:
             sync = ContributionSync(
                 contribution = self,
@@ -334,7 +338,6 @@ class Contribution(models.Model):
             sync.pre_state_uncommitted_changes = self.state_uncommitted_changes
             sync.save()
     
-            changed = False
     
             first_sync = False
             if not self.last_retrieve_checksum:
@@ -597,12 +600,8 @@ class Contribution(models.Model):
 
         sf_auth = self.decode_sf_oauth()
         github_token = self.github_token()
-        github_auth = self.contributor.user.social_auth.filter(provider = 'github')
-        if github_auth.count():
-            github_auth = github_auth[0]
-            github_auth.refresh_token()
 
-        if not sf_auth or not github_auth:
+        if not sf_auth or not github_token:
             return 
 
         push = SalesforcePackageToGithub(
@@ -640,12 +639,12 @@ class ContributionSync(models.Model):
     initial_state_behind_main = models.BooleanField()
     initial_state_undeployed_commit = models.BooleanField()
     initial_state_uncommitted_changes = models.BooleanField()
-    pre_state_behind_main = models.BooleanField()
-    pre_state_undeployed_commit = models.BooleanField()
-    pre_state_uncommitted_changes = models.BooleanField()
-    post_state_behind_main = models.BooleanField()
-    post_state_undeployed_commit = models.BooleanField()
-    post_state_uncommitted_changes = models.BooleanField()
+    pre_state_behind_main = models.NullBooleanField(null=True)
+    pre_state_undeployed_commit = models.NullBooleanField(null=True)
+    pre_state_uncommitted_changes = models.NullBooleanField(null=True)
+    post_state_behind_main = models.NullBooleanField(null=True)
+    post_state_undeployed_commit = models.NullBooleanField(null=True)
+    post_state_uncommitted_changes = models.NullBooleanField(null=True)
     date_started = models.DateTimeField(auto_now_add = True)
     date_modified = models.DateTimeField(auto_now = True)
 

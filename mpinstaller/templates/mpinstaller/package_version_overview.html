@@ -1,110 +1,120 @@
-{% extends 'mpinstaller/base.html' %}
+{% extends 'mpinstaller/layout_workspace.html' %}
 
 {% load bootstrap3 %}
 
-{% block bootstrap3_title %}{% block title %}{{ version.package }} Installer - {{ version.number }}{% endblock %}{% endblock %}
-{% block bootstrap3_page_title %}{{ version.package }} {{ version.number }} Installer{% endblock %}
-
-{% block bootstrap3_content %}
-
-{% bootstrap_messages %}
-
-{% if content_intro %}
-<div class="row">
-  <div class="col-md-12">
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">Welcome to the {{ version.package }} {{ version.number }} installer!</h3>
-      </div>
-      <div class="panel-body">
-        {% autoescape off %}{{ content_intro.body }}{% endautoescape %}
-      </div>
-    </div>
-  </div>  
-</div>
-{% endif %}
-
-{% if version.repo_url %}
-<div class="row">
-  <div class="col-md-12">
-    <div class="panel panel-primary">
-      <div class="panel-heading">
-        <h3 class="panel-title">For use in development environments only!!!</h3>
-      </div>
-      <div class="panel-body">
-        <p>This installer will install unmanaged metadata directly from the project's repository on Github (<a href="{{ version.repo_url }}">{{ version.repo_url }}</a>).  Only run this installer to set up a development environment to do development on the package itself.  It is recommended that you create a new Developer Edition org to use for this so you don't risk messing up any existing data or metadata.</p>
-
-        {% if fork %}
-        <h3>Fork: <a href="{{ repo_url }}">{{ fork }}</a></h3>
-        {% endif %}
-        <h3>Branch, Tag, or Commit: {% if git_ref %}<a href="{{ repo_url }}/tree/{{ git_ref }}">{{ git_ref }}</a>{% else %}<a href="{{ repo_url }}/tree/{{ version.branch }}">{{ version.branch }}</a>{% endif %}</h3>
-
-        <p>Note that you can install a specific branch, tag, or commit from the repository by passing the <strong>git_ref</strong> argument in the url</p>
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %}
-
-<div class="row">
-  {% if oauth.access_token %}
-  <div class="col-md-3 col-xs-12 col-sm-12">
-  {% else %}
-  <div class="col-md-12 col-xs-12 col-sm-12">
-  {% endif %}
-    <div class="panel{% if not oauth.access_token %} panel-primary{% else %} panel-default{% endif %}">
-      <div class="panel-heading">
-      {% if login_url %}
-        <h3 class="panel-title">
-          Connect to Salesforce
-        </h3>
-      {% else %}
-        <h3 class="panel-title">
-          <span class="glyphicon glyphicon-ok"></span>
-          Connected to Salesforce
-        </h3>
-      {% endif %}
-      </div>
-      <div class="panel-body">
-      {% if login_url %}
-        <p>You must be connected to a Salesforce organization to run the installer.</p>
-        <p><b>NOTE:</b> <i>Your login information only remains cached during the installation</i>.</p>
-        <div class="btn-group clearfix">
-          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-            <span class="glyphicon glyphicon-log-in"></span>
-            Log In <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu" role="menu">
-            <li><a href="{{ login_url }}">{% if not version.is_beta %}Production or {% endif %}Developer Edition org</a></li>
-            <li><a href="{{ login_url }}&sandbox=true">Sandbox org</a></li>
-          </ul>
+{% block layout_sidebar %}
+      {% if not oauth.access_token %}
+      <div class="slds-box slds-p-top--large slds-theme--info">
+        <h3 class="slds-text-heading--large slds-p-bottom--large">Connect to Salesforce</h3>
+        <p>You must be connected to a Salesforce organization to run the installer</p>
+        <p><strong>NOTE:</strong> <i>Your login information only remains cached during the installation</i></p>
+        <div class="slds-button-group slds-p-top--large" role="group">
+          <a href="{{ login_url }}"><button class="slds-button slds-button--brand">{% if not version.is_beta %}Production or {% endif %}Developer Edition</button></a>
+          <a href="{{ login_url }}&sandbox=true"><button class="slds-button slds-p-left--medium slds-button--neutral">Sandbox</button></a>
         </div>
+      </div>
       {% else %}
+      <div class="slds-box slds-p-top--large slds-theme--default">
+        <h3 class="slds-text-heading--large slds-p-bottom--large">Connected to Salesforce</h3>
         <p>
           <div><strong>User:</strong> <span id="oauth-username">{{ oauth.username }}</span></div>
           <div><strong>Org:</strong> {{ oauth.org_name }}</div>
           <div><strong>Type:</strong> {{ oauth.org_type }}</div>
         </p>
-        <div class="button-grp">
-          <a class="btn btn-info" href="{{ logout_url }}"><span class="glyphicon glyphicon-log-out"></span> Log Out</a>
+        <div class="slds-button-group slds-p-top--large" role="group">
+          <a class="slds-button slds-p-left--large slds-button--neutral" href="{{ logout_url }}">Log Out</a>
         </div>
+      </div>
       {% endif %}
+
+      {% if version.repo_url %}
+      <div class="slds-box slds-p-top--large slds-theme--warning">
+        <h3 class="slds-text-heading--large slds-p-bottom--large">For use in development environments only!!!</h3>
+        <p>This installer will install unmanaged metadata directly from the project's repository on Github (<a href="{{ version.repo_url }}">{{ version.repo_url }}</a>).  Only run this installer to set up a development environment to do development on the package itself.  It is recommended that you create a new Developer Edition org to use for this so you don't risk messing up any existing data or metadata.</p>
+        {% if fork %}
+        <h3 class="slds-text-heading--large slds-p-bottom--large">Fork: <a href="{{ repo_url }}">{{ fork }}</a></h3>
+        {% endif %}
+        <h3 class="slds-text-heading--large slds-p-top--large">Branch, Tag, or Commit: {% if git_ref %}<a href="{{ repo_url }}/tree/{{ git_ref }}">{{ git_ref }}</a>{% else %}<a href="{{ repo_url }}/tree/{{ version.branch }}">{{ version.branch }}</a>{% endif %}</h3>
+
+        <p>Note that you can install a specific branch, tag, or commit from the repository by passing the <strong>git_ref</strong> argument in the url</p>
       </div>
-    </div>
-  </div>
+      {% endif %}
+{% endblock %}
 
+{% block layout_body %}
+      {% if content_intro %}
+      <div class="slds-box slds-p-bottom--large">
+        <h3 class="slds-text-heading--large slds-p-bottom--large">Welcome to the {{ version.package }} {{ version.number }} installer!</h3>
+        <p>{% autoescape off %}{{ content_intro.body }}{% endautoescape %}</p>
+      </div>
+      {% endif %}
 
+          <div class="slds-box slds-p-top--large">
+            <h3 class="slds-text-heading--large slds-p-bottom--large">Installation Steps</h3>
+
+            {% if oauth.access_token %}
+            <p>{{ version.package }} {{ version.number }} requires the following unmanaged metadata and managed packages:</p>
+
+            <ul class="slds-p-top--large">
+              {% for step in package_list %}
+              <li>
+                <span class="slds-assistive-text">{{ step.action }}</span>
+                <div class="slds-media slds-media--timeline slds-timeline__media--task">
+                  <!-- Icon -->
+                  <div class="slds-media__figure slds-timeline__icon">
+                    <div class="slds-icon_container">
+                      <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-standard-task{% if step.version.number %}{% elif step.version.zip_url %}{% elif step.version.repo_url %}{% endif %}">
+                        <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#{% if step.version.number %}package{% elif step.version.zip_url %}download{% elif step.version.repo_url %}download{% endif %}"></use>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div class="slds-media__body">
+                    <h3 class="slds-truncate slds-text-heading--medium" title="{{ step.action }} {{ step.version.package.name }}">{{ step.action }} {{ step.version.package.name }}</h3>
+                    <ul class="slds-list--horizontal slds-wrap">
+                      <li class="slds-m-right--large">
+                        <span class="slds-text-title">Action:</span>
+                        <span class="slds-text-body--small">{{ step.action }}</span>
+                      </li>
+                      <li class="slds-m-right--large">
+                        <span class="slds-text-title">Type: </span>
+                        <span class="slds-text-body--small">
+                          {% if step.version.number %}
+                          Managed Package
+                          {% elif step.version.zip_url %}
+                          <a href="{{ step.version.zip_url }}" target="_blank">Unmanaged Metadata from Zip</a>
+                          {% elif step.version.repo_url and not step.version.subfolder %}
+                          <a href="{{ step.version.repo_url }}" target="_blank">Unmanaged Metadata from Github</a>
+                          {% elif step.version.repo_url and step.version.subfolder %}
+                          <a href="{{ step.version.repo_url }}/tree/{{ step.version.branch }}/{{ step.version.subfolder }}" target="_blank">Unmanaged Metadata from Github</a>
+                          {% endif %}
+                        </span>
+                      </li>
+                      <li class="slds-m-right--large">
+                        <span class="slds-text-title">Version:</span>
+                        <span class="slds-text-body--small">{{ step.version.number|default:"Unmanaged" }}</span>
+                      </li>
+                      <li class="slds-m-right--large">
+                        <span class="slds-text-title">Currently Installed: </span>
+                        <span class="slds-text-body--small">{{ step.installed|default:"Not Installed" }}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+            <div class="slds-button-group slds-p-top--large" role="group">
+              <a class="slds-button slds-p-left--large slds-button--brand" href="{{ install_url }}">Install</a>
+            </div>
+            {% else %}
+              Please log in using the Connect to Salesforce box.  The installer will examine your org and show you what steps it will take.  You will have to approve the steps before the installation will start.
+            {% endif %}
+          </div>
+{% endblock %}
+
+<div class="row">
   {% if oauth.access_token %}
-  <div class="col-md-9 col-sm-12 col-xs-12">
-
-    <div class="panel{% if oauth.access_token %} panel-primary{% else %} panel-default{% endif %}">
-      <div class="panel-heading">
-        <h3 class="panel-title">Installation Bundles and Packages</h3>
-      </div>
-     
-      <div class="panel-body"> 
-        <p>{{ version.package }} {{ version.number }} requires the following unmanaged metadata and managed packages:</p>
-        <ul class="list-group">
           {% for step in package_list %}
           <li class="list-group-item{% if step.uninstall %} list-group-item-danger{% elif step.install %} list-group-item-success{% elif step.upgrade %} list-group-item-info{% endif %}">
             <div class="row">
@@ -216,4 +226,3 @@
   </div>
 </div>
 
-{% endblock %}

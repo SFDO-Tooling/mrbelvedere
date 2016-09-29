@@ -80,6 +80,15 @@ class CreateContributionForm(forms.ModelForm):
 
     class Meta:
         model = Contribution
+        fields = [
+            'contributor',
+            'package_version',
+            'issue_type',
+            'github_issue',
+            'title',
+            'body',
+            'body',
+        ]
 
     def save(self, commit=True):
         instance = super(CreateContributionForm, self).save(commit=False)

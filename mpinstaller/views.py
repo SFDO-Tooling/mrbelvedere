@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from mpinstaller.auth import SalesforceOAuth2
 from mpinstaller.installer import version_install_map
@@ -29,6 +30,15 @@ from simple_salesforce.api import SalesforceExpiredSession
 from simple_salesforce.api import SalesforceResourceNotFound
 
 logger = logging.getLogger(__name__)
+
+def redirect_to_package_list(request):
+    return HttpResponseRedirect('/mpinstaller')
+
+def package_list(request):
+    packages = Package.objects.filter(
+        Q(current_prod__isnull = False) | Q(current_beta__isnull = False) | Q(current_github__isnull = False)
+    )
+    return render_to_response('mpinstaller/package_list.html', {'packages': packages}) 
 
 def package_overview(request, namespace, beta=None, github=None):
     package = get_object_or_404(Package, namespace = namespace)
@@ -51,6 +61,27 @@ def package_version_overview(request, namespace, version_id):
 
     fork = request.GET.get('fork',None)
     git_ref = request.GET.get('git_ref',None)
+
+    # Support the Install with mrbelvedere button by inspecting github referer url to determine fork and git_ref
+    referer = request.META.get('HTTP_REFERRER', '')
+    if referer.startswith('https://github.com/'):
+        url_parts = referer.replace('https://github.com/','').split('/')
+        owner = url_parts[0]
+        repo = url_parts[1]
+        repo_base_url = 'https://github.com/{}/{}'.format(owner, repo)
+        
+        if fork is None:
+            if version.repo_url != repo_base_url:
+                fork = owner
+        
+        if git_ref is None:
+            try:
+                if url_parts[2] == 'tree':
+                    git_ref = '/'.join(url_parts[3:])
+                    if git_ref.endswith('/README.md'):
+                        git_ref = git_ref.replace('/README.md','')
+            except IndexError:
+                pass
 
     oauth = request.session.get('oauth')
 
@@ -82,7 +113,7 @@ def package_version_overview(request, namespace, version_id):
         # Get the install map and package list
         install_map = version_install_map(version, org_packages, metadata, git_ref, fork)
         package_list = install_map_to_package_list(install_map)
-    
+
     logged_in = False
     redirect = quote(request.build_absolute_uri(request.path))
     if oauth and oauth.get('access_token', None):

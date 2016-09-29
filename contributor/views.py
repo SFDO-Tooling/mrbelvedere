@@ -3,7 +3,7 @@ import datetime
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from contributor.forms import CreateContributionForm
@@ -18,7 +18,7 @@ def contributor_home(request):
     if not request.user.is_anonymous():
         return HttpResponseRedirect('/contributor/%s' % request.user.username)
 
-    return render_to_response('contributor/contributor_home.html')
+    return render(request, 'contributor/contributor_home.html')
 
 @login_required
 def contributor_contributions(request, username):
@@ -35,15 +35,15 @@ def contributor_contributions(request, username):
         'contributions': contributor.contributions.all().order_by('-id'),
     }
 
-    return render_to_response('contributor/my_contributions.html', context)
+    return render(request, 'contributor/my_contributions.html', context)
 
 def create_contribution(request):
     if request.user.is_anonymous():
-        return HttpResponseRedirect('/social-auth/login/github?redirect=/contributor/create')
+        return HttpResponseRedirect('/login/github/?redirect=/contributor/create')
 
     # If the user doesn't have a github social auth, redirect to login
     if not request.user.social_auth.filter(provider='github').count():
-        return HttpResponseRedirect('/social-auth/login/github?redirect=/contributor/create')
+        return HttpResponseRedirect('/login/github/?redirect=/contributor/create')
     
     try:
         contributor = Contributor.objects.get(user = request.user)
@@ -62,8 +62,7 @@ def create_contribution(request):
         initial = {'contributor': contributor.id}
         form = CreateContributionForm(initial=initial)
        
-    context = RequestContext(request, {'form': form}) 
-    return render_to_response('contributor/create_contribution.html', context)
+    return render(request, 'contributor/create_contribution.html', {'form': form})
 
 @login_required
 def contribution(request, contribution_id):
@@ -71,7 +70,7 @@ def contribution(request, contribution_id):
    
     if not contribution.can_view(request.user): 
         if request.user.is_anonymous():
-            return HttpResponseRedirect('/social-auth/login/github?redirect=/contributor/contributions/%s' % contribution_id)
+            return HttpResponseRedirect('/login/github/?redirect=/contributor/contributions/%s' % contribution_id)
         return HttpResponse('Unauthorized', status=401)
 
     # If no fork_branch is set, send to the edit branch form
@@ -93,7 +92,7 @@ def contribution(request, contribution_id):
         'last_sync': last_sync,
     }
 
-    return render_to_response('contributor/contribution.html', context)
+    return render(request, 'contributor/contribution.html', context)
 
 @login_required
 def contribution_edit_branch(request, contribution_id):
@@ -112,8 +111,8 @@ def contribution_edit_branch(request, contribution_id):
     else:
         form = ContributionEditBranchForm(instance=contribution)
 
-    context = RequestContext(request, {'form': form, 'contribution': contribution})
-    return render_to_response('contributor/contribution_edit_branch.html', context)
+    context = {'form': form, 'contribution': contribution}
+    return render(request, 'contributor/contribution_edit_branch.html', context)
 
 @login_required
 def contribution_edit_salesforce_org(request, contribution_id):
@@ -125,7 +124,7 @@ def contribution_edit_salesforce_org(request, contribution_id):
     # Set a redirect url in the session to be redirected back after a normal mpinstaller login
     redirect = '/contributor/contributions/%s/capture_salesforce_org' % contribution.id
 
-    return render_to_response('contributor/contribution_edit_salesforce_org.html', {'contribution': contribution, 'redirect': redirect})
+    return render(request, 'contributor/contribution_edit_salesforce_org.html', {'contribution': contribution, 'redirect': redirect})
 
 @login_required
 def contribution_capture_salesforce_org(request, contribution_id):
@@ -168,7 +167,7 @@ def contribution_commit(request, contribution_id):
     else:
         form = ContributionCommitForm()
 
-    return render_to_response('contributor/contribution_commit.html', {'contribution': contribution, 'form': form})
+    return render(request, 'contributor/contribution_commit.html', {'contribution': contribution, 'form': form})
 
 @login_required
 def contribution_submit(request, contribution_id):
@@ -214,7 +213,7 @@ def contribution_submit(request, contribution_id):
     else:
         form = ContributionSubmitForm()
 
-    return render_to_response('contributor/contribution_submit.html', {'contribution': contribution, 'form': form})
+    return render(request, 'contributor/contribution_submit.html', {'contribution': contribution, 'form': form})
 
 @login_required
 def contribution_sync_state(request, contribution_id):
@@ -240,7 +239,7 @@ def contribution_syncs(request, contribution_id):
 
     syncs = contribution.syncs.all().order_by('-date_started')
 
-    return render_to_response('/contributor/contribution_syncs.html', {'contribution': contribution, 'syncs': syncs})
+    return render(request, 'contributor/contribution_syncs.html', {'contribution': contribution, 'syncs': syncs})
 
 @login_required
 def contribution_status(request, contribution_id):

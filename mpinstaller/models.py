@@ -24,6 +24,14 @@ INSTALLATION_ACTION_CHOICES = (
     ('skip','No change'),
 )
 
+def sldsify_html(html):
+    html = html.replace('<h1>', '<h1 class="slds-text-heading--large">')
+    html = html.replace('<h2>', '<h2 class="slds-text-heading--medium">')
+    html = html.replace('<h3>', '<h3 class="slds-text-heading--small">')
+    html = html.replace('<ol>', '<ol class="slds-list--ordered">')
+    html = html.replace('<ul>', '<ol class="slds-list--dotted">')
+    return html
+
 class MetadataCondition(models.Model):
     metadata_type = models.CharField(max_length=255)
     field = models.CharField(max_length=255)
@@ -223,7 +231,7 @@ class PackageVersion(models.Model):
     namespace_token = models.CharField(max_length=255, null=True, blank=True, help_text="If provided, all files in the archive will be scanned and the token will be replaced with the namespace provided.  For CumulusCI, the default token is %%%NAMESPACE%%%")
     namespace = models.CharField(max_length=255, null=True, blank=True, help_text="If provided, the namespace_token will be replaced with this namespace.  If not provided, the token will be cleared.  Example: npsp")
     package_name = models.CharField(max_length=255, null=True, blank=True, help_text="If configuring a Github repository for contributions, enter the package name for unmanaged deployments here.  This is used to retrieve a contribution's packaged metadata from a Salesforce org.")
-    conditions = models.ManyToManyField(MetadataCondition, null=True, blank=True)
+    conditions = models.ManyToManyField(MetadataCondition, blank=True)
     content_intro = HTMLField(null=True, blank=True, help_text="Optional version specific text to show in Package Information panel")
     content_success = HTMLField(null=True, blank=True, help_text="Optional version specific text shown after a successful installation.")
     content_failure = HTMLField(null=True, blank=True, help_text="Optional version specific text shown after a failed installation.")
@@ -309,10 +317,13 @@ class PackageVersion(models.Model):
         if self.content_intro:
             content.append(self.content_intro)
 
+        content = '\n'.join(content)
+        content = sldsify_html(content)
+
         if content:
             return {
                 'heading': self.package.name,
-                'body': '\n'.join(content),
+                'body': content,
             }
 
     def get_content_success(self):
@@ -328,10 +339,13 @@ class PackageVersion(models.Model):
         if self.content_success:
             content.append(self.content_success)
 
+        content = '\n'.join(content)
+        content = sldsify_html(content)
+
         if content:
             return {
                 'heading': self.package.name,
-                'body': '\n'.join(content),
+                'body': content,
             }
 
     def get_content_failure(self):
@@ -347,10 +361,13 @@ class PackageVersion(models.Model):
         if self.content_failure:
             content.append(self.content_failure)
 
+        content = '\n'.join(content)
+        content = sldsify_html(content)
+
         if content:
             return {
                 'heading': self.package.name,
-                'body': '\n'.join(content),
+                'body': content,
             }
 
     class Meta:
@@ -429,6 +446,7 @@ class PackageInstallation(models.Model):
         if self.version:
             version_content = self.version.get_content_success()
             if version_content:
+                version_content['body'] = sldsify_html(version_content['body'])
                 content.append(version_content)
    
         # Add content from dependent packages and versions
@@ -440,6 +458,7 @@ class PackageInstallation(models.Model):
             packages.append(step.package.id)
             step_content = step.version.get_content_success()
             if step_content:
+                step_content['body'] = sldsify_html(step_content['body'])
                 content.append(step_content)
         
         return content
@@ -454,6 +473,7 @@ class PackageInstallation(models.Model):
         if self.version:
             version_content = self.version.get_content_failure()
             if version_content:
+                version_content['body'] = sldsify_html(version_content['body'])
                 content.append(version_content)
    
         # Add content from dependent packages and versions
@@ -469,6 +489,7 @@ class PackageInstallation(models.Model):
             else:
                 step_content = step.version.get_content_failure()
             if step_content:
+                step_content['body'] = sldsify_html(step_content['body'])
                 content.append(step_content)
         
         return content
@@ -513,7 +534,7 @@ class InstallationErrorManager(models.Manager):
             'date_end': q_steps.aggregate(models.Max('created'))['created__max'],
         }
 
-        return {'errors': errors, 'facets': facets}
+        return {'errors': errors, 'facets': facets, 'parent_package': parent_package, 'parent_version': parent_version}
 
     def drilldown_steps(self, parent_package=None, parent_version=None, packages=None, versions=None, org_types=None, date_start=None, date_end=None):
         q_steps = PackageInstallationStep.objects.all()
@@ -560,7 +581,6 @@ class PackageInstallationStep(models.Model):
     installation = models.ForeignKey(PackageInstallation, related_name='steps')
     package = models.ForeignKey(Package, related_name='installation_steps', null=True, blank=True)
     version = models.ForeignKey(PackageVersion, related_name='installation_steps', null=True, blank=True)
-    action = models.ForeignKey(OrgAction, related_name='installation_steps', null=True, blank=True)
     previous_version = models.CharField(max_length=255, null=True, blank=True)
     action = models.CharField(choices=INSTALLATION_ACTION_CHOICES, max_length=32)
     status = models.CharField(choices=INSTALLATION_STEP_STATUS_CHOICES, max_length=32)

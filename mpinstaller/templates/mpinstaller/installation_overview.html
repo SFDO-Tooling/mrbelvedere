@@ -1,11 +1,10 @@
-{% extends 'mpinstaller/base.html' %}
+{% extends 'mpinstaller/layout_full.html' %}
 
 {% load bootstrap3 %}
 
-{% block bootstrap3_title %}{{ version.package }} {{ version.number }} Installation Status{% endblock %}
-{% block bootstrap3_page_title %}<a href="{{ version.get_installer_url }}">{{ version.package }} {{ version.number }} Installation Status</a>{% endblock %}
+{% block base_title %}{{ version.package }} {{ version.number }} Installation Status{% endblock %}
 
-{% block extra_head %}
+{% block base_head %}
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.js"></script> 
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-sanitize.js"></script> 
 <script type="text/javascript">
@@ -22,125 +21,197 @@
     font-weight; bold;
     padding-top: 10px;
   }
+  .slds-wizard__progress {
+    z-index: 0;
+  }
+  .slds-theme--default {
+    color: #16325c;
+  }
+
 </style>
 {% endblock %}
 
-{% block bootstrap3_content %}
+{% block base_body_wrapper_header %}
+{% verbatim %}
+  <div class="installation-status" ng-app="InstallationStatusApp" ng-controller="InstallationStatusController">
+{% endverbatim %}
+{% endblock %}
 
-{% bootstrap_messages %}
+{% block base_body_wrapper_footer %}
+  </div>
+{% endblock %}
+
+{% block layout_sidebar %}
 
 {% verbatim %}
+{% endverbatim %}
+  {% endblock %}
 
-  <div class="installation-status" ng-app="InstallationStatusApp" ng-controller="InstallationStatusController">
-
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">
-          <span class="glyphicon" ng-class="{'glyphicon-ok': (installation.status == 'Succeeded'),'glyphicon-warning-sign': (installation.status == 'Failed'),}"></span>
-          Overall Status
-        </h3>
-      </div>
-      
-      <div class="alert alert-primary" ng-hide="installation.progress == 100">
-          <span ng-hide="installation.status != 'Pending'">Your installation will start in a moment. This page will provide updates until the installation completes.</span>
-          <span ng-hide="installation.status != 'InProgress'">Your installation is in progress and running in the background. This page will provide updates until the installation completes.</span>
-      </div>
-      <div class="panel-body">  
-        <div id="installation-progress-bar">
-          <div class="progress" ng-class="{'progress-striped active': (installation.progress < 100)}">
-            <div class="progress-bar" ng-class="{'progress-bar-success': (installation.status == 'Succeeded'), 'progress-bar-danger': (installation.status == 'Failed'),'progress-bar-primary': (installation.status == 'InProgress'), 'progress-bar-default': (installation.status == 'Pending')}" role="progressbar" aria-valuenow="{{installation.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{installation.progress}}%">
-              {{installation.status}}
+  {% block layout_body %}
+{% verbatim %}
+    <div class="slds-box">
+      <h3 class="slds-text-heading--large slds-p-bottom--large">
+        <span class="glyphicon" ng-class="{'glyphicon-ok': (installation.status == 'Succeeded'),'glyphicon-warning-sign': (installation.status == 'Failed'),}"></span>
+        Overall Status:
+        <span class="slds-badge slds-text-heading--medium" ng-hide="installation.status != 'Pending'">Queued</span>
+        <span class="slds-badge slds-text-heading--medium slds-theme--info" ng-hide="installation.status != 'InProgress'">In Progress</span>
+        <span class="slds-badge slds-text-heading--medium slds-theme--success" ng-hide="installation.status != 'Succeeded'">Succeeded</span>
+        <span class="slds-badge slds-text-heading--medium slds-theme--error" ng-hide="installation.status != 'Failed'">Failed</span>
+      </h3>
+      <div class="slds-box--body">  
+        <div class="slds-notify_container" ng-hide="installation.progress == 100"> 
+          <div class="slds-notify slds-notify--default">
+            <span ng-hide="installation.status != 'Pending'">Your installation will start in a moment. This page will provide updates until the installation completes.</span>
+            <span ng-hide="installation.status != 'InProgress'">Your installation is in progress and running in the background. This page will provide updates until the installation completes.</span>
+          </div>
+        </div>
+        <div class="slds-wizard slds-p-bottom--large" role="navigation">
+          <ol class="slds-wizard__list">
+            <li class="slds-wizard__item" ng-class="{'slds-is-active': (installation.status == 'Pending' || installation.status == 'InProgress')}">
+              <div class="slds-wizard__link">
+                <span class="slds-wizard__marker" ng-class="{'slds-theme--success': (installation.status == 'Succeeded'), 'slds-theme--error': (installation.status == 'Failed')}"></span>
+                <span class="slds-wizard__label slds-text-title--caps slds-truncate">Queued</span>
+              </a>
+            </li>
+            <li class="slds-wizard__item" ng-class="{'slds-is-active': (installation.status == 'InProgress')}">
+              <div class="slds-wizard__link">
+                <span class="slds-wizard__marker" ng-class="{'slds-theme--success': (installation.status == 'Succeeded'), 'slds-theme--error': (installation.status == 'Failed')}"></span>
+                <span class="slds-wizard__label slds-text-title--caps slds-truncate">In Progress</span>
+              </div>
+            </li>
+            <li class="slds-wizard__item">
+              <div class="slds-wizard__link">
+                <span class="slds-wizard__marker" ng-class="{'slds-theme--success': (installation.status == 'Succeeded'), 'slds-theme--error': (installation.status == 'Failed')}"></span>
+                <span class="slds-wizard__label slds-text-title--caps slds-truncate">Complete</span>
+              </div>
+            </li>
+          </ol>
+          <span class="slds-wizard__progress">
+            <span class="slds-wizard__progress-bar" style="width:{{installation.progress}}%;" ng-class="{'slds-theme--success': (installation.status == 'Succeeded'), 'slds-theme--error': (installation.status == 'Failed')}"></span>
+          </span>
+        </div>
+        <div class="slds-box slds-theme--success slds-p-top--large" ng-if="installation.status == 'Succeeded' && installation.content_success">
+          <h3 class="slds-text-heading--large slds-p-bottom--large">Next Steps</h3>
+          <div class="slds-box--body">
+            <div class="slds-box slds-theme--default" ng-repeat="content in installation.content_success">
+              <h3 class="slds-text-heading--medium slds-p-bottom--medium">{{content.heading}}</h3>
+              <div class="slds-box--body">
+                <span ng-bind-html="content.body" />
+              </div>
+            </div>
+          </div>
+        </div>
+          
+        <div class="slds-box slds-theme--error slds-p-top--large" ng-if="installation.status == 'Failed' && installation.content_failure">
+          <h3 class="slds-text-heading--large slds-p-bottom--large">Next Steps</h3>
+          <div class="slds-box--body">
+            <div class="slds-box slds-theme--default" ng-repeat="content in installation.content_failure">
+              <h3 class="slds-text-heading--medium slds-p-bottom--medium">{{content.heading}}</h3>
+              <div class="slds-box--body">
+                <span ng-bind-html="content.body" />
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="content-next-steps content-next-steps-succeeded" ng-if="installation.status == 'Succeeded' && installation.content_success">
-          <h3>Next Steps</h3>
-          <ul class="list-group">
-            <li class="list-group-item list-group-item-success contextual-content" ng-repeat="content in installation.content_success">
-              <div class="row">
-                <div class="col-md-3">
-                  <h4>{{content.heading}}</h4>
-                </div>
-                <div class="col-md-9">
-                  <span ng-bind-html="content.body" />
-                </div>
-              </div>
-            </li>
-          </ul>
+        <div class="slds-button-group slds-p-top--large" ng-if="installation.status == 'Failed'">
+          <a href="{% endverbatim %}{{ version.get_installer_url }}{% verbatim %}"><button class="slds-button slds-button--brand">Retry Installation</button></a>
         </div>
+      </div>
+    </div>
+
+
+    <div class="slds-box">
+      <h3 class="slds-text-heading--large slds-p-bottom--large">Installation Log</h3>
+      <div class="slds-box--body">  
+        <ul id="installation-steps">
           
-        <div class="content-next-steps content-next-steps-failed" ng-if="installation.status == 'Failed' && installation.content_failure">
-          <h3>Next Steps</h3>
-          <ul class="list-group">
-            <li class="list-group-item list-group-item-warning contextual-content" ng-repeat="content in installation.content_failure">
-              <div class="row">
-                <div class="col-md-3">
-                  <h4>{{content.heading}}</h4>
-                </div>
-                <div class="col-md-9">
-                  <span ng-bind-html="content.body" />
-                </div>
-              </div>
-            </li>
-          </ul>
-
-          <a href="{% endverbatim %}{{ version.get_installer_url }}{% verbatim %}"><span class="glyphicon glyphicon-arrow-left"></span> Return to package overview to retry the installation</a>
-        </div>
-     
-        <h3>Installation Log</h3>
-        
-        <ul class="list-group" id="installation-steps">
-          
-          <li class="list-group-item" ng-class="{'list-group-item-success': (step.status == 'Succeeded' && step.action != 'skip'), 'text-muted': (step.action == 'skip'), 'list-group-item-danger': (step.status == 'Failed'),'list-group-item-primary': (step.status == 'InProgress'), 'list-group-item-default': (step.status == 'Pending')}" ng-repeat="step in installation.steps">
-            <div class="row">
-  
-              <div class="col-md-6">
-                <h3 class="panel-title">
-                  {{step.version.package.name}}
-                  <span ng-hide="step.version.number == '' || step.version.number == null || step.action == 'uninstall'">- {{step.version.number}}</span>
-                  <span ng-hide="step.action != 'uninstall'">- {{step.previous_version}}</span>
-                </h3>
-                <p>{{step.version.package.description}}</p>
-              </div>
-
-              <div class="col-md-3">
-                <span ng-hide="step.version.zip_url == null || step.version.zip_url == ''" class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata from Zip</span>
-                <span ng-hide="step.version.repo_url == null || step.version.repo_url == ''" class="badge"><span class="glyphicon glyphicon-compressed"></span> Metadata from Github</span>
-                <span ng-hide="step.version.number == null || step.version.number == ''" class="badge alert-info"><span class="glyphicon glyphicon-gift"></span> Managed Package</span>
-                <span ng-hide="step.version.is_beta != true" class="badge alert-warning"><span class="glyphicon glyphicon-warning-sign"></span> Beta Release</span>
-              </div>
-
-              <div class="col-md-3">
-                
-                <div ng-class="{'text-success': (step.status == 'Succeeded' && step.action != 'skip'), 'text-muted': (step.action == 'skip'), 'text-warning': (step.status == 'Cancelled'), 'text-danger': (step.status == 'Failed'),'text-primary': (step.status == 'InProgress'), 'text-default': (step.status == 'Pending')}">
-                  <span class="glyphicon" ng-class="{'glyphicon-ok': (step.status == 'Succeeded'),'glyphicon-exclamation-sign': (step.status == 'Failed'), 'glyphicon-ban-circle': (step.status == 'Cancelled'), 'glyphicon-time': (step.status == 'Pending'), 'glyphicon-refresh': (step.status == 'InProgress')}"></span>
-                  <span ng-hide="step.action != 'install'">Install</span>
-                  <span ng-hide="step.action != 'upgrade'">Upgrade from {{ step.previous_version }}</span>
-                  <span ng-hide="step.action != 'uninstall'">Uninstall</span>
-                  <span ng-hide="step.action != 'skip'">No Change</span>
-                </div>
-                
-                <div class="progress" ng-hide="step.status == 'Cancelled' || step.action == 'skip'" ng-class="{'progress-striped active': (step.progress < 100)}">
-                  <div class="progress-bar" ng-class="{'progress-bar-success': (step.status == 'Succeeded'), 'progress-bar-danger': (step.status == 'Failed'),'progress-bar-primary': (step.status == 'InProgress'), 'progress-bar-default': (step.status == 'Pending')}" role="progressbar" aria-valuenow="{{step.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{step.progress}}%">
-                    {{step.status}}
+          <li ng-repeat="step in installation.steps">
+            <div class="slds-media">
+              <div class="slds-media__body">
+                <div class="slds-media slds-media--timeline">
+                  <div class="slds-media__figure slds-timeline__icon slds-timeline__media--email">
+                    <div class="slds-icon_container" ng-hide="step.status != 'Pending'">
+                      <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-standard-email">
+                        {% autoescape off %}
+                        <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#clock"></use>
+                        {% endautoescape %}
+                      </svg>
+                    </div>
+                    <div class="slds-icon_container" ng-hide="step.status != 'InProgress'">
+                      <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-action-email slds-icon-text-default">
+                        {% autoescape off %}
+                        <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#spinner"></use>
+                        {% endautoescape %}
+                      </svg>
+                    </div>
+                    <div class="slds-icon_container" ng-hide="step.status != 'Succeeded'">
+                      <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-action-new-task">
+                        {% autoescape off %}
+                        <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
+                        {% endautoescape %}
+                      </svg>
+                    </div>
+                    <div class="slds-icon_container" ng-hide="step.status != 'Failed'">
+                      <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-action-close">
+                        {% autoescape off %}
+                        <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                        {% endautoescape %}
+                      </svg>
+                    </div>
+                    <div class="slds-icon_container" ng-hide="step.status != 'Cancelled'">
+                      <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-action-email">
+                        {% autoescape off %}
+                        <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#ban"></use>
+                        {% endautoescape %}
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="slds-media__body">
+                    <div class="slds-grid" ng-class="{'sdls-theme--shaded': (step.action == 'skip')}">
+                      <div class="slds-col slds-size--2-of-3">
+                        <h3 class="slds-text-heading--medium">{{step.action}} {{step.version.package.name}}</h3>
+                        <ul class="slds-list--horizontal slds-wrap">
+                          <li class="slds-m-right--large">
+                            <span class="slds-text-title">Type:</span>
+                            <span class="slds-text-body--small" ng-hide="step.version.zip_url == null || step.version.zip_url == ''" class="slds-badge">
+                              Unmanaged Metadata from Zip
+                            </span>
+                            <span class="slds-text-body--small" ng-hide="step.version.repo_url == null || step.version.repo_url == ''" class="slds-badge">
+                              Unmanaged Metadata from Github
+                            </span>
+                            <span class="slds-text-body--small" ng-hide="step.version.number == null || step.version.number == ''" class="slds-badge">
+                              <span class="slds-icon_container">
+                              </span>
+                              Managed Package
+                            </span>
+                            <span class="slds-text-body--small" ng-hide="step.version.is_beta != true" class="slds-badge">
+                              <span class="slds-icon_container">
+                              </span>
+                              Managed Package Beta
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div class="slds-col slds-size--1-of-3">
+                        <span class="slds-badge slds-float--right slds-text-heading--small" ng-class="{'slds-theme--info': (step.status == 'InProgress'), 'slds-theme--success': (step.status == 'Succeeded'), 'slds-theme--error': (step.status == 'Failed')}">{{ step.status }}</span>
+                      </div>
+                    </div>
+                    <div class="slds-box" ng-class="{'slds-theme--error': (step.status == 'Failed'), 'slds-theme--shaded': (step.status == 'Cancelled')}" ng-hide="step.log == '' || step.log == null">
+                      <div class="slds-box--body">
+                        <pre>{{step.log}}</pre>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                
               </div>
             </div>
     
-            <div class="well" ng-hide="step.log == '' || step.log == null">
-              {{step.log}}
-            </div>
 
           </li>
           
         </ul>
-        </div>
       </div>
-    
     </div>
-  </div>
 {% endverbatim %}
 {% endblock %}
