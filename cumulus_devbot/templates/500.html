@@ -1,19 +1,17 @@
-{% extends 'mpinstaller/base.html' %}
+{% extends 'django_slds/base_slds.html' %}
 
-{% load bootstrap3 %}
-
-{% block bootstrap3_title %}Installer Error{% endblock %}
-{% block bootstrap3_page_title %}Installer Error{% endblock %}
-{% block bootstrap3_page_description %}{% endblock %}
-
-{% block bootstrap3_content %}
-
-{% bootstrap_messages %}
-
-<div class="panel panel-warning">
-  <div class="panel-body"> 
-    An error has occurred.  We have notified the administrators of the issue.
+{% block base_body %}
+<div role="dialog" tabindex="-1" aria-labelledby="header-error" class="slds-modal slds-fade-in-open">
+  <div class="slds-modal__container">
+    <div class="slds-modal__header">
+      <h2 id="header-error" class="slds-text-heading--medium">Server Error</h2>
+    </div>
+    <div class="slds-modal__content slds-p-around--medium">
+      <div>
+        <p>An error has occurred.  We have notified the administrators of the issue.</p>
+      </div>
+    </div>
   </div>
 </div>
-
+<div class="slds-backdrop slds-backdrop--open"></div>
 {% endblock %}
