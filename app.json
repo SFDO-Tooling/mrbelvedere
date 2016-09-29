@@ -21,12 +21,12 @@
       "description": "The callback url configured for the Connected App, ex: https://your-app-name.herokuapp.com/mpinstaller/oauth/callback",
       "value": ""
     },
-    "GITHUB_APP_ID": {
+    "SOCIAL_AUTH_GITHUB_KEY": {
       "description": "The Github Developer App ID used by the Contributor Tool to do Github OAuth2 logins.  Not needed if you are not using the Contributor Tool",
       "value": "",
       "required": false
     },
-    "GITHUB_API_SECRET": {
+    "SOCIAL_AUTH_GITHUB_SECRET": {
       "description": "The Github Developer App API Secret used by the Contributor Tool to do Github OAuth2 logins.  Not needed if you are not using the Contributor Tool",
       "value": "",
       "required": false
