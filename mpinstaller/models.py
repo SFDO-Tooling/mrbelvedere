@@ -89,6 +89,19 @@ class Package(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return '/mpinstaller/{}'.format(self.namespace)
+
+    def limit_current_prod(self):
+        return {'package': self.package}
+        return models.Q(package = self.package)# & ~models.Q(number__contains = 'Beta')
+
+    def limit_current_beta(self):
+        return models.Q(package = self.package, number__isnull = False, number__contains = 'Beta')
+
+    def limit_current_github(self):
+        return models.Q(package = self.package, repo_url__isnull = False)
+
     def get_dependencies(self, beta):
         if not beta and not self.current_prod:
             raise LookupError('No current_prod found')
@@ -240,6 +253,9 @@ class PackageVersion(models.Model):
         if self.number:
             return '%s %s (%s)' % (self.name, self.number, self.package.namespace)
         return self.name
+
+    def get_absolute_url(self):
+        return '/mpinstaller/{}/version/{}'.format(self.package.namespace, self.id)
 
     def is_beta(self):
         if self.number and self.number.find('(Beta ') != -1:
