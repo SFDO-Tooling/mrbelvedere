@@ -7,6 +7,18 @@
   {% bootstrap_javascript jquery=True %}
   {% endautoescape %}
 
+  <style type="text/css">
+    .post-login-running {
+      display: none;
+    }
+    .post-login-success {
+      display: none;
+    }
+    .post-login-error {
+      display: none;
+    }
+  </style>
+
   <script type="text/javascript">
     {% autoescape off %}
     var actions = {{ actions }};
@@ -17,24 +29,28 @@
             $('#console-log .slds-box--body').append('<div>Redirecting to <a href="{{ redirect }}">{{ redirect }}</a></div>');
             //$("html, body").animate({ scrollTop: $(document).height() }, "slow");
             window.location = '{{ redirect }}';
+            return false;
         }
         action = actions[current_action_index];
    
         // Add console log line     
-        $('#console-log .slds-box--body').append('<div>' + action['message'] + '</div>');
+        //$('#console-log .slds-box--body').append('<div>' + action['message'] + '</div>');
         //$("html, body").animate({ scrollTop: $(document).height() }, "slow");
 
+        $('#' + action['id'] + ' .post-login-pending').hide();
+        $('#' + action['id'] + ' .post-login-running').show();
         $.ajax({
             url: action['url'],
             type: 'GET',
             success: function () {
-                $('#console-log .slds-box--body').append('<div>OK</div>');
-                //$("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                $('#' + action['id'] + ' .post-login-running').hide();
+                $('#' + action['id'] + ' .post-login-success').show();
                 // Trigger the next action
                 setTimeout(function () {run_actions()}, 1000);
             },
             error: function () {
-                $('#console-log .slds-box--body').append('<div>OK</div>');
+                $('#' + action['id'] + ' .post-login-running').hide();
+                $('#' + action['id'] + ' .post-login-error').show();
                 //$("html, body").animate({ scrollTop: $(document).height() }, "slow");
                 // Trigger the next action
                 setTimeout(function () {run_actions()}, 1000);
@@ -44,7 +60,10 @@
         current_action_index += 1;
     }
 
-    run_actions(actions);
+   
+    $(document).ready(function () {
+        run_actions(actions);
+    });
 
     {% endautoescape %}
   </script>
@@ -62,7 +81,47 @@
     
       <div class="slds-box">
         <div class="slds-box--body">
-          {{ message }}
+          {% for action in actions %}
+          <div class="slds-grid" id="{{ action.id }}">
+              <div class="slds-col slds-size--2-of-3">
+                <h3 class="slds-text-heading--small">{{ action.message }}</h3>
+              </div>
+              <div class="slds-col slds-size--1-of-3">
+                <!-- Pending Icon -->
+                <div class="post-login-pending slds-icon_container slds-float--right" title="pending">
+                  <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-text-default">
+                    <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#clock"></use>
+                  </svg>
+                  <span class="slds-assistive-text">Pending</span>
+                </div>
+                <!-- Running Icon -->
+                <div class="post-login-running slds-icon_container slds-float--right" title="running">
+                  <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-text-default">
+                    <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#spinner"></use>
+                  </svg>
+                  <span class="slds-assistive-text">Running</span>
+                </div>
+                <!-- Success Icon -->
+                <span class="post-login-success slds-icon_container slds-float--right slds-icon-action-newtask" title="success">
+                  <div class="slds-icon_container">
+                    <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-text-default">
+                      <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Success</span>
+                  </div>
+                </span>
+                <!-- Error Icon -->
+                <span class="post-login-error slds-icon_container slds-float--right slds-icon-action-close" title="error">
+                  <div class="slds-icon_container">
+                    <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-text-default">
+                    <use xlink:href="/static/slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Error</span>
+                  </div>
+                </span>
+              </div>
+          </div>
+          {% endfor %}
         </div>
       </div>
     </div>

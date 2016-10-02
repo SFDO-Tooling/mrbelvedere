@@ -412,19 +412,23 @@ def oauth_post_login(request):
     actions.append({
         'url': request.build_absolute_uri('/mpinstaller/org/user'),
         'message': 'Fetching user info',
+        'id': 'post-login-user-info',
     })
     actions.append({
         'url': request.build_absolute_uri('/mpinstaller/org/org'),
         'message': 'Fetching org info',
+        'id': 'post-login-org-info',
     })
     actions.append({
         'url': request.build_absolute_uri('/mpinstaller/org/packages'),
         'message': 'Fetching installed packages',
+        'id': 'post-login-installed-packages',
     })
     if version:
         actions.append({
             'url': request.build_absolute_uri('/mpinstaller/org/condition_metadata/%s' % version.id),
             'message': 'Fetching metadata lists needed by the installation',
+        'id': 'post-login-metadata-lists',
         })
 
     return render_to_response('mpinstaller/oauth_post_login.html', {
