@@ -127,7 +127,7 @@ class PackageVersionAdmin(admin.ModelAdmin):
     list_filter = ('package',)
     fieldsets = (
         (None, {
-            'fields': ('package',),
+            'fields': ('package','name'),
         }),
         ('Managed Package Version', {
             'classes': ('collapse',),
