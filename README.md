@@ -61,8 +61,8 @@ Go to `https://<your-app-name>.herokuapp.com/admin` and log in using the user yo
 * Enter the repo_url in the repo_url field (i.e. https://github.com/SaleforceFoundation/mrbelvedere-df16-demo-project)
 * Enter your Github username
 * Enter your Github password or app token
-* Enter the subdirectory of the repo where metadata is stored
-* Enter the name of the package configured in the `<fullName>` element of the package.xml
+* Enter the subdirectory of the repo where metadata is stored (i.e. src)
+* Enter the name of the package configured in the `<fullName>` element of the package.xml (i.e. DF16 mrbelvedere demo project)
 
 ### Metadata Zip URL Version
 
