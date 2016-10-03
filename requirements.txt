@@ -12,8 +12,8 @@ django-slds-crispyforms>=0.1.0
 django-tinymce==2.4.0
 djangorestframework==3.4.7
 gunicorn==19.6.0
-jenkinsapi==0.2.16
 newrelic==2.70.0.51
+pycparser==2.13
 psycopg2==2.6.2
 pysqlite==2.8.3
 python-dateutil==2.5.3
