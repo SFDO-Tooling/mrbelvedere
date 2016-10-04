@@ -6,21 +6,27 @@ A Python/Django web application that runs on Heroku to assist Salesforce develop
 
 ## Deploy to Heroku
 
-Click the link below to deploy mrbelvedere to Heroku.  Use the "App Name (optional)" field to select an available name for your Heroku app.  Before submitting the form, continue to the next step using the selected app name to create a Connected App and get the Client ID and Client Secret to complete the form. 
+Click the link below to deploy mrbelvedere to Heroku.  Use the "App Name (optional)" field to select an available name for your Heroku app.  Before submitting the form on Heroku, create a Connected App in your Salesforce org and get the Client ID and Client Secret to complete the Heroku form.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
 ## Salesforce Connected App
 
-* Select a persistent Salesforce org (i.e. your business org if you're an ISV or your DE org if a developer)
-* Go to Setup -> Create -> Apps
-    * New Connected App
-        * Scopes: full, api, refresh_token
-        * Callback URL: `https://<your-app-name>.herokuapp.com/mpinstaller/oauth/callback`
+1. Log in to a persistent Salesforce org (e.g. your business org if you're an ISV, or your DE org if a developer)
+2. Go to Setup -> Create -> Apps
+3. Create a new Connected App
+4. Use any values you'd like for app name, api name, and contact email
+5. Click `Enable OAuth Settings` and use these settings:
+    * Scopes: full, api, refresh_token
+    * Callback URL: `https://<your-app-name>.herokuapp.com/mpinstaller/oauth/callback`
+6. Use these values from the Connected App to complete the Heroku form:
+    * Consumer Key -> MPINSTALLER_CLIENT_ID
+    * Consumer Secret -> MPINSTALLER_CLIENT_SECRET
+    * Callback URL -> MPINSTALLER_CALLBACK_URL
 
 ## Post deploy configuration
 
-Using the Heroku toolbelt, run the following command to create an admin user in the app's database
+Clone the mrbelvedere repository and `cd` into it. Using the Heroku toolbelt, log in to your account using `heroku login` and then run the following command to create an admin user in the app's database:
 
     heroku run python manage.py createsuperuser --app <your-app-name>
 
@@ -50,19 +56,19 @@ Go to `https://<your-app-name>.herokuapp.com/admin` and log in using the user yo
 
 * Click `Add` next to PackageVersions under the mpinstaller app
 * Select the package
-* Enter a name for the version (i.e. 1.1)
+* Enter a name for the version (e.g. 1.1)
 * Enter the version number in the Number field
 
 ### Github Versions
 
 * Click `Add` next to PackageVersions under the mpinstaller app
 * Select the package
-* Enter a name for the version (i.e. Github - Unmanaged)
-* Enter the repo_url in the repo_url field (i.e. https://github.com/SaleforceFoundation/mrbelvedere-df16-demo-project)
+* Enter a name for the version (e.g. Github - Unmanaged)
+* Enter the repo_url in the repo_url field (e.g. https://github.com/SaleforceFoundation/mrbelvedere-df16-demo-project)
 * Enter your Github username
 * Enter your Github password or app token
-* Enter the subdirectory of the repo where metadata is stored (i.e. src)
-* Enter the name of the package configured in the `<fullName>` element of the package.xml (i.e. DF16 mrbelvedere demo project)
+* Enter the subdirectory of the repo where metadata is stored (e.g. src)
+* Enter the name of the package configured in the `<fullName>` element of the package.xml (e.g. DF16 mrbelvedere demo project)
 
 ### Metadata Zip URL Version
 
