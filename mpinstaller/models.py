@@ -495,7 +495,7 @@ class PackageInstallation(models.Model):
         # Add content from dependent packages and versions
         packages = []
         #packages.append(self.package.id)
-        for step in self.steps.filter(status = 'Failed').exclude(action = 'skip'):
+        for step in self.steps.filter(status = 'Failed').exclude(action = 'skip', version = self.version):
             if step.package.id in packages:
                 continue
             packages.append(step.package.id)

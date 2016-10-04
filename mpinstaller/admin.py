@@ -123,7 +123,7 @@ class PackageVersionAdminForm(forms.ModelForm):
         }
 
 class PackageVersionAdmin(admin.ModelAdmin):
-    list_display = ('package', 'number', 'name')
+    list_display = ('name', 'number', 'package')
     list_filter = ('package',)
     fieldsets = (
         (None, {
