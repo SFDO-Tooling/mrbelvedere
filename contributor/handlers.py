@@ -27,6 +27,10 @@ def sync_contribution(contribution_id):
 
         changed = False
 
+        # Skip if no SF org is linked
+        if not contribution.sf_oauth:
+            return 'Skipping sync, no Salesforce org linked to contribution'
+
         # Sync the contribution
         changed = contribution.sync()
 
