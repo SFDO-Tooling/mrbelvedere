@@ -215,6 +215,9 @@ def start_package_installation(request, namespace, version_id):
 
     install_map = version_install_map(version, installed, metadata, git_ref, fork)
 
+    if 'org_id' not in oauth['org_id']:
+        org_org(request)
+
     installation_obj = PackageInstallation(
         package = version.package,
         version = version,
@@ -570,8 +573,8 @@ def get_oauth_org(oauth):
         org = sf.Organization.get(org_id)
         return org
 
-    except SalesforceResourceNotFound:
-        pass
+    #except SalesforceResourceNotFound:
+        #pass
 
 def get_oauth_user(oauth):
     """ Fetches the user info from the org """
