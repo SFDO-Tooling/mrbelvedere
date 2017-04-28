@@ -215,7 +215,7 @@ def start_package_installation(request, namespace, version_id):
 
     install_map = version_install_map(version, installed, metadata, git_ref, fork)
 
-    if 'org_id' not in oauth['org_id']:
+    if 'org_id' not in oauth:
         org_org(request)
 
     installation_obj = PackageInstallation(
