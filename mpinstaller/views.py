@@ -569,9 +569,9 @@ def get_oauth_org(oauth):
     # Parse org id from id which ends in /ORGID/USERID
     org_id = oauth['id'].split('/')[-2]
 
-    try:
-        org = sf.Organization.get(org_id)
-        return org
+    #try:
+    org = sf.Organization.get(org_id)
+    return org
 
     #except SalesforceResourceNotFound:
         #pass
