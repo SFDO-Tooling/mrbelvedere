@@ -14,6 +14,12 @@ def zip_subfolder(zip_src, path, namespace_token=None, namespace=None):
         # work well with filenames so replace all %'s with _'s for the filename token
         filename_namespace_token = namespace_token.replace('%','_')
 
+    # Handle the %%%NAMESPACE_OR_C%%% token
+    namespace_or_c_token = '%%%NAMESPACE_OR_C%%%'
+
+    # Handle the %%%NAMESPACED_ORG%%% token
+    namespaced_org_token = '%%%NAMESPACED_ORG%%%'
+
     zip_dest = zipfile.ZipFile(StringIO.StringIO(), 'w', zipfile.ZIP_DEFLATED)
     for name in zip_src.namelist():
         if not name.startswith(path):
@@ -22,14 +28,18 @@ def zip_subfolder(zip_src, path, namespace_token=None, namespace=None):
         content = zip_src.read(name)
         rel_name = name.replace(path, '', 1)
 
+        # Strip the NAMESPACED_ORG token since we don't support it in mrbelvedere
+        content = content.replace(namespaced_org_token, '')
         if namespace_token:
             # If a namespace_token was specified, replace the token with the namespace or nothing
             if namespace:
                 content = content.replace(namespace_token, '%s__' % namespace)
+                content = content.replace(namespace_or_c_token, '%s__' % namespace)
                 if rel_name:
                     rel_name = rel_name.replace(filename_namespace_token, '%s__' % namespace)
             else:
                 content = content.replace(namespace_token, '')
+                content = content.replace(namespace_or_c_token, 'c')
                 if rel_name:
                     rel_name = rel_name.replace(filename_namespace_token, '')
 
