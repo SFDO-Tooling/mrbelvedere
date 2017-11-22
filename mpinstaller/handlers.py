@@ -12,7 +12,7 @@ from mpinstaller.mdapi import ApiInstallVersion, ApiUninstallVersion
 from mpinstaller.utils import convert_to_18
 
 # Convert all WhiteListOrg.org_id values to 18 character org ids
-@receiver(pre_save, sender=WhiteListOrg):
+@receiver(pre_save, sender=WhiteListOrg)
 def convert_org_id_to_18(sender, **kwargs):
     org = kwargs['instance']
     if len(org.org_id) == 15:
