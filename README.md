@@ -47,5 +47,3 @@ Go to https://<your-app-name>.herokuapp.com/admin and log in using the user you 
 # Analyzing and Supporting Installations
 
 # Configuring the Contributor Tool
-
-# Using the Contributor Tool
