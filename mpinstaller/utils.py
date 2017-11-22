@@ -98,7 +98,7 @@ def zip_subfolders(zip_src, path, namespace_token=None, namespace=None):
 # Salesforce related utilities
 
 # From https://gist.github.com/KorbenC/7356677
-def convert_To_18(id):
+def convert_to_18(id):
     #check valid input
     if id is None:
         return id
