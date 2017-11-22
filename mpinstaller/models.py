@@ -383,11 +383,17 @@ class PackageVersionDependency(models.Model):
 
 class WhiteList(models.Model):
     name = models.CharField(max_length=255)
+    
+    def __unicode__(self):
+        return self.name
 
 class WhiteListOrg(models.Model):
     name = models.CharField(max_length=255)
     whitelist = models.ForeignKey(WhiteList, related_name='orgs')
     org_id = models.CharField(max_length=18)
+
+    def __unicode__(self):
+        return '{} ({})'.format(self.name, self.org_id)
 
 class PackageInstallation(models.Model):
     package = models.ForeignKey(Package, related_name='installations')
