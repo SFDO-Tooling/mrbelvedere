@@ -140,6 +140,11 @@ def check_installation_available(request, version):
         if not oauth.get('sandbox',False) and oauth['org_type'].find('Developer Edition') == -1:
             return 'beta-in-prod-org'
 
+    # If the Package has a whitelist, make sure the org is in the whitelist
+    if version.package.whitelist:
+        if not whitelist.orgs.filter(org_id = oauth['org_id']).count():
+            return 'org-not-authorized'
+
     # Allow passing of ?bypass_sandbox=true to bypass a sandbox installation
     bypass_sandbox = request.session.get('bypass_sandbox', None)
     if bypass_sandbox == None:

@@ -77,6 +77,7 @@ class Package(models.Model):
     content_intro_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content intro if the package is a beta.")
     content_success_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content success if the package is a beta.")
     content_failure_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content failure if the package is a beta.")
+    whitelist = models.ForeignKey('mpinstaller.WhiteList', related_name='packages', null=True, blank=True)
 
     def __unicode__(self):
         return self.name
@@ -379,6 +380,14 @@ class PackageVersionDependency(models.Model):
 
     class Meta:
         ordering = ['order',]
+
+class WhiteList(models.Model):
+    name = models.CharField(max_length=255)
+
+class WhiteListOrg(models.Model):
+    name = models.CharField(max_length=255)
+    whitelist = models.ForeignKey(WhiteList, related_name='orgs')
+    org_id = models.CharField(max_length=18)
 
 class PackageInstallation(models.Model):
     package = models.ForeignKey(Package, related_name='installations')
