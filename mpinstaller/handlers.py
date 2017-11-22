@@ -1,12 +1,22 @@
 import json
 import signal
 from rq.worker import signal_name
+from django.db.models.signals import pre_save
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from time import sleep
 import django_rq
 from mpinstaller.models import PackageInstallation, PackageInstallationStep
+from mpinstaller.models import WhiteListOrg
 from mpinstaller.mdapi import ApiInstallVersion, ApiUninstallVersion
+from mpinstaller.utils import convert_to_18
+
+# Convert all WhiteListOrg.org_id values to 18 character org ids
+@receiver(pre_save, sender=WhiteListOrg):
+def convert_org_id_to_18(sender, **kwargs):
+    org = kwargs['instance']
+    if len(org.org_id) == 15:
+        org.org_id = convert_to_18(org.org_id)
 
 # Set the error field on a failed step by calling the step's set_error method
 @receiver(post_save, sender=PackageInstallationStep)

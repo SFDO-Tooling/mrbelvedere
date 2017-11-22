@@ -97,6 +97,30 @@ def zip_subfolders(zip_src, path, namespace_token=None, namespace=None):
 
 # Salesforce related utilities
 
+# From https://gist.github.com/KorbenC/7356677
+def convert_To_18(id):
+    #check valid input
+    if id is None:
+        return id
+    if len(id) < 15:
+        print "not a valid 15 digit ID"
+        return
+    #print initial id
+    print "15 digit ID: ", id
+    suffix = ''
+    for i in xrange(0, 3):
+        flags = 0
+        for x in xrange(0,5):
+            c = id[i*5+x]
+            #add flag if c is uppercase
+            if c.upper() == c and c >= 'A' and c <= 'Z':
+                flags = flags + (1 << x)
+        if flags <= 25:
+            suffix = suffix + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[flags]
+        else:
+            suffix = suffix + '012345'[flags - 26]
+    print "18 digit ID: ",  id + suffix
+
 def obscure_salesforce_log(text):
     text = obscure_mpinstaller_deployment_test_failure(text)
     text = obscure_salesforce_ids(text)
