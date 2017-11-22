@@ -556,8 +556,14 @@ class ApiInstallVersion(ApiDeploy):
                 zip_url = self.version.zip_url
 
             # Deploy a zipped bundled downloaded from a url
+            kwargs = {}
+            if installation_step.version.github_username and installation_step.version.github_password:
+                kwargs['auth'] = requests.auth.HttpBasicAuth(
+                    installation_step.version.github_username,
+                    installation_step.version.github_password,
+                )
             try:
-                zip_resp = requests.get(zip_url)
+                zip_resp = requests.get(zip_url, **kwargs)
             except:
                 raise ValueError('Failed to fetch zip from %s' % self.version.zip_url)
 
