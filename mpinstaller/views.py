@@ -142,7 +142,7 @@ def check_installation_available(request, version):
 
     # If the Package has a whitelist, make sure the org is in the whitelist
     if version.package.whitelist:
-        if not whitelist.orgs.filter(org_id = oauth['org_id']).count():
+        if not version.package.whitelist.orgs.filter(org_id = oauth['org_id']).count():
             return 'org-not-authorized'
 
     # Allow passing of ?bypass_sandbox=true to bypass a sandbox installation
