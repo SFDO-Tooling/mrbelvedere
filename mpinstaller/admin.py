@@ -61,7 +61,7 @@ class PackageVersionDependencyAdmin(admin.ModelAdmin):
 admin.site.register(PackageVersionDependency, PackageVersionDependencyAdmin)
 
 class WhiteListAdmin(admin.ModelAdmin):
-    list_display = ('name')
+    list_display = ('name',)
 admin.site.register(WhiteList, WhiteListAdmin)
 
 class WhiteListOrgAdmin(admin.ModelAdmin):
