@@ -558,7 +558,7 @@ class ApiInstallVersion(ApiDeploy):
             # Deploy a zipped bundled downloaded from a url
             kwargs = {}
             if installation_step.version.github_username and installation_step.version.github_password:
-                kwargs['auth'] = requests.auth.HttpBasicAuth(
+                kwargs['auth'] = requests.auth.HTTPBasicAuth(
                     installation_step.version.github_username,
                     installation_step.version.github_password,
                 )
