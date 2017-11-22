@@ -9,6 +9,8 @@ from mpinstaller.models import PackageInstallationSession
 from mpinstaller.models import PackageInstallationStep
 from mpinstaller.models import PackageVersion
 from mpinstaller.models import PackageVersionDependency
+from mpinstaller.models import WhiteList
+from mpinstaller.models import WhiteListOrg
 
 class MetadataConditionAdmin(admin.ModelAdmin):
     pass
@@ -57,3 +59,12 @@ class PackageVersionDependencyAdmin(admin.ModelAdmin):
     list_display = ('version', 'requires', 'order')
     list_filter = ('version__name','requires__name')
 admin.site.register(PackageVersionDependency, PackageVersionDependencyAdmin)
+
+class WhiteListAdmin(admin.ModelAdmin):
+    list_display = ('name')
+admin.site.register(WhiteList, WhiteListAdmin)
+
+class WhiteListOrgAdmin(admin.ModelAdmin):
+    list_display = ('whitelist', 'name', 'org_id')
+    list_filter = ('whitelist',)
+admin.site.register(WhiteListOrg, WhiteListOrgAdmin)
