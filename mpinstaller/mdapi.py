@@ -319,7 +319,7 @@ class BaseMetadataApiCall(object):
             instance_url = re.sub(r'https://.*\.(\w+)\.my\.salesforce\.com', r'https://\1.salesforce.com', instance_url)
 
         # Build the endpoint url from the instance_url
-        endpoint = '%s/services/Soap/m/%s/%s' % (instance_url, api_version, org_id)
+        endpoint = '%s/services/Soap/m/%s/%s' % (instance_url, self.api_version, org_id)
         return endpoint
     
     def call_mdapi(self, headers, envelope, refresh=None):
