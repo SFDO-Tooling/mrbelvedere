@@ -185,7 +185,8 @@ class BaseMetadataApiCall(object):
     soap_action_status = None
     soap_action_result = None
 
-    def __init__(self, oauth, installation_step=None):
+    def __init__(self, oauth, installation_step=None, api_version=None):
+        self.api_version = api_version if api_version else '33.0'
         self.installation_step = installation_step
         self.oauth = oauth
 
@@ -318,7 +319,7 @@ class BaseMetadataApiCall(object):
             instance_url = re.sub(r'https://.*\.(\w+)\.my\.salesforce\.com', r'https://\1.salesforce.com', instance_url)
 
         # Build the endpoint url from the instance_url
-        endpoint = '%s/services/Soap/m/33.0/%s' % (instance_url, org_id)
+        endpoint = '%s/services/Soap/m/%s/%s' % (instance_url, api_version, org_id)
         return endpoint
     
     def call_mdapi(self, headers, envelope, refresh=None):
@@ -463,8 +464,8 @@ class ApiDeploy(BaseMetadataApiCall):
     soap_action_start = 'deploy'
     soap_action_status = 'checkDeployStatus'
 
-    def __init__(self, oauth, package_zip, installation_step, purge_on_delete=True):
-        super(ApiDeploy, self).__init__(oauth, installation_step)
+    def __init__(self, oauth, package_zip, installation_step, purge_on_delete=True, api_version=None):
+        super(ApiDeploy, self).__init__(oauth, installation_step, api_version)
         self.set_purge_on_delete(purge_on_delete)
         self.package_zip = package_zip
 
@@ -539,6 +540,7 @@ class ApiInstallVersion(ApiDeploy):
         self.version = version
 
         # Construct and set the package_zip file
+        self.api_version = version.api_version if version.api_version else '33.0'
         if self.version.number:
             self.package_zip = PackageZipBuilder(self.version.package.namespace, self.version.number).install_package()
         elif self.version.zip_url or self.version.repo_url:
@@ -589,7 +591,7 @@ class ApiInstallVersion(ApiDeploy):
                 subzipfp.seek(0)
                 self.package_zip = base64.b64encode(subzipfp.read())
 
-        super(ApiInstallVersion, self).__init__(oauth, self.package_zip, installation_step, purge_on_delete)
+        super(ApiInstallVersion, self).__init__(oauth, self.package_zip, installation_step, purge_on_delete=purge_on_delete, api_version=self.api_version)
 
 class ApiUninstallVersion(ApiDeploy):
     def __init__(self, oauth, version, installation_step, purge_on_delete=True):

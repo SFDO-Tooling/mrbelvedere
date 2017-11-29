@@ -217,6 +217,7 @@ class PackageVersion(models.Model):
     number = models.CharField(max_length=32, null=True, blank=True)
     zip_url = models.URLField(null=True, blank=True)
     repo_url = models.URLField(null=True, blank=True)
+    api_version = models.CharField(max_length=4, null=True, blank=True)
     github_username = models.CharField(max_length=255, null=True, blank=True)
     github_password = models.CharField(max_length=255, null=True, blank=True)
     branch = models.CharField(max_length=255, null=True, blank=True)
