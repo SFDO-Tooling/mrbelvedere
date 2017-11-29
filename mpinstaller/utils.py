@@ -34,7 +34,7 @@ def zip_subfolder(zip_src, path, namespace_token=None, namespace=None):
             # If a namespace_token was specified, replace the token with the namespace or nothing
             if namespace:
                 content = content.replace(namespace_token, '%s__' % namespace)
-                content = content.replace(namespace_or_c_token, '%s__' % namespace)
+                content = content.replace(namespace_or_c_token, '%s' % namespace)
                 if rel_name:
                     rel_name = rel_name.replace(filename_namespace_token, '%s__' % namespace)
             else:
