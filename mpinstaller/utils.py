@@ -119,7 +119,7 @@ def convert_to_18(id):
             suffix = suffix + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[flags]
         else:
             suffix = suffix + '012345'[flags - 26]
-    print "18 digit ID: ",  id + suffix
+    return id + suffix
 
 def obscure_salesforce_log(text):
     text = obscure_mpinstaller_deployment_test_failure(text)
