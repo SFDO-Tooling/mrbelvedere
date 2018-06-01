@@ -14,7 +14,7 @@ djangorestframework==3.4.7
 gunicorn==19.6.0
 newrelic==2.70.0.51
 pycparser==2.13
-psycopg2==2.6.2
+psycopg2==2.7.4
 pysqlite==2.8.3
 python-dateutil==2.5.3
 python-social-auth==0.2.21
