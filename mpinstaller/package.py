@@ -8,12 +8,12 @@ PACKAGE_XML = """<?xml version="1.0" encoding="utf-8"?>
     <members>%s</members>
     <name>InstalledPackage</name>
   </types>
-<version>33.0</version>
+<version>43.0</version>
 </Package>"""
 
 EMPTY_PACKAGE_XML = """<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
-<version>33.0</version>
+<version>43.0</version>
 </Package>"""
 
 INSTALLED_PACKAGE = """<?xml version="1.0" encoding="UTF-8"?>
