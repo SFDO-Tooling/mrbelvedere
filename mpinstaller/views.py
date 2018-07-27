@@ -314,7 +314,7 @@ def package_installation_overview(request, installation_id):
 def oauth_login(request):
     """ Redirects the user to the appropriate login page for OAuth2 login """
     redirect = request.GET['redirect']
-    if request.META['http_host'] not in redirect or 'javascript:' in redirect:
+    if request.META['HTTP_HOST'] not in redirect or 'javascript:' in redirect:
         return HttpResponse('Unauthorized', status=401)
 
     sandbox = request.GET.get('sandbox', False)
@@ -540,7 +540,7 @@ def org_condition_metadata(request, version_id):
 def oauth_logout(request):
     """ Revoke the login token """
     redirect = request.GET.get('redirect',None)
-    if request.META['http_host'] not in redirect or 'javascript:' in redirect:
+    if request.META['HTTP_HOST'] not in redirect or 'javascript:' in redirect:
         return HttpResponse('Unauthorized', status=401)
 
     oauth = request.session.get('oauth', None)
