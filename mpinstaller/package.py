@@ -19,6 +19,7 @@ EMPTY_PACKAGE_XML = """<?xml version="1.0" encoding="utf-8"?>
 INSTALLED_PACKAGE = """<?xml version="1.0" encoding="UTF-8"?>
 <InstalledPackage xmlns="http://soap.sforce.com/2006/04/metadata">
   <versionNumber>%s</versionNumber>
+  <activateRSS>false</activateRSS>
 </InstalledPackage>"""
 
 class PackageZipBuilder(object):
