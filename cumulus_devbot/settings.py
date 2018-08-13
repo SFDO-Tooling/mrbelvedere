@@ -149,28 +149,14 @@ INSTALLED_APPS = (
     'tinymce',
     'rest_framework',
     'api',
-    'social_auth',
     'crispy_forms',
     'django_slds',
     'django_slds_crispyforms',
 )
 
 AUTHENTICATION_BACKENDS = (
-    'social_auth.backends.contrib.github.GithubBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
-
-GITHUB_APP_ID = os.environ.get('GITHUB_APP_ID')
-GITHUB_API_SECRET = os.environ.get('GITHUB_API_SECRET')
-GITHUB_EXTENDED_PERMISSIONS = os.environ.get('GITHUB_EXTENDED_PERMISSIONS', None)
-if GITHUB_EXTENDED_PERMISSIONS:
-    GITHUB_EXTENDED_PERMISSIONS = GITHUB_EXTENDED_PERMISSIONS.split(',')
-else:
-    GITHUB_EXTENDED_PERMISSIONS = ['public_repo',]
-
-LOGIN_URL = '/social-auth/login/github'
-LOGIN_REDIRECT_URL = '/contributor'
-#LOGIN_ERROR_URL = '/login-error/'
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
