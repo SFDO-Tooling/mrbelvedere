@@ -72,12 +72,12 @@ def set_installation_status(sender, **kwargs):
         step.installation.save()
         return
 
-@receiver(post_save, sender=PackageInstallation)
-def queue_installation(sender, **kwargs):
-    if not kwargs['created']:
-        # Only run on create
-        return
-    install_package_version.delay(kwargs['instance'].id)
+#@receiver(post_save, sender=PackageInstallation)
+#def queue_installation(sender, **kwargs):
+#    if not kwargs['created']:
+#        # Only run on create
+#        return
+#    install_package_version.delay(kwargs['instance'].id)
 
 @django_rq.job('default', timeout=3600)
 def install_package_version(installation_id):

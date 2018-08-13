@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
 from django.contrib.auth.decorators import login_required
 from mpinstaller.auth import SalesforceOAuth2
+from mpinstaller.handlers import install_package_version
 from mpinstaller.installer import version_install_map
 from mpinstaller.installer import install_map_to_package_list
 from mpinstaller.installer import install_map_to_json
@@ -268,6 +269,8 @@ def start_package_installation(request, namespace, version_id):
         del request.session['org_packages']
     if 'metadata' in request.session:
         del request.session['metadata']
+
+    install_package_version.delay(installation_obj.id)
 
     return HttpResponseRedirect('/mpinstaller/installation/%s' % installation_obj.id)
 
