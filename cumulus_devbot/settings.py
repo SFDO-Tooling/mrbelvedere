@@ -144,7 +144,6 @@ INSTALLED_APPS = (
     'bootstrap3',
     'mrbelvedere',
     'mpinstaller',
-    'contributor',
     'djangular',
     'cumulus_devbot',
     'tinymce',
