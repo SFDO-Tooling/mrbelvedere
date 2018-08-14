@@ -142,7 +142,6 @@ INSTALLED_APPS = (
     'south',
     'django_rq',
     'bootstrap3',
-    'mrbelvedere',
     'mpinstaller',
     'djangular',
     'cumulus_devbot',
