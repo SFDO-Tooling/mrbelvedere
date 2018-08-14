@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -397,6 +398,7 @@ class WhiteListOrg(models.Model):
         return '{} ({})'.format(self.name, self.org_id)
 
 class PackageInstallation(models.Model):
+    install_hash = models.CharField(max_length=64, default=lambda:uuid.uuid1().hex)
     package = models.ForeignKey(Package, related_name='installations')
     version = models.ForeignKey(PackageVersion, related_name='installations', null=True, blank=True)
     git_ref = models.CharField(max_length=255, null=True, blank=True)
@@ -602,6 +604,7 @@ class PackageInstallationStep(models.Model):
         obscurred_log = obscure_salesforce_log(self.log)
         error, created = InstallationError.objects.get_or_create(message = obscurred_log)
         self.error = error
+        self.log = obscurred_log
         self.save()
 
     class Meta:
