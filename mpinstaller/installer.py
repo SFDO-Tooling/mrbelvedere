@@ -104,7 +104,7 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
             required_packages[key] = value
 
     # Find all the unpackaged subdirectories that need to be deployed
-    if version.subfolder != 'src':
+    if version.subfolder == 'src':
         unpackaged = list_github_directories(owner, repo, '/unpackaged', git_ref, version.github_username, version.github_password) 
         unpackaged_subdirs = {}
         for item in unpackaged:
