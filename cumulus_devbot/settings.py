@@ -104,7 +104,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '-)3=k_d8821*k+v0cm&unyc429hm&tfs%#6y(ndk*%+l4a+7+('
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 TEMPLATES = [
     {
