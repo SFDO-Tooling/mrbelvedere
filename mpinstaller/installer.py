@@ -104,44 +104,45 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
             required_packages[key] = value
 
     # Find all the unpackaged subdirectories that need to be deployed
-    unpackaged = list_github_directories(owner, repo, '/unpackaged', git_ref, version.github_username, version.github_password) 
-    unpackaged_subdirs = {}
-    for item in unpackaged:
-        if item in ('pre','post'):
-            unpackaged_subdirs[item] = []
-        else:
-            unpackaged_subdirs[item] = {}
-
-    for subdir in unpackaged_subdirs.keys():
-        subdir_contents = list_github_directories(owner, repo, '/unpackaged/%s' % subdir, git_ref, version.github_username, version.github_password)
-        for item in subdir_contents:
-            # For unpackaged/pre and unpackaged/post, simply include subdirectories
+    if version.subfolder != 'src':
+        unpackaged = list_github_directories(owner, repo, '/unpackaged', git_ref, version.github_username, version.github_password) 
+        unpackaged_subdirs = {}
+        for item in unpackaged:
+            if item in ('pre','post'):
+                unpackaged_subdirs[item] = []
+            else:
+                unpackaged_subdirs[item] = {}
+    
+        for subdir in unpackaged_subdirs.keys():
+            subdir_contents = list_github_directories(owner, repo, '/unpackaged/%s' % subdir, git_ref, version.github_username, version.github_password)
+            for item in subdir_contents:
+                # For unpackaged/pre and unpackaged/post, simply include subdirectories
+                if subdir in ('pre','post'):
+                    unpackaged_subdirs[subdir].append(item)
+                    continue
+    
+                # For all other directories, assume they are namespace pre/post directories
+                if subdir not in required_packages:
+                    # Skip any namespaces not in required_packages
+                    continue
+    
+                # If this is a namespace pre/post for a required namespace, get the contents of its subfolders
+                if item not in unpackaged_subdirs[subdir]:
+                    unpackaged_subdirs[subdir][item] = []
+    
+                subsubdir_contents = list_github_directories(owner, repo, '/unpackaged/%s/%s' % (subdir, item), git_ref, version.github_username, version.github_password)
+                for subitem in subsubdir_contents:
+                    unpackaged_subdirs[subdir][item].append(subitem)
+    
+        # Sort the subdirs
+        for subdir in unpackaged_subdirs.keys():
             if subdir in ('pre','post'):
-                unpackaged_subdirs[subdir].append(item)
+                unpackaged_subdirs[subdir].sort()
                 continue
-
-            # For all other directories, assume they are namespace pre/post directories
-            if subdir not in required_packages:
-                # Skip any namespaces not in required_packages
-                continue
-
-            # If this is a namespace pre/post for a required namespace, get the contents of its subfolders
-            if item not in unpackaged_subdirs[subdir]:
-                unpackaged_subdirs[subdir][item] = []
- 
-            subsubdir_contents = list_github_directories(owner, repo, '/unpackaged/%s/%s' % (subdir, item), git_ref, version.github_username, version.github_password)
-            for subitem in subsubdir_contents:
-                unpackaged_subdirs[subdir][item].append(subitem)
-
-    # Sort the subdirs
-    for subdir in unpackaged_subdirs.keys():
-        if subdir in ('pre','post'):
-            unpackaged_subdirs[subdir].sort()
-            continue
-        # FIXME: Handle pre/post folders for managed packages required by version.properties
-        #for subsubdir in subdir.keys():
-        #    unpackaged_subdirs[subdir][subsubdir].sort()
-
+                # FIXME: Handle pre/post folders for managed packages required by version.properties
+            #for subsubdir in subdir.keys():
+            #    unpackaged_subdirs[subdir][subsubdir].sort()
+    
     # Assemble a linear order of dependencies
     dependencies = []
     counter_pre = 1
