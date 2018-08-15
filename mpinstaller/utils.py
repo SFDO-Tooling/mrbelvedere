@@ -128,6 +128,7 @@ def obscure_salesforce_log(text):
     text = obscure_salesforce_error_id(text)
     text = obscure_salesforce_org_name(text)
     text = obscure_salesforce_created_by_name(text)
+    text = obscure_salesforce_debugging_info(text)
     return text
 
 def obscure_mpinstaller_deployment_test_failure(text):
@@ -164,6 +165,9 @@ def obscure_salesforce_ids(text):
 
 def obscure_salesforce_created_by_name(text):
     return re.sub(r'<createdByName>.*</createdByName>','', text)
+
+def obscure_salesforce_debugging_info(text):
+    return re.sub(r'<DebuggingInfo>.*</DebuggingInfo>','', text)
 
 # Taken from http://www.fishofprey.com/2011/09/obscure-salesforce-object-key-prefixes.html
 SALESFORCE_OID_PREFIXES = [

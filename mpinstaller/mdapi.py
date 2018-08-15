@@ -196,9 +196,10 @@ class BaseMetadataApiCall(object):
         if self.status != 'Failed':
             return self.process_response(response)
 
-    def set_status(self, status, log=None):
+    def set_status(self, status, log=None, private_log=None):
         self.status = status
         self.log = log
+        self.private_log = private_log
 
         if not self.installation_step:
             # return now if there is no installation step object to log to
@@ -206,8 +207,8 @@ class BaseMetadataApiCall(object):
 
         self.installation_step.status = self.status
         self.installation_step.log = self.log
+        self.installation_step.private_log = self.private_log
         self.installation_step.save()
-            
 
     def get_response(self):
         if not self.soap_envelope_start:
@@ -281,7 +282,8 @@ class BaseMetadataApiCall(object):
                 self.set_status('Done')
         else:
             # If no done element was in the xml, fail logging the entire SOAP envelope as the log
-            self.set_status('Failed', response.content)
+            log = 'An error occurred.  We have logged the error message.  Please contact for support'
+            self.set_status('Failed', log, response.content)
         return response
 
     def process_response_result(self, response):

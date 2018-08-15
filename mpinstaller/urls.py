@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 
 urlpatterns = patterns('',
-    url(r'^installation/(?P<installation_id>\w+)$', 'mpinstaller.views.installation_overview'),
+    url(r'^installation/(?P<install_hash>\w+)$', 'mpinstaller.views.installation_overview'),
     url(r'^oauth/callback$', 'mpinstaller.views.oauth_callback'),
     url(r'^oauth/login$', 'mpinstaller.views.oauth_login'),
     url(r'^oauth/post_login$', 'mpinstaller.views.oauth_post_login'),

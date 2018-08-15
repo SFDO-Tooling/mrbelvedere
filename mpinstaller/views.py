@@ -274,8 +274,8 @@ def start_package_installation(request, namespace, version_id):
 
     return HttpResponseRedirect('/mpinstaller/installation/%s' % installation_obj.id)
 
-def installation_overview(request, installation_id):
-    installation = get_object_or_404(PackageInstallation, id=installation_id)
+def installation_overview(request, install_hash):
+    installation = get_object_or_404(PackageInstallation, install_hash=install_hash)
 
     oauth = request.session.get('oauth')
 
@@ -289,7 +289,7 @@ def installation_overview(request, installation_id):
         login_url = request.build_absolute_uri('/mpinstaller/oauth/login?redirect=%s' % redirect)
         logout_url = None
 
-    status_api_url = request.build_absolute_uri('/api/installations/%s/' % installation.id)
+    status_api_url = request.build_absolute_uri('/api/installations/%s/' % installation.install_hash)
 
     installer_url = installation.version.get_installer_url()
 
@@ -308,12 +308,6 @@ def installation_overview(request, installation_id):
 
     return render_to_response('mpinstaller/installation_overview.html', data)
 
-def package_installation_overview(request, installation_id):
-    """ Shows information about a package installation """
-    installation = get_object_or_404(PackageInstallation, id=installation_id)
-
-    return render_to_response('mpinstaller/package_installation.html', {'installation': installation})
-     
 def oauth_login(request):
     """ Redirects the user to the appropriate login page for OAuth2 login """
     redirect = request.GET['redirect']

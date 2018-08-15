@@ -399,7 +399,7 @@ class WhiteListOrg(models.Model):
         return '{} ({})'.format(self.name, self.org_id)
 
 class PackageInstallation(models.Model):
-    install_hash = models.CharField(max_length=128, default=lambda:hashlib.sha512(os.urandom(512)).hexdigest())
+    install_hash = models.CharField(max_length=128, unique=True, default=lambda:hashlib.sha512(os.urandom(512)).hexdigest())
     package = models.ForeignKey(Package, related_name='installations')
     version = models.ForeignKey(PackageVersion, related_name='installations', null=True, blank=True)
     git_ref = models.CharField(max_length=255, null=True, blank=True)
@@ -584,6 +584,7 @@ class PackageInstallationStep(models.Model):
     action = models.CharField(choices=INSTALLATION_ACTION_CHOICES, max_length=32)
     status = models.CharField(choices=INSTALLATION_STEP_STATUS_CHOICES, max_length=32)
     log = models.TextField(null=True, blank=True)
+    private_log = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     order = models.IntegerField()
@@ -603,6 +604,8 @@ class PackageInstallationStep(models.Model):
         if not self.log:
             return
         obscurred_log = obscure_salesforce_log(self.log)
+        if self.private_log:
+            self.private_log = obscure_salesforce_log(self.private_log)
         error, created = InstallationError.objects.get_or_create(message = obscurred_log)
         self.error = error
         self.log = obscurred_log

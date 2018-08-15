@@ -8,6 +8,7 @@ class InstallationViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Provides a detailed status of an installation and all its steps
     """
+    lookup_field = 'install_hash'
     queryset = PackageInstallation.objects.all()
     serializer_class = InstallationSerializer
 
