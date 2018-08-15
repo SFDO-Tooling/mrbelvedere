@@ -58,10 +58,6 @@ def create_repo_package_versions(version, git_ref=None, fork=None):
     if not version.repo_url:
         return
 
-    # If deploying a subfolder other than src, don't include dependencies
-    if version.subfolder != 'src':
-        return
-
     repo_url = version.repo_url
     if fork:
         repo_url_parts = repo_url.split('/')
