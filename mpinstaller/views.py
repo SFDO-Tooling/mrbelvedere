@@ -272,7 +272,7 @@ def start_package_installation(request, namespace, version_id):
 
     install_package_version.delay(installation_obj.id)
 
-    return HttpResponseRedirect('/mpinstaller/installation/%s' % installation_obj.id)
+    return HttpResponseRedirect('/mpinstaller/installation/%s' % installation_obj.install_hash)
 
 def installation_overview(request, install_hash):
     installation = get_object_or_404(PackageInstallation, install_hash=install_hash)
