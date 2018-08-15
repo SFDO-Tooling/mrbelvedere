@@ -1,4 +1,5 @@
-import uuid
+import hashlib
+import os
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -398,7 +399,7 @@ class WhiteListOrg(models.Model):
         return '{} ({})'.format(self.name, self.org_id)
 
 class PackageInstallation(models.Model):
-    install_hash = models.CharField(max_length=64, default=lambda:uuid.uuid1().hex)
+    install_hash = models.CharField(max_length=128, default=lambda:hashlib.sha512(os.urandom(512)).hexdigest())
     package = models.ForeignKey(Package, related_name='installations')
     version = models.ForeignKey(PackageVersion, related_name='installations', null=True, blank=True)
     git_ref = models.CharField(max_length=255, null=True, blank=True)
