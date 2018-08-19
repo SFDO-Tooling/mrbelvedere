@@ -311,7 +311,7 @@ def installation_overview(request, install_hash):
 def oauth_login(request):
     """ Redirects the user to the appropriate login page for OAuth2 login """
     redirect = request.GET['redirect']
-    if request.META['HTTP_HOST'] not in redirect or 'javascript:' in redirect:
+    if request.META['HTTP_HOST'] not in redirect or 'javascript:' in redirect or '%3C' in redirect or '%3E' in redirect:
         return HttpResponse('Unauthorized', status=401)
 
     sandbox = request.GET.get('sandbox', False)
