@@ -7,6 +7,7 @@ from distutils.version import LooseVersion
 from django.conf import settings
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.http import HttpResponsePermanentRedirect
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
 from django.contrib.auth.decorators import login_required
@@ -33,6 +34,8 @@ logger = logging.getLogger(__name__)
 
 def package_overview(request, namespace, beta=None, github=None):
     package = get_object_or_404(Package, namespace = namespace)
+    if package.redirect_to:
+        return HttpResponsePermanentRedirect(package.redirect_to)
 
     if beta:
         suffix = 'beta'
