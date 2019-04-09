@@ -80,6 +80,7 @@ class Package(models.Model):
     content_success_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content success if the package is a beta.")
     content_failure_beta = HTMLField(null=True, blank=True, help_text="Shown instead of Content failure if the package is a beta.")
     whitelist = models.ForeignKey('mpinstaller.WhiteList', related_name='packages', null=True, blank=True)
+    redirect_to = models.CharField(max_length=255, null=True, blank=True)
 
     def __unicode__(self):
         return self.name
