@@ -53,6 +53,9 @@ def package_overview(request, namespace, beta=None, github=None):
 def package_version_overview(request, namespace, version_id):
     version = get_object_or_404(PackageVersion, package__namespace = namespace, id=version_id)
 
+    if version.package.redirect_to:
+        return HttpResponsePermanentRedirect(version.package.redirect_to)
+
     fork = request.GET.get('fork',None)
     git_ref = request.GET.get('git_ref',None)
 
