@@ -314,14 +314,14 @@ def installation_overview(request, install_hash):
 
     return render_to_response('mpinstaller/installation_overview.html', data)
 
-def validate_redirect(redirect):
+def validate_redirect(request, redirect):
     if request.META['HTTP_HOST'] not in redirect or 'javascript:' in redirect or '%3C' in redirect or '%3E' in redirect:
         return HttpResponse('Unauthorized', status=401)
 
 def oauth_login(request):
     """ Redirects the user to the appropriate login page for OAuth2 login """
     redirect = request.GET['redirect']
-    validation_result = validate_redirect(redirect)
+    validation_result = validate_redirect(request, redirect)
     if validation_result:
         return validation_result
 
@@ -548,7 +548,7 @@ def org_condition_metadata(request, version_id):
 def oauth_logout(request):
     """ Revoke the login token """
     redirect = request.GET.get('redirect',None)
-    validation_result = validate_redirect(redirect)
+    validation_result = validate_redirect(request, redirect)
     if validation_result:
         return validation_result
 
