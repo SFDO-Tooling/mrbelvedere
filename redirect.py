@@ -7,7 +7,7 @@ REDIRECTS = {
     'hed': 'https://install.salesforce.org/products/eda/install',
     'npsp': 'https://install.salesforce.org/products/npsp/install',
     'npsp_reports': 'https://install.salesforce.org/products/npsp/reports',
-    'sal': 'https://install.salesforce.org/products/sal/install',
+    'sfal': 'https://install.salesforce.org/products/sal/install',
 }
 
 @app.route('/mpinstaller/<project>/')
